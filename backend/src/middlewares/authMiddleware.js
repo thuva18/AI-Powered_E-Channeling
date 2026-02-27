@@ -45,4 +45,13 @@ const doctorOnly = async (req, res, next) => {
     }
 };
 
-module.exports = { protect, adminOnly, doctorOnly };
+const patientOnly = (req, res, next) => {
+    if (req.user && req.user.role === 'PATIENT') {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized as Patient' });
+    }
+};
+
+module.exports = { protect, adminOnly, doctorOnly, patientOnly };
+

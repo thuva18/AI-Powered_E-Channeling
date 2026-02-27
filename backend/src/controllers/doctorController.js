@@ -69,10 +69,11 @@ const updateAvailability = async (req, res) => {
         }
 
         doctor.availability = availability;
-        const updatedDoctor = await doctor.save();
+        const updatedDoctor = await doctor.save({ validateModifiedOnly: true });
         res.json(updatedDoctor.availability);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Availability update error:', error);
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
 };
 

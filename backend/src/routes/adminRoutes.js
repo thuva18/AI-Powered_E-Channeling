@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getPendingDoctors,
+    getAllDoctors,
     updateDoctorApprovalStatus,
     deleteDoctor,
 } = require('../controllers/adminController');
@@ -11,7 +12,10 @@ const { protect, adminOnly } = require('../middlewares/authMiddleware');
 router.use(protect);
 router.use(adminOnly);
 
-// @route   GET /api/v1/admin/doctors/pending
+// @route   GET /api/v1/admin/doctors          — all doctors (any status)
+router.get('/doctors', getAllDoctors);
+
+// @route   GET /api/v1/admin/doctors/pending  — only PENDING
 router.get('/doctors/pending', getPendingDoctors);
 
 // @route   PATCH /api/v1/admin/doctors/:id/approve

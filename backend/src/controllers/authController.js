@@ -132,8 +132,58 @@ const checkNicAvailability = async (req, res) => {
     }
 };
 
+// @desc    Check if email is already registered (for patient registration form)
+// @route   GET /api/v1/auth/check-email?email=XXXXX
+// @access  Public
+const checkEmailAvailability = async (req, res) => {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ message: 'Email query param required' });
+    try {
+        const exists = await User.findOne({ email: email.trim().toLowerCase() });
+        res.json({ available: !exists });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Register a new patient
+// @route   POST /api/v1/auth/patient/register
+// @access  Public
+const registerPatient = async (req, res) => {
+    const { email, password, firstName, lastName, phone, nic, dateOfBirth } = req.body;
+
+    if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: 'Please fill in all required fields' });
+    }
+
+    try {
+        const userExists = await User.findOne({ email: email.trim().toLowerCase() });
+        if (userExists) {
+            return res.status(400).json({ message: 'An account with this email already exists' });
+        }
+
+        const user = await User.create({
+            email: email.trim().toLowerCase(),
+            passwordHash: password,
+            role: 'PATIENT',
+            // Store patient profile data directly on the User document via a patientProfile subdoc
+            patientProfile: { firstName, lastName, phone, nic: nic ? nic.trim().toUpperCase() : '', dateOfBirth },
+        });
+
+        res.status(201).json({
+            message: 'Patient registered successfully.',
+            user: { _id: user._id, email: user.email, role: user.role },
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Server Error' });
+    }
+};
+
 module.exports = {
     registerDoctor,
     loginUser,
     checkNicAvailability,
+    checkEmailAvailability,
+    registerPatient,
 };
+

@@ -5,7 +5,7 @@ import api from '../services/api';
 import {
     LayoutDashboard, Calendar, Users, Settings,
     LogOut, Activity, ShieldCheck, Bell, ChevronRight, BookOpen,
-    Menu, X, User, CheckCircle, Clock, AlertCircle,
+    Menu, X, User, CheckCircle, Clock, AlertCircle, Heart, FileText, CreditCard, Search,
 } from 'lucide-react';
 
 // ── Toast component ────────────────────────────────────────────────────────────
@@ -82,13 +82,14 @@ const DashboardLayout = ({ allowedRoles }) => {
         api.get('/doctors/appointments').then(({ data }) => {
             setNotifications(data.slice(0, 5));
             setPendingCount(data.filter(a => a.status === 'PENDING').length);
-        }).catch(() => {});
+        }).catch(() => { });
     }, [user]);
 
     if (!user) return <Navigate to="/login" replace />;
     if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
 
     const isDoctor = user.role === 'DOCTOR';
+    const isPatient = user.role === 'PATIENT';
 
     const doctorLinks = [
         { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -103,37 +104,54 @@ const DashboardLayout = ({ allowedRoles }) => {
         { label: 'All Doctors', path: '/admin/doctors', icon: Users },
     ];
 
-    const links = isDoctor ? doctorLinks : adminLinks;
-    const displayName = user.firstName
-        ? `Dr. ${user.firstName} ${user.lastName || ''}`.trim()
-        : user.email.split('@')[0];
-    const initials = (user.firstName?.[0] || user.email[0]).toUpperCase();
+    const patientLinks = [
+        { label: 'Book Appointment', path: '/patient', icon: Search },
+        { label: 'My Appointments', path: '/patient/appointments', icon: Calendar },
+        { label: 'Medical History', path: '/patient/history', icon: FileText },
+        { label: 'Payment History', path: '/patient/payments', icon: CreditCard },
+        { label: 'My Profile', path: '/patient/profile', icon: User },
+    ];
+
+    const links = isDoctor ? doctorLinks : isPatient ? patientLinks : adminLinks;
+
+    const displayName = isPatient
+        ? `${user.patientProfile?.firstName || ''} ${user.patientProfile?.lastName || ''}`.trim() || user.email.split('@')[0]
+        : isDoctor
+            ? `Dr. ${user.firstName} ${user.lastName || ''}`.trim()
+            : user.email.split('@')[0];
+    const initials = (isPatient
+        ? (user.patientProfile?.firstName?.[0] || user.email[0])
+        : (user.firstName?.[0] || user.email[0])
+    ).toUpperCase();
 
     const SidebarContent = () => (
         <>
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-slate-100 gap-3 shrink-0">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                    <Activity size={16} className="text-white" />
+                <div className={`h-8 w-8 rounded-xl flex items-center justify-center shadow-lg ${isPatient
+                    ? 'bg-gradient-to-br from-blue-600 to-indigo-500 shadow-blue-500/30'
+                    : 'bg-gradient-to-br from-blue-600 to-indigo-500 shadow-blue-500/30'
+                    }`}>
+                    {isPatient ? <Heart size={16} className="text-white" /> : <Activity size={16} className="text-white" />}
                 </div>
                 <div>
-                    <p className="font-bold text-slate-900 text-sm leading-none">MediPortal</p>
+                    <p className="font-bold text-slate-900 text-sm leading-none">Medicare</p>
                     <p className="text-[10px] font-medium text-slate-400 mt-0.5 uppercase tracking-widest">
-                        {isDoctor ? 'Doctor Portal' : 'Admin Panel'}
+                        {isPatient ? 'Patient Portal' : isDoctor ? 'Doctor Portal' : 'Admin Panel'}
                     </p>
                 </div>
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
+            <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest px-3 pb-2 pt-1">
-                    {isDoctor ? 'Navigation' : 'Management'}
+                    {isPatient ? 'My Account' : isDoctor ? 'Navigation' : 'Management'}
                 </p>
                 {links.map(({ label, path, icon: Icon }) => (
                     <NavLink
                         key={path}
                         to={path}
-                        end={path === '/dashboard' || path === '/admin'}
+                        end={path === '/dashboard' || path === '/admin' || path === '/patient'}
                         onClick={() => setMobileOpen(false)}
                         className={({ isActive }) =>
                             `sidebar-link ${isActive ? 'active' : ''}`
@@ -150,9 +168,12 @@ const DashboardLayout = ({ allowedRoles }) => {
             <div className="p-3 border-t border-slate-100 shrink-0">
                 <div
                     className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 mb-2 cursor-pointer hover:bg-blue-50 transition-colors"
-                    onClick={() => { navigate('/dashboard/profile'); setMobileOpen(false); }}
+                    onClick={() => { if (isPatient) navigate('/patient/profile'); else if (!isPatient) navigate('/dashboard/profile'); setMobileOpen(false); }}
                 >
-                    <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm ${isPatient
+                        ? 'bg-gradient-to-br from-blue-600 to-indigo-500'
+                        : 'bg-gradient-to-br from-blue-600 to-indigo-500'
+                        }`}>
                         {initials}
                     </div>
                     <div className="flex-1 overflow-hidden">
@@ -213,7 +234,7 @@ const DashboardLayout = ({ allowedRoles }) => {
                         </button>
                         <div>
                             <h2 className="font-bold text-slate-900 text-sm hidden sm:block">
-                                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {user.firstName || user.email.split('@')[0]}!
+                                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, {isPatient ? (user.patientProfile?.firstName || user.email.split('@')[0]) : (user.firstName || user.email.split('@')[0])}!
                             </h2>
                             <p className="text-xs text-slate-400 hidden sm:block">
                                 {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

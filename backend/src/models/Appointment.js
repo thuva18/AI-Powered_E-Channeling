@@ -9,7 +9,7 @@ const appointmentSchema = new mongoose.Schema(
         },
         patientId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User', // Assuming patient is also a User
+            ref: 'User',
             required: true,
         },
         appointmentDate: {
@@ -17,7 +17,7 @@ const appointmentSchema = new mongoose.Schema(
             required: true,
         },
         timeSlot: {
-            type: String, // Format: 'HH:mm - HH:mm'
+            type: String,
             required: true,
         },
         status: {
@@ -30,9 +30,27 @@ const appointmentSchema = new mongoose.Schema(
             enum: ['PAID', 'UNPAID'],
             default: 'UNPAID',
         },
+        symptoms: {
+            type: [String],
+            default: [],
+        },
+        symptomDescription: {
+            type: String,
+            default: '',
+        },
+        symptomImages: {
+            type: [String], // stored filenames / URLs
+            default: [],
+        },
         notes: {
             type: String,
             default: '',
+        },
+        rating: {
+            type: Number,
+            min: 1,
+            max: 5,
+            default: null,
         },
         consultationFeeCharged: {
             type: Number,
@@ -44,3 +62,4 @@ const appointmentSchema = new mongoose.Schema(
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 module.exports = Appointment;
+
