@@ -4,7 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Badge, EmptyState, SectionHeader, InfoBanner, Toast } from '../components/ui/Common';
 import {
     ShieldCheck, XCircle, CheckCircle, RefreshCw, ExternalLink,
-    Clock, Users, Phone, AlertTriangle,
+    Clock, Users, Phone, AlertTriangle, IdCard,
 } from 'lucide-react';
 
 // ── ConfirmModal ───────────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ const ConfirmModal = ({ action, onConfirm, onCancel }) => {
     const isApprove = action.status === 'APPROVED';
     const cfg = isApprove
         ? { color: 'emerald', label: 'Approve', Icon: CheckCircle, desc: 'This will grant the doctor full dashboard access.' }
-        : { color: 'red',     label: 'Reject',  Icon: XCircle,     desc: 'This will deny the doctor access to the platform.' };
+        : { color: 'red', label: 'Reject', Icon: XCircle, desc: 'This will deny the doctor access to the platform.' };
 
     return (
         <div
@@ -49,11 +49,10 @@ const ConfirmModal = ({ action, onConfirm, onCancel }) => {
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 shadow-sm ${
-                            isApprove
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 shadow-sm ${isApprove
                                 ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'
                                 : 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
-                        }`}
+                            }`}
                     >
                         {cfg.label}
                     </button>
@@ -65,11 +64,11 @@ const ConfirmModal = ({ action, onConfirm, onCancel }) => {
 
 // ── AdminDashboard ─────────────────────────────────────────────────────────────
 const AdminDashboard = () => {
-    const [pending, setPending]   = useState([]);
-    const [loading, setLoading]   = useState(true);
+    const [pending, setPending] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(null);
-    const [toast, setToast]       = useState(null);
-    const [confirm, setConfirm]   = useState(null); // { id, name, status }
+    const [toast, setToast] = useState(null);
+    const [confirm, setConfirm] = useState(null); // { id, name, status }
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -137,11 +136,10 @@ const AdminDashboard = () => {
 
                 {/* Stats strip */}
                 <div className="flex flex-wrap gap-3">
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full border font-medium text-sm ${
-                        pending.length > 0
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full border font-medium text-sm ${pending.length > 0
                             ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    }`}>
+                        }`}>
                         {pending.length > 0 ? (
                             <><AlertTriangle size={14} /> {pending.length} pending review</>
                         ) : (
@@ -194,7 +192,7 @@ const AdminDashboard = () => {
                             <table className="w-full text-left">
                                 <thead>
                                     <tr className="border-b border-slate-100 bg-slate-50/60">
-                                        {['Doctor', 'SLMC Number', 'Phone', 'Specialization', 'Applied', 'Actions'].map((h) => (
+                                        {['Doctor', 'SLMC Number', 'NIC', 'Phone', 'Specialization', 'Applied', 'Actions'].map((h) => (
                                             <th key={h} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400 whitespace-nowrap">
                                                 {h}
                                             </th>
@@ -227,6 +225,20 @@ const AdminDashboard = () => {
                                                 <span className="font-mono font-semibold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-lg text-sm">
                                                     {doc.slmcNumber}
                                                 </span>
+                                            </td>
+
+                                            {/* NIC */}
+                                            <td className="px-5 py-4">
+                                                {doc.nic ? (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <IdCard size={13} className="text-amber-500 shrink-0" />
+                                                        <span className="font-mono font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg text-sm">
+                                                            {doc.nic}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">—</span>
+                                                )}
                                             </td>
 
                                             {/* Phone */}

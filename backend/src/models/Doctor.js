@@ -20,6 +20,17 @@ const doctorSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
+        nic: {
+            type: String,
+            required: [true, 'NIC number is required'],
+            unique: true,
+            trim: true,
+            uppercase: true, // normalise 'v' → 'V'
+            validate: {
+                validator: (v) => /^(\d{9}[Vv]|\d{12})$/.test(v),
+                message: 'NIC must be 9 digits + V (e.g. 912345678V) or 12 digits (e.g. 200012345678)',
+            },
+        },
         phone: {
             type: String,
             required: [true, 'Phone number is required'],

@@ -1,40 +1,30 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { Mail, Lock, User, CreditCard, Stethoscope, CheckCircle, Phone, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, CreditCard, Stethoscope, CheckCircle, Phone, AlertCircle, IdCard } from 'lucide-react';
 import api from '../services/api';
 
 // ── Approved specializations list ─────────────────────────────────────────────
 const SPECIALIZATIONS = [
-    'Dermatologist',
-    'Allergist',
-    'Gastroenterologist',
-    'Hepatologist',
-    'Osteopathic',
-    'Endocrinologist',
-    'Pulmonologist',
-    'Cardiologist',
-    'Neurologist',
-    'Internal Medicine',
-    'Pediatrician',
-    'Common Cold',
-    'Phlebologist',
-    'Osteoarthritis',
-    'Rheumatologist',
-    'Otolaryngologist',
-    'Gynecologist',
-    'General Physician',
+    'Dermatologist', 'Allergist', 'Gastroenterologist', 'Hepatologist',
+    'Osteopathic', 'Endocrinologist', 'Pulmonologist', 'Cardiologist',
+    'Neurologist', 'Internal Medicine', 'Pediatrician', 'Common Cold',
+    'Phlebologist', 'Osteoarthritis', 'Rheumatologist', 'Otolaryngologist',
+    'Gynecologist', 'General Physician',
 ];
 
-// ── Validation rules ──────────────────────────────────────────────────────────
+// ── Regex constants ────────────────────────────────────────────────────────────
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
+const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
 
+// ── Validators ────────────────────────────────────────────────────────────────
 const validators = {
     firstName: (v) => !v.trim() ? 'First name is required' : v.trim().length < 2 ? 'Must be at least 2 characters' : /[^a-zA-Z\s'-]/.test(v) ? 'No numbers or special characters allowed' : '',
     lastName: (v) => !v.trim() ? 'Last name is required' : v.trim().length < 2 ? 'Must be at least 2 characters' : /[^a-zA-Z\s'-]/.test(v) ? 'No numbers or special characters allowed' : '',
     email: (v) => !v.trim() ? 'Email is required' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Enter a valid email address' : '',
     phone: (v) => !v.trim() ? 'Phone number is required' : !PHONE_REGEX.test(v.trim()) ? 'Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX' : '',
+    nic: (v) => !v.trim() ? 'NIC number is required' : !NIC_REGEX.test(v.trim()) ? 'Enter a valid SL NIC (e.g. 912345678V or 200012345678)' : '',
     slmcNumber: (v) => !v.trim() ? 'SLMC number is required' : v.trim().length < 4 ? 'SLMC number is too short' : '',
     specialization: (v) => !v.trim() ? 'Specialization is required' : !SPECIALIZATIONS.includes(v.trim()) ? 'Please select a valid specialization from the list' : '',
     password: (v) => !v ? 'Password is required' : v.length < 8 ? 'Minimum 8 characters required' : !/[A-Z]/.test(v) ? 'Must include at least one uppercase letter' : !/[0-9]/.test(v) ? 'Must include at least one number' : '',
@@ -63,7 +53,7 @@ const Register = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', phone: '',
+        firstName: '', lastName: '', email: '', phone: '', nic: '',
         slmcNumber: '', specialization: '', password: '', confirmPassword: '',
     });
     const [errors, setErrors] = useState({});
@@ -72,9 +62,14 @@ const Register = () => {
     const [success, setSuccess] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
+    // NIC duplicate check state
+    const [nicChecking, setNicChecking] = useState(false);
+    const [nicAvailable, setNicAvailable] = useState(null); // null | true | false
+
     const set = (field) => (e) => {
         const value = e.target.value;
         setFormData((p) => ({ ...p, [field]: value }));
+        if (field === 'nic') setNicAvailable(null); // reset availability when typing
         if (touched[field]) {
             const err = field === 'confirmPassword'
                 ? validators.confirmPassword(value, formData.password)
@@ -91,6 +86,26 @@ const Register = () => {
         setErrors((p) => ({ ...p, [field]: err }));
     };
 
+    // Real-time NIC duplicate check (fires on blur if format is valid)
+    const handleNicBlur = useCallback(async () => {
+        blur('nic')();
+        const val = formData.nic.trim();
+        if (!NIC_REGEX.test(val)) return; // format invalid — don't bother checking
+        setNicChecking(true);
+        setNicAvailable(null);
+        try {
+            const { data } = await api.get(`/auth/check-nic?nic=${encodeURIComponent(val)}`);
+            setNicAvailable(data.available);
+            if (!data.available) {
+                setErrors((p) => ({ ...p, nic: 'This NIC is already registered' }));
+            }
+        } catch {
+            // silently ignore — server-side will catch on submit
+        } finally {
+            setNicChecking(false);
+        }
+    }, [formData.nic]);
+
     const validateFields = (fields) => {
         const newErrors = {};
         fields.forEach((field) => {
@@ -105,7 +120,11 @@ const Register = () => {
     };
 
     const handleNext = () => {
-        if (validateFields(['firstName', 'lastName', 'email', 'phone'])) setStep(2);
+        if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic'])) {
+            // Also block proceed if NIC is not available
+            if (nicAvailable === false) return;
+            setStep(2);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -119,6 +138,7 @@ const Register = () => {
                 lastName: formData.lastName.trim(),
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
+                nic: formData.nic.trim().toUpperCase(),
                 slmcNumber: formData.slmcNumber.trim(),
                 specialization: formData.specialization.trim(),
                 password: formData.password,
@@ -133,8 +153,9 @@ const Register = () => {
 
     const pwStrength = passwordStrength(formData.password);
     const specValid = SPECIALIZATIONS.includes(formData.specialization.trim());
+    const nicFormatOk = NIC_REGEX.test(formData.nic.trim());
 
-    // ── Success screen ───────────────────────────────────────────────────────────
+    // ── Success screen ────────────────────────────────────────────────────────
     if (success) return (
         <div className="text-center space-y-5 py-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-400 shadow-xl shadow-emerald-500/30 mb-2">
@@ -143,7 +164,7 @@ const Register = () => {
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-2">Application Submitted!</h2>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
-                    Your registration is awaiting admin review. Once your SLMC credentials are verified, you'll receive full access.
+                    Your registration is awaiting admin review. Once your SLMC credentials and NIC are verified, you'll receive full access.
                 </p>
             </div>
             <Button variant="outline" onClick={() => navigate('/login')} className="w-full justify-center">
@@ -152,7 +173,7 @@ const Register = () => {
         </div>
     );
 
-    // ── Form ─────────────────────────────────────────────────────────────────────
+    // ── Form ──────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-5">
             {/* Header */}
@@ -205,6 +226,7 @@ const Register = () => {
                             error={touched.lastName ? errors.lastName : ''}
                         />
                     </div>
+
                     <Input
                         label="Email Address *"
                         id="email"
@@ -218,7 +240,7 @@ const Register = () => {
                         autoComplete="email"
                     />
 
-                    {/* Phone number with format hints */}
+                    {/* Phone */}
                     <div className="space-y-1.5">
                         <label htmlFor="phone" className="block text-sm font-semibold text-slate-700">
                             Phone Number *
@@ -261,6 +283,74 @@ const Register = () => {
                                 )
                         }
                     </div>
+
+                    {/* NIC — with real-time duplicate check */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="nic" className="block text-sm font-semibold text-slate-700">
+                            NIC Number *
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                <IdCard size={16} className="text-slate-400" />
+                            </div>
+                            <input
+                                id="nic"
+                                type="text"
+                                autoComplete="off"
+                                placeholder="e.g. 912345678V or 200012345678"
+                                value={formData.nic}
+                                onChange={set('nic')}
+                                onBlur={handleNicBlur}
+                                maxLength={12}
+                                className={`input-field pr-9 uppercase ${touched.nic && (errors.nic || nicAvailable === false)
+                                        ? 'border-red-400 focus:border-red-500'
+                                        : nicAvailable === true
+                                            ? 'border-emerald-400 focus:border-emerald-500'
+                                            : ''
+                                    }`}
+                                style={{ paddingLeft: '38px' }}
+                            />
+                            {/* Status icon */}
+                            <div className="absolute inset-y-0 right-3 flex items-center">
+                                {nicChecking ? (
+                                    <svg className="animate-spin h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                ) : touched.nic ? (
+                                    nicAvailable === true
+                                        ? <CheckCircle size={15} className="text-emerald-500" />
+                                        : (errors.nic || nicAvailable === false)
+                                            ? <AlertCircle size={15} className="text-red-400" />
+                                            : null
+                                ) : null}
+                            </div>
+                        </div>
+
+                        {/* Feedback messages */}
+                        {touched.nic && errors.nic ? (
+                            <p className="text-xs font-medium text-red-500 flex items-center gap-1">
+                                <AlertCircle size={11} /> {errors.nic}
+                            </p>
+                        ) : nicAvailable === true && nicFormatOk ? (
+                            <p className="text-xs font-medium text-emerald-600 flex items-center gap-1">
+                                <CheckCircle size={11} /> NIC available
+                            </p>
+                        ) : (
+                            <div className="space-y-1 mt-0.5">
+                                <p className="text-xs text-slate-400">Sri Lanka NIC formats accepted:</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">912345678<strong>V</strong></span>
+                                    <span className="text-xs text-slate-400">Old (9 digits + V)</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">200012345678</span>
+                                    <span className="text-xs text-slate-400">New (12 digits)</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <Button onClick={handleNext} className="w-full justify-center mt-1">
                         Continue →
                     </Button>
@@ -283,7 +373,7 @@ const Register = () => {
                         helper="Will be manually verified by the admin team"
                     />
 
-                    {/* Specialization — datalist (type-to-search + click-to-select) */}
+                    {/* Specialization */}
                     <div className="space-y-1.5">
                         <label htmlFor="spec" className="block text-sm font-semibold text-slate-700">
                             Specialization *
@@ -329,7 +419,6 @@ const Register = () => {
                             error={touched.password ? errors.password : ''}
                             autoComplete="new-password"
                         />
-                        {/* Strength indicator */}
                         {formData.password && (
                             <div className="space-y-1 pt-0.5">
                                 <div className="flex gap-1">
@@ -341,9 +430,9 @@ const Register = () => {
                                     ))}
                                 </div>
                                 <p className={`text-xs font-semibold ${pwStrength.score <= 1 ? 'text-red-500'
-                                        : pwStrength.score === 2 ? 'text-amber-500'
-                                            : pwStrength.score === 3 ? 'text-blue-500'
-                                                : 'text-emerald-600'
+                                    : pwStrength.score === 2 ? 'text-amber-500'
+                                        : pwStrength.score === 3 ? 'text-blue-500'
+                                            : 'text-emerald-600'
                                     }`}>
                                     {pwStrength.label} password
                                 </p>
