@@ -5,13 +5,23 @@ const generateToken = require('../utils/generateToken');
 // @desc    Register a new doctor
 // @route   POST /api/v1/auth/doctor/register
 // @access  Public
-const registerDoctor = async (req, res) => {
-    const { email, password, firstName, lastName, slmcNumber, specialization, phone } = req.body;
+const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
 
-    // Validate phone format before hitting the DB
+const registerDoctor = async (req, res) => {
+    const { email, password, firstName, lastName, slmcNumber, specialization, phone, nic } = req.body;
+
+    // Validate phone format
     if (!phone || !/^(07\d{8}|\+94\d{9})$/.test(phone.trim())) {
         return res.status(400).json({
             message: 'Phone number must be in the format 07XXXXXXXX or +94XXXXXXXXX',
+        });
+    }
+
+    // Validate NIC format
+    const nicTrimmed = (nic || '').trim().toUpperCase();
+    if (!NIC_REGEX.test(nicTrimmed)) {
+        return res.status(400).json({
+            message: 'NIC must be 9 digits + V (e.g. 912345678V) or 12 digits (e.g. 200012345678)',
         });
     }
 
@@ -24,6 +34,11 @@ const registerDoctor = async (req, res) => {
         const doctorExists = await Doctor.findOne({ slmcNumber });
         if (doctorExists) {
             return res.status(400).json({ message: 'SLMC Number already registered' });
+        }
+
+        const nicExists = await Doctor.findOne({ nic: nicTrimmed });
+        if (nicExists) {
+            return res.status(400).json({ message: 'A doctor with this NIC is already registered' });
         }
 
         // Create User account
@@ -39,6 +54,7 @@ const registerDoctor = async (req, res) => {
             firstName,
             lastName,
             slmcNumber,
+            nic: nicTrimmed,
             phone: phone.trim(),
             specialization,
             approvalStatus: 'PENDING',
@@ -101,7 +117,23 @@ const loginUser = async (req, res) => {
     }
 };
 
+// @desc    Check if NIC is already registered (for real-time form validation)
+// @route   GET /api/v1/auth/check-nic?nic=XXXXX
+// @access  Public
+const checkNicAvailability = async (req, res) => {
+    const { nic } = req.query;
+    if (!nic) return res.status(400).json({ message: 'NIC query param required' });
+    const nicNormalised = nic.trim().toUpperCase();
+    try {
+        const exists = await Doctor.findOne({ nic: nicNormalised });
+        res.json({ available: !exists });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     registerDoctor,
     loginUser,
+    checkNicAvailability,
 };
