@@ -129,13 +129,13 @@ const DashboardLayout = ({ allowedRoles }) => {
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-slate-100 gap-3 shrink-0">
                 <div className={`h-8 w-8 rounded-xl flex items-center justify-center shadow-lg ${isPatient
-                    ? 'bg-gradient-to-br from-teal-500 to-cyan-400 shadow-teal-500/30'
-                    : 'bg-gradient-to-br from-blue-600 to-blue-400 shadow-blue-500/30'
+                    ? 'bg-gradient-to-br from-blue-600 to-indigo-500 shadow-blue-500/30'
+                    : 'bg-gradient-to-br from-blue-600 to-indigo-500 shadow-blue-500/30'
                     }`}>
                     {isPatient ? <Heart size={16} className="text-white" /> : <Activity size={16} className="text-white" />}
                 </div>
                 <div>
-                    <p className="font-bold text-slate-900 text-sm leading-none">MediPortal</p>
+                    <p className="font-bold text-slate-900 text-sm leading-none">Medicare</p>
                     <p className="text-[10px] font-medium text-slate-400 mt-0.5 uppercase tracking-widest">
                         {isPatient ? 'Patient Portal' : isDoctor ? 'Doctor Portal' : 'Admin Panel'}
                     </p>
@@ -171,7 +171,7 @@ const DashboardLayout = ({ allowedRoles }) => {
                     onClick={() => { if (isPatient) navigate('/patient/profile'); else if (!isPatient) navigate('/dashboard/profile'); setMobileOpen(false); }}
                 >
                     <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm ${isPatient
-                        ? 'bg-gradient-to-br from-teal-500 to-cyan-400'
+                        ? 'bg-gradient-to-br from-blue-600 to-indigo-500'
                         : 'bg-gradient-to-br from-blue-600 to-indigo-500'
                         }`}>
                         {initials}

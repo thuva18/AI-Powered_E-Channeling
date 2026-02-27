@@ -180,7 +180,7 @@ const PatientRegister = () => {
             </div>
             <button
                 onClick={() => navigate('/login')}
-                className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 hover:from-teal-600 hover:to-cyan-600 transition-all"
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:to-indigo-700 transition-all"
             >
                 Sign In Now <ArrowRight size={16} />
             </button>
@@ -191,19 +191,20 @@ const PatientRegister = () => {
 
     return (
         <div className="space-y-5">
-            <div className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 shadow-lg shadow-teal-500/30 mb-3">
-                    <User className="h-6 w-6 text-white" />
+            {/* Header/Title */}
+            <div className="text-center mb-8 animate-fade-up">
+                <div className="mx-auto w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4">
+                    <Heart size={28} className="text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-slate-900 mb-1">Patient Registration</h1>
-                <p className="text-sm text-slate-500">Create your free MediPortal patient account</p>
+                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Create Patient Account</h2>
+                <p className="text-sm font-medium text-slate-500 mt-1">Book appointments and track your health</p>
             </div>
 
             {/* Progress */}
             <div className="space-y-1.5">
                 <div className="flex gap-2">
                     {[1, 2].map(s => (
-                        <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${s <= step ? 'bg-teal-500' : 'bg-slate-200'}`} />
+                        <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${s <= step ? 'bg-blue-500' : 'bg-slate-200'}`} />
                     ))}
                 </div>
                 <p className="text-xs font-medium text-slate-400 text-center">
@@ -238,12 +239,12 @@ const PatientRegister = () => {
                         <span className="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">200012345678</span>
                     </div>
                     <Field {...fieldProps} id="dob" label="Date of Birth *" icon={Calendar} type="date" field="dateOfBirth" autoComplete="bday" />
-                    <button
-                        onClick={handleNext}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 hover:from-teal-600 hover:to-cyan-600 transition-all mt-1"
-                    >
-                        Continue <ArrowRight size={15} />
-                    </button>
+                    <div className="flex justify-end pt-2">
+                        <button type="button" onClick={handleNext}
+                            className="flex items-center gap-2 py-3 px-8 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all active:scale-95 group">
+                            Continue <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -312,19 +313,19 @@ const PatientRegister = () => {
                             ← Back
                         </button>
                         <button type="submit" disabled={loading}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 hover:from-teal-600 hover:to-cyan-600 transition-all disabled:opacity-60">
+                            className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">
                             {loading ? (
-                                <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Creating…</>
-                            ) : 'Create Account'}
+                                <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg> Creating Account…</>
+                            ) : (<><ShieldCheck size={16} /> Create Account</>)}
                         </button>
                     </div>
                 </form>
             )}
 
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm font-medium text-slate-500 mt-6 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                 Already have an account?{' '}
-                <Link to="/login" className="text-teal-600 font-semibold hover:underline underline-offset-2">
-                    Sign in →
+                <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                    Log in here
                 </Link>
             </p>
         </div>

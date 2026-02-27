@@ -55,11 +55,11 @@ const Login = () => {
     };
 
     const isPatient = tab === 'patient';
-    const accentFrom = isPatient ? 'from-teal-600' : 'from-blue-600';
-    const accentTo = isPatient ? 'to-cyan-500' : 'to-indigo-600';
-    const accentShadow = isPatient ? 'shadow-teal-500/25' : 'shadow-blue-500/25';
-    const accentHoverFrom = isPatient ? 'hover:from-teal-700' : 'hover:from-blue-700';
-    const accentHoverTo = isPatient ? 'hover:to-cyan-600' : 'hover:to-indigo-700';
+    const accentFrom = isPatient ? 'from-blue-600' : 'from-blue-600';
+    const accentTo = isPatient ? 'to-indigo-500' : 'to-indigo-600';
+    const accentShadow = isPatient ? 'shadow-blue-500/25' : 'shadow-blue-500/25';
+    const accentHoverFrom = isPatient ? 'hover:from-blue-700' : 'hover:from-blue-700';
+    const accentHoverTo = isPatient ? 'hover:to-indigo-600' : 'hover:to-indigo-700';
     const registerLink = isPatient ? '/patient/register' : '/register';
     const registerText = isPatient ? 'New patient? Register here' : 'New doctor? Apply for an account';
 
@@ -89,7 +89,7 @@ const Login = () => {
                         onClick={() => { setTab(key); setServerError(''); setForm({ email: '', password: '' }); setTouched({ email: false, password: false }); }}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${tab === key
                             ? key === 'patient'
-                                ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/20'
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20'
                                 : 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md shadow-blue-500/20'
                             : 'text-slate-500 hover:text-slate-700'}`}
                     >
@@ -98,10 +98,12 @@ const Login = () => {
                 ))}
             </div>
 
+            <p className="text-sm font-medium text-slate-500 mb-6">Access your {isPatient ? 'healthcare' : 'practice'} dashboard</p>
+
             {serverError && (
-                <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl mb-5 animate-fade-up">
-                    <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700 font-medium">{serverError}</p>
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-fade-in">
+                    <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
+                    <p className="text-sm text-red-700 font-medium leading-relaxed">{serverError}</p>
                 </div>
             )}
 
@@ -183,10 +185,12 @@ const Login = () => {
                 </div>
             )}
 
-            <p className="text-center text-sm text-slate-500 mt-5">
-                {isPatient ? "Don't have an account? " : "New doctor? "}{' '}
-                <Link to={registerLink} className={`font-semibold hover:underline underline-offset-2 ${isPatient ? 'text-teal-600' : 'text-blue-600'}`}>
-                    {registerText} →
+            {/* Link to appropriate registration page */}
+            <p className="text-center text-sm font-medium text-slate-500 mt-6">
+                Don't have an account?{' '}
+                <Link to={isPatient ? '/patient/register' : '/register'} className={`font-bold hover:underline 
+                    ${isPatient ? 'text-blue-600 hover:text-blue-700' : 'text-blue-600 hover:text-blue-800'}`}>
+                    Create {isPatient ? 'Patient' : 'Doctor'} Account
                 </Link>
             </p>
         </div>

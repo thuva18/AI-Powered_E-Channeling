@@ -108,7 +108,7 @@ const PatientPaymentHistory = () => {
                                             </td>
                                             <td className="px-5 py-4">
                                                 <div className="flex items-center gap-1.5 text-sm text-slate-600">
-                                                    <Calendar size={13} className="text-teal-500 shrink-0" />
+                                                    <Calendar size={13} className="text-blue-500 shrink-0" />
                                                     {new Date(p.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </div>
                                             </td>
@@ -123,9 +123,9 @@ const PatientPaymentHistory = () => {
                                             </td>
                                             <td className="px-5 py-4">
                                                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${p.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                                                        p.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' :
-                                                            p.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                                                                'bg-slate-100 text-slate-600'
+                                                    p.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-700' :
+                                                        p.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                                                            'bg-slate-100 text-slate-600'
                                                     }`}>{p.status}</span>
                                             </td>
                                         </tr>

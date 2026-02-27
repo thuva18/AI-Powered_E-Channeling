@@ -68,11 +68,11 @@ const PatientMyAppointments = () => {
                     </div>
                     <div className="flex flex-wrap gap-3 mt-2.5">
                         <span className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">
-                            <Calendar size={12} className="text-teal-500" />
+                            <Calendar size={12} className="text-blue-500" />
                             {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                         <span className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">
-                            <Clock size={12} className="text-teal-500" /> {apt.timeSlot}
+                            <Clock size={12} className="text-blue-500" /> {apt.timeSlot}
                         </span>
                         {doc?.consultationFee > 0 && (
                             <span className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg">

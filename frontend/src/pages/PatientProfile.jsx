@@ -95,7 +95,7 @@ const PatientProfile = () => {
 
             {/* Header card */}
             <div className="card p-6 flex items-center gap-5">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-teal-500/30 shrink-0">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30 shrink-0">
                     {(form.firstName[0] || user?.email?.[0] || 'P').toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -105,16 +105,16 @@ const PatientProfile = () => {
                             : 'My Profile'}
                     </h1>
                     <div className="flex items-center gap-1.5 mt-1 text-sm text-slate-500">
-                        <Mail size={13} className="text-teal-500 shrink-0" />
+                        <Mail size={13} className="text-blue-500 shrink-0" />
                         <span className="truncate">{user?.email}</span>
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                        <Shield size={12} className="text-teal-500" />
-                        <span className="text-xs font-semibold text-teal-600 uppercase tracking-wide">Patient</span>
+                        <Shield size={12} className="text-blue-500" />
+                        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Patient</span>
                     </div>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center shrink-0">
-                    <Edit3 size={15} className="text-teal-500" />
+                <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                    <Edit3 size={15} className="text-blue-500" />
                 </div>
             </div>
 
@@ -122,7 +122,7 @@ const PatientProfile = () => {
             <form onSubmit={handleSave}>
                 <div className="card p-6 space-y-5">
                     <h2 className="font-bold text-slate-900 flex items-center gap-2">
-                        <User size={17} className="text-teal-500" /> Personal Information
+                        <User size={17} className="text-blue-500" /> Personal Information
                     </h2>
 
                     {/* Name row */}
@@ -177,7 +177,7 @@ const PatientProfile = () => {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/25 hover:from-teal-600 hover:to-cyan-600 transition-all disabled:opacity-60"
+                        className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-60"
                     >
                         {saving ? (
                             <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

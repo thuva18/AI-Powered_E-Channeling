@@ -29,10 +29,10 @@ const SPEC_COLORS = {
     'Allergist': 'bg-lime-100 text-lime-700',
     'Pulmonologist': 'bg-sky-100 text-sky-700',
     'Endocrinologist': 'bg-orange-100 text-orange-700',
-    'Pediatrician': 'bg-cyan-100 text-cyan-700',
+    'Pediatrician': 'bg-blue-100 text-blue-700',
     'General Physician': 'bg-slate-100 text-slate-700',
     'Rheumatologist': 'bg-indigo-100 text-indigo-700',
-    'Otolaryngologist': 'bg-teal-100 text-teal-700',
+    'Otolaryngologist': 'bg-violet-100 text-violet-700',
     'Gynecologist': 'bg-rose-100 text-rose-700',
 };
 
@@ -133,8 +133,8 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                                     {slots.map(s => (
                                         <button key={s} onClick={() => setSlot(s)}
                                             className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${slot === s
-                                                    ? 'bg-teal-500 border-teal-500 text-white shadow-sm shadow-teal-500/30'
-                                                    : 'bg-white border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50'
+                                                ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30'
+                                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50'
                                                 }`}>
                                             <Clock size={13} className={slot === s ? 'text-white' : 'text-slate-400'} />
                                             {s}
@@ -145,9 +145,9 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                         )}
 
                         {/* Fee info */}
-                        <div className="flex items-center gap-2 p-3 bg-teal-50 border border-teal-100 rounded-xl">
-                            <DollarSign size={16} className="text-teal-600 shrink-0" />
-                            <p className="text-sm text-teal-700">
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                            <DollarSign size={16} className="text-blue-600 shrink-0" />
+                            <p className="text-sm text-blue-700">
                                 Consultation fee: <strong>LKR {doctor.consultationFee?.toLocaleString() || '—'}</strong>
                             </p>
                         </div>
@@ -165,7 +165,7 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                                 Cancel
                             </button>
                             <button onClick={handleConfirm} disabled={loading || !date || !slot}
-                                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 shadow-sm shadow-teal-500/20 hover:from-teal-600 hover:to-cyan-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                                 {loading ? (
                                     <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
                                 ) : null}
@@ -185,12 +185,12 @@ const DoctorCard = ({ doctor, onBook, highlighted }) => {
     const days = doctor.availability?.map(a => a.day.slice(0, 3)).join(', ') || 'Not set';
 
     return (
-        <div className={`card p-5 flex flex-col gap-4 hover:shadow-lg transition-all duration-300 border-2 ${highlighted ? 'border-teal-400 shadow-md shadow-teal-500/10' : 'border-transparent'
+        <div className={`card p-5 flex flex-col gap-4 hover:shadow-lg transition-all duration-300 border-2 ${highlighted ? 'border-blue-400 shadow-md shadow-blue-500/10' : 'border-transparent'
             } animate-fade-up`}>
             {highlighted && (
                 <div className="flex items-center gap-1.5 -mb-1">
-                    <Sparkles size={13} className="text-teal-500" />
-                    <span className="text-xs font-bold text-teal-600 uppercase tracking-wide">Recommended</span>
+                    <Sparkles size={13} className="text-blue-500" />
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Recommended</span>
                 </div>
             )}
             <div className="flex items-start gap-4">
@@ -212,7 +212,7 @@ const DoctorCard = ({ doctor, onBook, highlighted }) => {
                 </div>
                 <div className="text-right shrink-0">
                     <p className="text-xs text-slate-400">Consultation</p>
-                    <p className="font-bold text-teal-600">LKR {doctor.consultationFee?.toLocaleString() || '—'}</p>
+                    <p className="font-bold text-blue-600">LKR {doctor.consultationFee?.toLocaleString() || '—'}</p>
                 </div>
             </div>
 
@@ -221,12 +221,12 @@ const DoctorCard = ({ doctor, onBook, highlighted }) => {
             )}
 
             <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">
-                <Calendar size={13} className="text-teal-500 shrink-0" />
+                <Calendar size={13} className="text-blue-500 shrink-0" />
                 <span><strong className="text-slate-700">Available:</strong> {days}</span>
             </div>
 
             <button onClick={() => onBook(doctor)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-cyan-500 shadow-sm shadow-teal-500/20 hover:from-teal-600 hover:to-cyan-600 transition-all active:scale-[0.98]">
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-[0.98]">
                 Book Appointment <ChevronRight size={15} />
             </button>
         </div>
@@ -292,7 +292,7 @@ const PatientBookAppointment = () => {
                 {/* ── Symptom form ── */}
                 <div className="card p-6">
                     <div className="flex items-center gap-3 mb-5">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-400 flex items-center justify-center shadow-md shadow-teal-500/30">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/30">
                             <Search size={18} className="text-white" />
                         </div>
                         <div>
@@ -324,7 +324,7 @@ const PatientBookAppointment = () => {
                                 Upload Images <span className="font-normal text-slate-400">(optional)</span>
                             </label>
                             <label className={`flex flex-col items-center justify-center gap-3 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all
-                                ${images.length > 0 ? 'border-teal-300 bg-teal-50/50' : 'border-slate-200 hover:border-teal-300 hover:bg-teal-50/30'}`}>
+                                ${images.length > 0 ? 'border-blue-300 bg-blue-50/50' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'}`}>
                                 <input
                                     type="file" accept="image/jpeg,image/png" multiple className="sr-only"
                                     onChange={handleImageChange}
@@ -355,7 +355,7 @@ const PatientBookAppointment = () => {
                                             </div>
                                         </div>
                                     ))}
-                                    <div className="flex items-center gap-1.5 text-xs text-teal-600 font-medium bg-teal-50 rounded-xl px-3 py-2">
+                                    <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium bg-blue-50 rounded-xl px-3 py-2">
                                         <ImageIcon size={13} /> {previews.length} image{previews.length > 1 ? 's' : ''} selected
                                     </div>
                                 </div>
@@ -365,7 +365,7 @@ const PatientBookAppointment = () => {
                         <button
                             onClick={handleSearch}
                             disabled={!symptoms.trim() || loading}
-                            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/25 hover:from-teal-600 hover:to-cyan-600 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                             {loading ? (
                                 <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Finding doctors…</>
                             ) : (
@@ -387,7 +387,7 @@ const PatientBookAppointment = () => {
                                 </h2>
                                 {highlightedSpecs.size > 0 && (
                                     <p className="text-sm text-slate-400 mt-0.5">
-                                        Specialists in <strong className="text-teal-600">{[...highlightedSpecs].join(', ')}</strong> shown first
+                                        Specialists in <strong className="text-blue-600">{[...highlightedSpecs].join(', ')}</strong> shown first
                                     </p>
                                 )}
                             </div>

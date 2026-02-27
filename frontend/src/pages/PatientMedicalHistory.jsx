@@ -73,7 +73,7 @@ const PatientMedicalHistory = () => {
                                         </div>
 
                                         <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
-                                            <Calendar size={12} className="text-teal-500" />
+                                            <Calendar size={12} className="text-blue-500" />
                                             {new Date(rec.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}
                                             · {rec.timeSlot}
                                         </div>

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 import Login from './pages/Login';
@@ -22,9 +23,11 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
+        {/* Public Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Auth routes (Login/Register) */}
         <Route element={<AuthLayout />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/patient/register" element={<PatientRegister />} />
