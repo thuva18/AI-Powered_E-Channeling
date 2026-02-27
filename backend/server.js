@@ -5,6 +5,7 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/authRoutes');
 const doctorRoutes = require('./src/routes/doctorRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
+const patientRoutes = require('./src/routes/patientRoutes');
 
 // Connect to Database
 connectDB();
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/doctors', doctorRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/patients', patientRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {

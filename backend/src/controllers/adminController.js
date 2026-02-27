@@ -13,12 +13,27 @@ const getPendingDoctors = async (req, res) => {
     }
 };
 
+// @desc    Get ALL doctors (any approval status)
+// @route   GET /api/v1/admin/doctors
+// @access  Private/Admin
+const getAllDoctors = async (req, res) => {
+    try {
+        const doctors = await Doctor.find()
+            .populate('userId', 'email')
+            .sort({ createdAt: -1 });
+        res.json(doctors);
+    } catch (error) {
+        console.error('getAllDoctors error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // @desc    Approve or reject doctor registration
 // @route   PATCH /api/v1/admin/doctors/:id/approve
 // @access  Private/Admin
 const updateDoctorApprovalStatus = async (req, res) => {
     try {
-        const { status } = req.body; // 'APPROVED' or 'REJECTED'
+        const { status } = req.body;
 
         if (!['APPROVED', 'REJECTED'].includes(status)) {
             return res.status(400).json({ message: 'Invalid status' });
@@ -31,11 +46,12 @@ const updateDoctorApprovalStatus = async (req, res) => {
 
         doctor.approvalStatus = status;
         doctor.isActive = status === 'APPROVED';
-        const updatedDoctor = await doctor.save();
+        const updatedDoctor = await doctor.save({ validateModifiedOnly: true });
 
         res.json({ message: `Doctor status updated to ${status}`, doctor: updatedDoctor });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        console.error('Admin approval error:', error);
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
 };
 
@@ -49,9 +65,7 @@ const deleteDoctor = async (req, res) => {
             return res.status(404).json({ message: 'Doctor not found' });
         }
 
-        // Delete associated user account
         await User.findByIdAndDelete(doctor.userId);
-        // Delete doctor profile
         await Doctor.findByIdAndDelete(doctor._id);
 
         res.json({ message: 'Doctor account permanently deleted' });
@@ -62,6 +76,7 @@ const deleteDoctor = async (req, res) => {
 
 module.exports = {
     getPendingDoctors,
+    getAllDoctors,
     updateDoctorApprovalStatus,
     deleteDoctor,
 };

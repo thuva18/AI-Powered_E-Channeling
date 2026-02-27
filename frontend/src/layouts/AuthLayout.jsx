@@ -7,6 +7,7 @@ const AuthLayout = () => {
     if (user) {
         if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
         if (user.role === 'DOCTOR') return <Navigate to="/dashboard" replace />;
+        if (user.role === 'PATIENT') return <Navigate to="/patient" replace />;
     }
 
     return (

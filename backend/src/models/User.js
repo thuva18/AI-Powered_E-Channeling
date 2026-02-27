@@ -19,6 +19,13 @@ const userSchema = new mongoose.Schema(
             enum: ['DOCTOR', 'ADMIN', 'PATIENT'],
             required: true,
         },
+        patientProfile: {
+            firstName: { type: String, default: '' },
+            lastName: { type: String, default: '' },
+            phone: { type: String, default: '' },
+            nic: { type: String, default: '' },
+            dateOfBirth: { type: Date, default: null },
+        },
     },
     { timestamps: true }
 );
