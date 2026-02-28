@@ -158,7 +158,11 @@ const PatientRegister = () => {
             });
             setSuccess(true);
         } catch (err) {
-            setSubmitError(err.response?.data?.message || 'Registration failed. Please try again.');
+            if (!err.response) {
+                setSubmitError('Unable to connect to the server. Please make sure the backend is running.');
+            } else {
+                setSubmitError(err.response?.data?.message || 'Registration failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }

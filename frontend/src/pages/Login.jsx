@@ -48,7 +48,11 @@ const Login = () => {
             else if (data.role === 'PATIENT') navigate('/patient');
             else navigate('/dashboard');
         } catch (err) {
-            setServerError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+            if (!err.response) {
+                setServerError('Unable to connect to the server. Please make sure the backend is running.');
+            } else {
+                setServerError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
