@@ -7,6 +7,7 @@ const {
     cancelAppointment,
     getMyProfile,
     updateMyProfile,
+    deleteMyProfile,
 } = require('../controllers/patientController');
 const { protect, patientOnly } = require('../middlewares/authMiddleware');
 
@@ -18,5 +19,6 @@ router.get('/doctors', getApprovedDoctors);
 router.get('/appointments', getMyAppointments);
 router.post('/appointments', bookAppointment);
 router.patch('/appointments/:id/cancel', cancelAppointment);
+router.delete('/profile', deleteMyProfile);
 
 module.exports = router;

@@ -18,6 +18,8 @@ const PatientProfile = () => {
         firstName: '', lastName: '', phone: '', nic: '', dateOfBirth: '',
     });
     const [errors, setErrors] = useState({});
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -74,6 +76,19 @@ const PatientProfile = () => {
             showToast(err.response?.data?.message || 'Failed to update profile.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setDeleting(true);
+        try {
+            await api.delete('/patients/profile');
+            // Important: Call the logout method from authStore to clear state and redirect
+            useAuthStore.getState().logout();
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to delete account.', 'error');
+            setDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -189,6 +204,52 @@ const PatientProfile = () => {
                     </button>
                 </div>
             </form>
+
+            <div className="card p-6 mt-6 border-red-100 bg-red-50/30">
+                <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                        <AlertCircle size={20} className="text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-red-700">Danger Zone</h3>
+                        <p className="text-sm text-red-600/80 mt-1 mb-4">
+                            Once you delete your account, there is no going back. Please be certain.
+                        </p>
+                        {showDeleteConfirm ? (
+                            <div className="space-y-3 bg-white p-4 rounded-xl border border-red-200">
+                                <p className="text-sm font-semibold text-slate-700">Are you absolutely sure?</p>
+                                <p className="text-xs text-slate-500">This action cannot be undone. This will permanently delete your account and all associated data.</p>
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleDeleteAccount}
+                                        disabled={deleting}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {deleting ? 'Deleting...' : 'Yes, delete my account'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors"
+                            >
+                                Delete Account
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
         </div>
     );
 };

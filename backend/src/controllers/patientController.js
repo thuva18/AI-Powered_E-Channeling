@@ -202,4 +202,25 @@ const updateMyProfile = async (req, res) => {
     }
 };
 
-module.exports = { getApprovedDoctors, getMyAppointments, bookAppointment, cancelAppointment, getMyProfile, updateMyProfile };
+// @desc    Delete current patient's own profile and account
+// @route   DELETE /api/v1/patients/profile
+// @access  Private/Patient
+const deleteMyProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Delete all appointments associated with this patient
+        await Appointment.deleteMany({ patientId: userId });
+
+        // Delete the user record
+        await User.findByIdAndDelete(userId);
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Server Error' });
+    }
+};
+
+module.exports = { getApprovedDoctors, getMyAppointments, bookAppointment, cancelAppointment, getMyProfile, updateMyProfile, deleteMyProfile };

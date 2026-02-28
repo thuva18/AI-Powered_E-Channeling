@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, IdCard, Calendar, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Phone, IdCard, Calendar, CheckCircle, AlertCircle, ArrowRight, Heart, ShieldCheck } from 'lucide-react';
 import api from '../services/api';
 
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
