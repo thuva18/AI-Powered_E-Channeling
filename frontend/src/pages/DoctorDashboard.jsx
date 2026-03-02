@@ -17,7 +17,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 // ── StatCard ──────────────────────────────────────────────────────────────────
 const StatCard = ({ title, value, icon: Icon, gradient, sub, delay = '', onClick }) => (
     <div
-        className={`card card-hover stat-card p-6 animate-fade-up ${delay} ${onClick ? 'cursor-pointer group' : ''}`}
+        className={`bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-6 animate-fade-up ${delay} ${onClick ? 'cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300' : ''}`}
         onClick={onClick}
     >
         <div className="flex items-start justify-between mb-4">
@@ -124,21 +124,21 @@ const DoctorDashboard = () => {
 
             {/* KPI row */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((s) => <StatCard key={s.title} {...s} />)}
+                {stats.map((s) => <StatCard key={s.title} {...s} />)}
             </div>
 
             {/* Revenue + Status donut */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Revenue area */}
-                <div className="card p-6 col-span-2 animate-fade-up anim-delay-2">
+                <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-7 col-span-2 animate-fade-up anim-delay-2">
                     <div className="flex items-center justify-between mb-5">
                         <div>
-                            <h3 className="font-bold text-slate-900">Monthly Revenue</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Last 6 months — Rs.</p>
+                            <h3 className="text-lg font-extrabold text-slate-900">Monthly Revenue</h3>
+                            <p className="text-sm text-slate-500 font-medium mt-0.5">Last 6 months overview</p>
                         </div>
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
-                            <TrendingUp size={13} /> Live from database
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-full shadow-sm">
+                            <TrendingUp size={14} /> Live from database
                         </div>
                     </div>
                     {monthly.length === 0 ? (
@@ -166,9 +166,9 @@ const DoctorDashboard = () => {
                 </div>
 
                 {/* Appointment status donut */}
-                <div className="card p-6 animate-fade-up anim-delay-3">
-                    <h3 className="font-bold text-slate-900 mb-1">Appointment Status</h3>
-                    <p className="text-xs text-slate-400 mb-2">Distribution overview</p>
+                <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-7 animate-fade-up anim-delay-3">
+                    <h3 className="text-lg font-extrabold text-slate-900 mb-1">Appointment Status</h3>
+                    <p className="text-sm text-slate-500 font-medium mb-4">Distribution overview</p>
                     <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
                             <Pie data={statusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={4} dataKey="value">
@@ -185,9 +185,9 @@ const DoctorDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* Journal shortcut card */}
-                <div className="card p-6 animate-fade-up anim-delay-1">
-                    <h3 className="font-bold text-slate-900 mb-1">Personal Journal</h3>
-                    <p className="text-xs text-slate-400 mb-4">Patient records, prescriptions &amp; history</p>
+                <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-7 animate-fade-up anim-delay-1">
+                    <h3 className="text-lg font-extrabold text-slate-900 mb-1">Personal Journal</h3>
+                    <p className="text-sm text-slate-500 font-medium mb-5">Patient records, prescriptions &amp; history</p>
                     <div className="space-y-3">
                         <div className="flex items-center gap-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shrink-0">
@@ -205,9 +205,9 @@ const DoctorDashboard = () => {
                 </div>
 
                 {/* Peer comparison bar chart */}
-                <div className="card p-6 animate-fade-up anim-delay-2">
-                    <h3 className="font-bold text-slate-900 mb-1">Peer Comparison</h3>
-                    <p className="text-xs text-slate-400 mb-4">Revenue vs peers in same specialization</p>
+                <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-7 animate-fade-up anim-delay-2">
+                    <h3 className="text-lg font-extrabold text-slate-900 mb-1">Peer Comparison</h3>
+                    <p className="text-sm text-slate-500 font-medium mb-5">Revenue vs peers in same specialization</p>
                     {comparison.length <= 1 ? (
                         <div className="h-48 flex items-center justify-center text-slate-400 text-sm">No peers in same specialization yet.</div>
                     ) : (
@@ -238,47 +238,52 @@ const DoctorDashboard = () => {
             </div>
 
             {/* Recent appointments */}
-            <div className="card overflow-hidden animate-fade-up">
-                <div className="flex items-center justify-between p-6 border-b border-slate-100">
+            <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl overflow-hidden animate-fade-up">
+                <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100/60 bg-white/40">
                     <div>
-                        <h3 className="font-bold text-slate-900">Recent Appointments</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">Latest booking activity</p>
+                        <h3 className="text-lg font-extrabold text-slate-900">Recent Appointments</h3>
+                        <p className="text-sm text-slate-500 font-medium mt-0.5">Latest booking activity</p>
                     </div>
-                    <Link to="/dashboard/appointments" className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        View all <ArrowRight size={13} />
+                    <Link to="/dashboard/appointments" className="flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-indigo-600 hover:bg-blue-50 px-4 py-2 rounded-xl transition-all">
+                        View all <ArrowRight size={14} />
                     </Link>
                 </div>
                 {appointments.length === 0 ? (
-                    <EmptyState
-                        icon={<Calendar size={28} />}
-                        title="No appointments yet"
-                        description="Once patients book with you, their appointments will appear here."
-                        action={
-                            <Link
-                                to="/dashboard/appointments"
-                                className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-                            >
-                                View all appointments <ArrowRight size={14} />
-                            </Link>
-                        }
-                    />
+                    <div className="p-8">
+                        <EmptyState
+                            icon={<Calendar size={28} />}
+                            title="No appointments yet"
+                            description="Once patients book with you, their appointments will appear here."
+                            action={
+                                <Link
+                                    to="/dashboard/appointments"
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                                >
+                                    View all appointments <ArrowRight size={14} />
+                                </Link>
+                            }
+                        />
+                    </div>
                 ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100/50">
                         {appointments.map((apt) => (
-                            <div key={apt._id} className="table-row flex items-center justify-between px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-sm font-bold shrink-0">
+                            <div key={apt._id} className="flex flex-col sm:flex-row sm:items-center justify-between px-6 sm:px-8 py-5 hover:bg-blue-50/40 transition-colors gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-50 border border-blue-200/50 shadow-sm flex items-center justify-center text-blue-700 text-lg font-bold shrink-0">
                                         {apt.patientId?.email?.[0]?.toUpperCase() || 'P'}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-800">{apt.patientId?.email}</p>
-                                        <p className="text-xs text-slate-400">{apt.symptoms?.slice(0, 2).join(', ') || apt.timeSlot}</p>
+                                        <p className="text-base font-bold text-slate-900">{apt.patientId?.email}</p>
+                                        <p className="text-sm font-medium text-slate-500 mt-0.5">{apt.symptoms?.slice(0, 2).join(', ') || apt.timeSlot}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <p className="text-xs text-slate-500 hidden sm:block">
-                                        {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
-                                    </p>
+                                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
+                                    <div className="text-left sm:text-right">
+                                        <p className="text-sm font-bold text-slate-700">
+                                            {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                                        </p>
+                                        <p className="text-xs font-semibold text-slate-400 mt-0.5">{apt.timeSlot}</p>
+                                    </div>
                                     <Badge status={apt.status} />
                                 </div>
                             </div>

@@ -20,7 +20,15 @@ const createJournal = async (req, res) => {
     try {
         const doctor = await Doctor.findOne({ userId: req.user._id });
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
-        const entry = await Journal.create({ doctorId: doctor._id, ...req.body });
+
+        // Destructure patientId if provided to explicitly handle it
+        const { patientId, ...rest } = req.body;
+        const entry = await Journal.create({
+            doctorId: doctor._id,
+            patientId: patientId || null,
+            ...rest
+        });
+
         res.status(201).json(entry);
     } catch (e) {
         res.status(500).json({ message: 'Server error', error: e.message });
@@ -34,6 +42,7 @@ const updateJournal = async (req, res) => {
         const doctor = await Doctor.findOne({ userId: req.user._id });
         const entry = await Journal.findOne({ _id: req.params.id, doctorId: doctor._id });
         if (!entry) return res.status(404).json({ message: 'Entry not found' });
+
         Object.assign(entry, req.body);
         await entry.save();
         res.json(entry);

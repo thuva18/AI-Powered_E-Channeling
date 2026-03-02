@@ -7,6 +7,7 @@ const {
     getAppointments,
     updateAppointmentStatus,
     getAnalytics,
+    getPatients,
 } = require('../controllers/doctorController');
 const { getJournals, createJournal, updateJournal, deleteJournal } = require('../controllers/journalController');
 const { protect, doctorOnly } = require('../middlewares/authMiddleware');
@@ -25,6 +26,7 @@ router.get('/appointments', getAppointments);
 router.patch('/appointments/:id/status', updateAppointmentStatus);
 
 router.get('/analytics', getAnalytics);
+router.get('/patients', getPatients);
 
 // Journal — CRUD
 router.route('/journal').get(getJournals).post(createJournal);

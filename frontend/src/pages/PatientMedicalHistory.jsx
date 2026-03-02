@@ -9,8 +9,8 @@ const PatientMedicalHistory = () => {
     const fetch = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/patients/appointments');
-            setRecords(data.filter(a => a.status === 'COMPLETED'));
+            const { data } = await api.get('/patients/journals');
+            setRecords(data);
         } catch { /* silent */ }
         finally { setLoading(false); }
     }, []);
@@ -62,33 +62,53 @@ const PatientMedicalHistory = () => {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">
-                                                    <Stethoscope size={10} /> Completed
+                                                    <Stethoscope size={10} /> {rec.status || 'Active'}
                                                 </span>
-                                                {rec.rating && (
-                                                    <span className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-600">
-                                                        <Star size={10} className="fill-amber-400 text-amber-400" /> {rec.rating}
-                                                    </span>
-                                                )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500">
+                                        <div className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 mb-3">
                                             <Calendar size={12} className="text-blue-500" />
-                                            {new Date(rec.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                            · {rec.timeSlot}
+                                            {new Date(rec.visitDate).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}
                                         </div>
 
-                                        {rec.symptomDescription && (
-                                            <div className="mt-3 p-3 bg-slate-50 rounded-xl">
-                                                <p className="text-xs font-semibold text-slate-500 mb-1">Symptoms reported</p>
-                                                <p className="text-sm text-slate-700">{rec.symptomDescription}</p>
+                                        {rec.diagnosis && (
+                                            <div className="mb-3">
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Diagnosis</p>
+                                                <p className="text-sm font-medium text-slate-800">{rec.diagnosis}</p>
+                                            </div>
+                                        )}
+
+                                        {rec.prescription && rec.prescription.length > 0 && (
+                                            <div className="mb-3">
+                                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Prescription</p>
+                                                <div className="space-y-1">
+                                                    {rec.prescription.map((rx, idx) => (
+                                                        <div key={idx} className="flex flex-wrap items-center gap-2 text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                                                            <span className="font-semibold">{rx.medication}</span>
+                                                            <span className="text-slate-400">&bull;</span>
+                                                            <span>{rx.dosage}</span>
+                                                            <span className="text-slate-400">&bull;</span>
+                                                            <span>{rx.frequency}</span>
+                                                            <span className="text-slate-400">&bull;</span>
+                                                            <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium text-xs">{rx.duration}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
 
                                         {rec.notes && (
-                                            <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                                                <p className="text-xs font-semibold text-blue-600 mb-1">Doctor's notes</p>
+                                            <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-xl mb-3">
+                                                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Doctor's Notes</p>
                                                 <p className="text-sm text-slate-700">{rec.notes}</p>
+                                            </div>
+                                        )}
+
+                                        {rec.followUpDate && (
+                                            <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-600 bg-amber-50 px-3 py-2 rounded-lg w-fit">
+                                                <Calendar size={13} className="text-amber-500" />
+                                                Recommend Follow-up: {new Date(rec.followUpDate).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' })}
                                             </div>
                                         )}
                                     </div>

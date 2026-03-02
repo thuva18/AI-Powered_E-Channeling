@@ -27,15 +27,27 @@ const ConfirmDialog = ({ action, onConfirm, onCancel }) => {
     const c = config[action.status];
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in" onClick={onCancel} />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fade-up">
-                <h3 className="font-bold text-slate-900 text-base mb-2">{c.title}</h3>
-                <p className="text-sm text-slate-500 mb-5">{c.desc}</p>
-                <div className="flex gap-3 justify-end">
-                    <button onClick={onCancel} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={onCancel} />
+            <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-up border border-slate-100">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${action.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-600' :
+                            action.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
+                                'bg-blue-100 text-blue-600'
+                        }`}>
+                        {action.status === 'ACCEPTED' && <CheckCircle size={24} />}
+                        {action.status === 'REJECTED' && <XCircle size={24} />}
+                        {action.status === 'COMPLETED' && <CheckSquare size={24} />}
+                    </div>
+                    <div>
+                        <h3 className="font-extrabold text-slate-900 text-xl">{c.title}</h3>
+                        <p className="text-sm font-medium text-slate-500 mt-0.5">{c.desc}</p>
+                    </div>
+                </div>
+                <div className="flex gap-3 justify-end mt-8">
+                    <button onClick={onCancel} className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">
                         Cancel
                     </button>
-                    <button onClick={onConfirm} className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${c.btnClass}`}>
+                    <button onClick={onConfirm} className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all hover:-translate-y-0.5 ${c.btnClass}`}>
                         {c.btnLabel}
                     </button>
                 </div>
@@ -113,19 +125,19 @@ const DoctorAppointments = () => {
             />
 
             {/* Filter tabs */}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200/50 w-fit">
                 {filters.map((f) => {
                     const count = f === 'ALL' ? appointments.length : appointments.filter(a => a.status === f).length;
                     return (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${filter === f
-                                ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
-                                : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300 hover:text-blue-600'
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${filter === f
+                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-1 ring-blue-500'
+                                : 'bg-transparent text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-sm'
                                 }`}
                         >
-                            {f} {count > 0 && <span className={`ml-1 ${filter === f ? 'opacity-70' : 'opacity-60'}`}>({count})</span>}
+                            {f} {count > 0 && <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>{count}</span>}
                         </button>
                     );
                 })}
@@ -155,60 +167,60 @@ const DoctorAppointments = () => {
                     />
                 </div>
             ) : (
-                <div className="card overflow-hidden">
+                <div className="bg-white/80 backdrop-blur-2xl shadow-xl shadow-slate-200/50 rounded-3xl border border-white/80 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/60">
+                                <tr className="border-b border-slate-200/60 bg-slate-50/50">
                                     {['Patient', 'Date', 'Time Slot', 'Status', 'Payment', 'Actions'].map((h) => (
-                                        <th key={h} className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{h}</th>
+                                        <th key={h} className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100/50">
                                 {filtered.map((apt) => (
-                                    <tr key={apt._id} className={`table-row transition-all ${updating === apt._id + apt.status ? 'opacity-60' : ''}`}>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 text-sm font-bold shrink-0">
+                                    <tr key={apt._id} className={`hover:bg-blue-50/30 transition-all ${updating === apt._id + apt.status ? 'opacity-50 scale-[0.99]' : ''}`}>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-50 border border-blue-200 flex items-center justify-center text-blue-700 text-base font-bold shrink-0 shadow-sm">
                                                     {apt.patientId?.email?.[0]?.toUpperCase() || 'P'}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold text-slate-800">{apt.patientId?.email || 'Patient'}</p>
+                                                    <p className="text-base font-bold text-slate-900">{apt.patientId?.email || 'Patient'}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-sm text-slate-700">
-                                                <Calendar size={13} className="text-slate-400" />
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                                <Calendar size={15} className="text-blue-500" />
                                                 {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-sm text-slate-700">
-                                                <Clock size={13} className="text-slate-400" />
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                                <Clock size={15} className="text-amber-500" />
                                                 {apt.timeSlot || '—'}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4"><Badge status={apt.status} /></td>
-                                        <td className="px-6 py-4"><Badge status={apt.paymentStatus} /></td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                        <td className="px-8 py-5"><Badge status={apt.status} /></td>
+                                        <td className="px-8 py-5"><Badge status={apt.paymentStatus} /></td>
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 {apt.status === 'PENDING' && (
                                                     <>
                                                         <button
                                                             onClick={() => handleStatusRequest(apt._id, 'ACCEPTED')}
                                                             disabled={!!updating}
-                                                            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95 transition-all border border-emerald-200 disabled:opacity-50"
+                                                            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50"
                                                         >
-                                                            <CheckCircle size={13} /> Accept
+                                                            <CheckCircle size={15} /> Accept
                                                         </button>
                                                         <button
                                                             onClick={() => handleStatusRequest(apt._id, 'REJECTED')}
                                                             disabled={!!updating}
-                                                            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 active:scale-95 transition-all border border-red-200 disabled:opacity-50"
+                                                            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/30 hover:border-transparent active:scale-95 transition-all disabled:opacity-50"
                                                         >
-                                                            <XCircle size={13} /> Reject
+                                                            <XCircle size={15} /> Reject
                                                         </button>
                                                     </>
                                                 )}
@@ -216,13 +228,13 @@ const DoctorAppointments = () => {
                                                     <button
                                                         onClick={() => handleStatusRequest(apt._id, 'COMPLETED')}
                                                         disabled={!!updating}
-                                                        className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95 transition-all border border-blue-200 disabled:opacity-50"
+                                                        className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 transition-all disabled:opacity-50"
                                                     >
-                                                        <CheckSquare size={13} /> Complete
+                                                        <CheckSquare size={15} /> Complete
                                                     </button>
                                                 )}
                                                 {(apt.status === 'REJECTED' || apt.status === 'COMPLETED') && (
-                                                    <span className="text-xs text-slate-400 italic">—</span>
+                                                    <span className="text-sm font-bold text-slate-400 italic bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">—</span>
                                                 )}
                                             </div>
                                         </td>

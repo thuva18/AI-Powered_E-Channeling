@@ -1,6 +1,7 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Journal = require('../models/Journal');
 
 // Keyword → specialization map for AI-style recommendation
 const KEYWORD_SPEC_MAP = {
@@ -202,4 +203,94 @@ const updateMyProfile = async (req, res) => {
     }
 };
 
+<<<<<<< Updated upstream
 module.exports = { getApprovedDoctors, getMyAppointments, bookAppointment, cancelAppointment, getMyProfile, updateMyProfile };
+=======
+// @desc    Delete current patient's own profile and account
+// @route   DELETE /api/v1/patients/profile
+// @access  Private/Patient
+const deleteMyProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Delete all appointments associated with this patient
+        await Appointment.deleteMany({ patientId: userId });
+
+        // Delete the user record
+        await User.findByIdAndDelete(userId);
+
+        res.json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Server Error' });
+    }
+};
+
+// @desc    Get patient analytics (total apps, upcoming, completed, spent)
+// @route   GET /api/v1/patients/analytics
+// @access  Private/Patient
+const getPatientAnalytics = async (req, res) => {
+    try {
+        const appointments = await Appointment.find({ patientId: req.user._id });
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        let upcoming = 0;
+        let completed = 0;
+        let totalSpent = 0;
+
+        appointments.forEach(apt => {
+            if (apt.status === 'COMPLETED') {
+                completed++;
+                if (apt.consultationFeeCharged) {
+                    totalSpent += apt.consultationFeeCharged;
+                }
+            } else if ((apt.status === 'ACCEPTED' || apt.status === 'PENDING') && new Date(apt.appointmentDate) >= now) {
+                upcoming++;
+            }
+        });
+
+        res.json({
+            totalAppointments: appointments.length,
+            upcomingAppointments: upcoming,
+            completedAppointments: completed,
+            totalSpent
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get patient's medical history (journals)
+// @route   GET /api/v1/patients/journals
+// @access  Private/Patient
+const getJournals = async (req, res) => {
+    try {
+        const journals = await Journal.find({ patientId: req.user._id })
+            .populate({
+                path: 'doctorId',
+                select: 'firstName lastName specialization',
+            })
+            .sort({ visitDate: -1 });
+
+        res.json(journals);
+    } catch (error) {
+        console.error('getJournals error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+module.exports = {
+    getApprovedDoctors,
+    getMyAppointments,
+    bookAppointment,
+    cancelAppointment,
+    getMyProfile,
+    updateMyProfile,
+    deleteMyProfile,
+    getPatientAnalytics,
+    getJournals,
+};
+>>>>>>> Stashed changes

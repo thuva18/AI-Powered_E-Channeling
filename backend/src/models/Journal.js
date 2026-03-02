@@ -8,6 +8,11 @@ const journalSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
+        patientId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null, // Allow null for older unlinked records or external walk-ins
+        },
         patientName: {
             type: String,
             required: true,

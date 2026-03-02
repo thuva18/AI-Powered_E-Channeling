@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
     Search, Stethoscope, Star, Calendar, Clock, CheckCircle, AlertCircle,
-    ChevronRight, X, Upload, ImageIcon, Sparkles, MapPin, DollarSign,
+    ChevronRight, X, Upload, ImageIcon, Sparkles, MapPin, CreditCard,
+    Building2, Wallet, ArrowLeft, ShieldCheck, Lock, ExternalLink, Receipt,
+    RefreshCw, XCircle, TrendingUp, Activity,
 } from 'lucide-react';
+import useAuthStore from '../store/authStore';
 
 // ── Keyword → specialization map (mirrors backend) ────────────────────────────
 const KEYWORD_SPEC_MAP = {
@@ -36,23 +40,80 @@ const SPEC_COLORS = {
     'Gynecologist': 'bg-rose-100 text-rose-700',
 };
 
+// ── Payment method definitions ─────────────────────────────────────────────────
+const PAYMENT_METHODS = [
+    {
+        id: 'PAYHERE',
+        label: 'PayHere',
+        subtitle: 'Cards, Internet Banking, eZ Cash',
+        icon: '🏦',
+        recommended: true,
+        color: 'from-orange-500 to-red-500',
+        border: 'border-orange-300',
+        bg: 'bg-orange-50',
+        badge: 'bg-orange-500',
+        description: 'Secure payment gateway. Booking confirmed instantly on success.',
+    },
+    {
+        id: 'BANK_TRANSFER',
+        label: 'Bank Transfer',
+        subtitle: 'Direct bank deposit',
+        icon: '🏛️',
+        recommended: false,
+        color: 'from-blue-500 to-indigo-600',
+        border: 'border-blue-200',
+        bg: 'bg-blue-50',
+        badge: 'bg-blue-500',
+        description: 'Transfer to our bank account. Booking pending admin verification (1-2 hours).',
+    },
+    {
+        id: 'PAYPAL',
+        label: 'PayPal',
+        subtitle: 'PayPal transfer',
+        icon: '💳',
+        recommended: false,
+        color: 'from-sky-400 to-blue-500',
+        border: 'border-sky-200',
+        bg: 'bg-sky-50',
+        badge: 'bg-sky-500',
+        description: 'Transfer via PayPal. Booking pending admin verification (1-2 hours).',
+    },
+];
+
+const BANK_DETAILS = {
+    bank: 'Bank of Ceylon',
+    branch: 'Colombo Fort',
+    accountName: 'Medicare E-Channeling (Pvt) Ltd',
+    accountNumber: '0012345678',
+    swiftCode: 'BCEYLKLX',
+};
+
+const PAYPAL_EMAIL = 'payments@mediportal.lk';
+
 // ── BookingModal ───────────────────────────────────────────────────────────────
 const BookingModal = ({ doctor, onClose, onBooked }) => {
+    const navigate = useNavigate();
+    // Step 1: slot selection, Step 2: payment
+    const [step, setStep] = useState(1);
     const [date, setDate] = useState('');
     const [slot, setSlot] = useState('');
+    // Payment state
+    const [selectedMethod, setSelectedMethod] = useState(null);
+    const [paymentRef, setPaymentRef] = useState('');
+    const [paymentNote, setPaymentNote] = useState('');
+    const [transactionId, setTransactionId] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
+    const [paymentScreen, setPaymentScreen] = useState(null); // null | 'pending' | 'success' | 'failed' | 'polling'
+    const [receiptId, setReceiptId] = useState(null);
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Generate slots from doctor availability for selected date
     const getSlots = () => {
         if (!date || !doctor?.availability?.length) return [];
         const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
         const avail = doctor.availability.find(a => a.day === dayName);
         if (!avail) return [];
-        // Generate 30-min slots between startTime and endTime
         const slots = [];
         const [sh, sm] = avail.startTime.split(':').map(Number);
         const [eh, em] = avail.endTime.split(':').map(Number);
@@ -66,114 +127,515 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
         }
         return slots;
     };
-
     const slots = getSlots();
 
-    const handleConfirm = async () => {
+    // Proceed from step 1 → step 2
+    const handleProceedToPayment = () => {
         if (!date || !slot) { setError('Please select a date and time slot.'); return; }
+        setError('');
+        setStep(2);
+    };
+
+    // Initiate payment on backend
+    const handleInitiatePayment = async () => {
+        if (!selectedMethod) { setError('Please select a payment method.'); return; }
         setLoading(true);
         setError('');
         try {
-            await api.post('/patients/appointments', {
+            const { data } = await api.post('/payments/initiate', {
                 doctorId: doctor._id,
                 appointmentDate: date,
                 timeSlot: slot,
+                method: selectedMethod,
             });
-            setSuccess(true);
-            setTimeout(() => { onBooked(); onClose(); }, 1500);
+
+            setTransactionId(data.transactionId);
+
+            if (selectedMethod === 'PAYHERE') {
+                // Launch PayHere popup
+                launchPayhere(data);
+            }
+            // For dummy methods, stay on step 2 to show the reference form
         } catch (err) {
-            setError(err.response?.data?.message || 'Booking failed. Please try again.');
-        } finally { setLoading(false); }
+            setError(err.response?.data?.message || 'Failed to initiate payment. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const launchPayhere = (data) => {
+        const ph = data.payhere;
+        if (!ph || !window.payhere) {
+            // Fallback if SDK not loaded — show instructions
+            setPaymentScreen('payhere_fallback');
+            return;
+        }
+
+        const payment = {
+            sandbox: true,
+            merchant_id: ph.merchantId,
+            return_url: ph.returnUrl,
+            cancel_url: ph.cancelUrl,
+            notify_url: ph.notifyUrl,
+            order_id: ph.orderId,
+            items: ph.itemName,
+            amount: ph.amount,
+            currency: ph.currency,
+            hash: ph.hash,
+            first_name: ph.firstName,
+            last_name: ph.lastName,
+            email: ph.email,
+            phone: ph.phone,
+            address: 'Colombo',
+            city: 'Colombo',
+            country: 'Sri Lanka',
+        };
+
+        window.payhere.startPayment(payment);
+        setPaymentScreen('polling');
+    };
+
+    // Poll payment status after PayHere popup closes
+    const pollPaymentStatus = useCallback(async (txnId) => {
+        if (!txnId) return;
+        try {
+            const { data } = await api.get(`/payments/${txnId}/status`);
+            if (data.status === 'SUCCESS') {
+                setPaymentScreen('success');
+                setReceiptId(txnId);
+                onBooked();
+            } else if (data.status === 'FAILED') {
+                setPaymentScreen('failed');
+            } else {
+                // Still pending, poll again
+                setTimeout(() => pollPaymentStatus(txnId), 3000);
+            }
+        } catch {
+            setTimeout(() => pollPaymentStatus(txnId), 5000);
+        }
+    }, [onBooked]);
+
+    // Watch for PayHere events
+    useEffect(() => {
+        if (!window.payhere) return;
+        window.payhere.onCompleted = (orderId) => {
+            setPaymentScreen('polling');
+            setTimeout(() => pollPaymentStatus(orderId), 2000);
+        };
+        window.payhere.onDismissed = () => {
+            setPaymentScreen(null);
+            setError('Payment was cancelled. Please try again.');
+        };
+        window.payhere.onError = () => {
+            setPaymentScreen('failed');
+        };
+    }, [pollPaymentStatus]);
+
+    // Submit dummy payment reference
+    const handleDummySubmit = async () => {
+        if (!paymentRef.trim()) { setError('Please enter your payment reference.'); return; }
+        if (!transactionId) { setError('No active transaction. Please initiate payment first.'); return; }
+        setLoading(true);
+        setError('');
+        try {
+            await api.post(`/payments/${transactionId}/dummy-submit`, {
+                paymentReference: paymentRef,
+                paymentNote,
+            });
+            setPaymentScreen('pending');
+            onBooked();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to submit payment reference.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const methodObj = PAYMENT_METHODS.find(m => m.id === selectedMethod);
+    const fee = doctor.consultationFee;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }}
-            onClick={onClose}>
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-fade-up" onClick={e => e.stopPropagation()}>
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5">
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900">Book Appointment</h3>
-                        <p className="text-sm text-slate-500">Dr. {doctor.firstName} {doctor.lastName}</p>
+            style={{ background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)' }}
+            onClick={paymentScreen ? undefined : onClose}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-fade-up overflow-hidden" onClick={e => e.stopPropagation()}>
+
+                {/* ── Modal Header ── */}
+                <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {step === 2 && !paymentScreen && (
+                                <button onClick={() => { setStep(1); setSelectedMethod(null); setTransactionId(null); setError(''); }}
+                                    className="h-7 w-7 rounded-lg bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors">
+                                    <ArrowLeft size={14} />
+                                </button>
+                            )}
+                            <div>
+                                <h3 className="text-base font-bold">
+                                    {paymentScreen === 'success' ? '🎉 Booking Confirmed!' :
+                                        paymentScreen === 'failed' ? '❌ Payment Failed' :
+                                            paymentScreen === 'pending' ? '⏳ Awaiting Verification' :
+                                                paymentScreen === 'polling' ? '🔄 Verifying Payment…' :
+                                                    step === 1 ? 'Book Appointment' : 'Complete Payment'}
+                                </h3>
+                                <p className="text-blue-100 text-xs">Dr. {doctor.firstName} {doctor.lastName} — {doctor.specialization}</p>
+                            </div>
+                        </div>
+                        {!paymentScreen && (
+                            <button onClick={onClose} className="h-8 w-8 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors">
+                                <X size={16} />
+                            </button>
+                        )}
                     </div>
-                    <button onClick={onClose} className="h-8 w-8 rounded-xl hover:bg-slate-100 flex items-center justify-center text-slate-400 transition-colors">
-                        <X size={18} />
-                    </button>
+                    {/* Step indicator */}
+                    {!paymentScreen && (
+                        <div className="flex items-center gap-2 mt-3">
+                            {[1, 2].map(s => (
+                                <div key={s} className="flex items-center gap-2">
+                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step >= s ? 'bg-white text-blue-600' : 'bg-white/30 text-white/70'
+                                        }`}>{s}</div>
+                                    <span className={`text-xs ${step >= s ? 'text-white font-medium' : 'text-blue-200'
+                                        }`}>{s === 1 ? 'Slot' : 'Payment'}</span>
+                                    {s < 2 && <ChevronRight size={12} className="text-blue-200" />}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                {success ? (
-                    <div className="text-center py-8">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-100 mb-4">
-                            <CheckCircle size={28} className="text-emerald-500" />
-                        </div>
-                        <p className="font-bold text-slate-900">Appointment Booked!</p>
-                        <p className="text-sm text-slate-500 mt-1">You'll receive confirmation shortly.</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {/* Date picker */}
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-semibold text-slate-700">Select Date</label>
-                            <input type="date" min={today} value={date}
-                                onChange={e => { setDate(e.target.value); setSlot(''); }}
-                                className="input-field w-full" />
-                            {date && slots.length === 0 && (
-                                <p className="text-xs text-amber-600 flex items-center gap-1">
-                                    <AlertCircle size={11} /> No availability on this day. Try another date.
-                                </p>
-                            )}
-                        </div>
+                {/* ── Modal Content ── */}
+                <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
 
-                        {/* Time slot grid */}
-                        {slots.length > 0 && (
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-semibold text-slate-700">Select Time Slot</label>
-                                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                                    {slots.map(s => (
-                                        <button key={s} onClick={() => setSlot(s)}
-                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${slot === s
-                                                ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30'
-                                                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50'
-                                                }`}>
-                                            <Clock size={13} className={slot === s ? 'text-white' : 'text-slate-400'} />
-                                            {s}
-                                        </button>
-                                    ))}
+                    {/* ── Post-payment screens ── */}
+                    {paymentScreen === 'polling' && (
+                        <div className="text-center py-10">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
+                                <RefreshCw size={28} className="text-blue-600 animate-spin" />
+                            </div>
+                            <p className="font-bold text-slate-800 text-lg">Verifying your payment…</p>
+                            <p className="text-sm text-slate-500 mt-1">This may take a few seconds. Please don't close this window.</p>
+                        </div>
+                    )}
+
+                    {paymentScreen === 'success' && (
+                        <div className="text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-4">
+                                <CheckCircle size={32} className="text-emerald-500" />
+                            </div>
+                            <p className="font-bold text-slate-800 text-lg">Payment Successful!</p>
+                            <p className="text-sm text-slate-500 mt-1 mb-4">Your appointment has been confirmed.</p>
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-left mb-5">
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-slate-500">Doctor</span>
+                                    <span className="font-semibold text-slate-800">Dr. {doctor.firstName} {doctor.lastName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-slate-500">Date</span>
+                                    <span className="font-semibold text-slate-800">{new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Time</span>
+                                    <span className="font-semibold text-slate-800">{slot}</span>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Fee info */}
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-                            <DollarSign size={16} className="text-blue-600 shrink-0" />
-                            <p className="text-sm text-blue-700">
-                                Consultation fee: <strong>LKR {doctor.consultationFee?.toLocaleString() || '—'}</strong>
-                            </p>
+                            {receiptId && (
+                                <Link to={`/patient/payments/receipt/${receiptId}`}
+                                    onClick={onClose}
+                                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all">
+                                    <Receipt size={15} /> View & Download Receipt
+                                </Link>
+                            )}
+                            <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button>
                         </div>
+                    )}
 
-                        {error && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
-                                <AlertCircle size={15} className="text-red-500 shrink-0" />
-                                <p className="text-sm text-red-700">{error}</p>
+                    {paymentScreen === 'failed' && (
+                        <div className="text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-100 mb-4">
+                                <XCircle size={32} className="text-red-500" />
                             </div>
-                        )}
-
-                        <div className="flex gap-3 pt-1">
-                            <button onClick={onClose}
-                                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
-                                Cancel
+                            <p className="font-bold text-slate-800 text-lg">Payment Failed</p>
+                            <p className="text-sm text-slate-500 mt-1 mb-6">Your payment was not successful. No charges were made.</p>
+                            <button onClick={() => { setPaymentScreen(null); setStep(2); setTransactionId(null); setError(''); }}
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm">
+                                Try Again
                             </button>
-                            <button onClick={handleConfirm} disabled={loading || !date || !slot}
-                                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                                {loading ? (
-                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
-                                ) : null}
-                                Confirm Booking
-                            </button>
+                            <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {paymentScreen === 'pending' && (
+                        <div className="text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 mb-4">
+                                <Clock size={32} className="text-amber-500" />
+                            </div>
+                            <p className="font-bold text-slate-800 text-lg">Awaiting Admin Verification</p>
+                            <p className="text-sm text-slate-500 mt-1 mb-4">We've received your payment reference. Our team will verify it within 1-2 hours.</p>
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-left mb-5 space-y-1.5">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Status</span>
+                                    <span className="font-semibold text-amber-700 flex items-center gap-1"><Clock size={12} /> Pending Approval</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Method</span>
+                                    <span className="font-semibold text-slate-800">{methodObj?.label}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Reference</span>
+                                    <span className="font-mono text-xs text-slate-800 font-semibold">{paymentRef}</span>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 mb-5">You can track status in <strong>Payment History</strong>.</p>
+                            <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm">Done</button>
+                        </div>
+                    )}
+
+                    {paymentScreen === 'payhere_fallback' && (
+                        <div className="text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange-100 mb-4">
+                                <ExternalLink size={28} className="text-orange-500" />
+                            </div>
+                            <p className="font-bold text-slate-800">PayHere SDK Not Loaded</p>
+                            <p className="text-sm text-slate-500 mt-2 mb-4">To test PayHere, ensure the sandbox script is loaded. You can manually complete the payment and enter your reference below.</p>
+                            <button onClick={() => { setPaymentScreen(null); setSelectedMethod('BANK_TRANSFER'); }}
+                                className="w-full py-2.5 rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">Use Bank Transfer Instead</button>
+                            <button onClick={onClose} className="mt-2 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-500">Cancel</button>
+                        </div>
+                    )}
+
+                    {/* ── Step 1: Date & Slot ── */}
+                    {!paymentScreen && step === 1 && (
+                        <div className="space-y-4">
+                            {/* Date picker */}
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-semibold text-slate-700">Select Date</label>
+                                <input type="date" min={today} value={date}
+                                    onChange={e => { setDate(e.target.value); setSlot(''); setError(''); }}
+                                    className="input-field w-full" />
+                                {date && slots.length === 0 && (
+                                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                                        <AlertCircle size={11} /> No availability on this day. Try another date.
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Time slots */}
+                            {slots.length > 0 && (
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-semibold text-slate-700">Select Time Slot</label>
+                                    <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-0.5">
+                                        {slots.map(s => (
+                                            <button key={s} onClick={() => { setSlot(s); setError(''); }}
+                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${slot === s
+                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30'
+                                                    : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50'
+                                                    }`}>
+                                                <Clock size={13} className={slot === s ? 'text-white' : 'text-slate-400'} />
+                                                {s}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Fee */}
+                            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                                <CreditCard size={16} className="text-blue-600 shrink-0" />
+                                <p className="text-sm text-blue-700">Consultation fee: <strong>LKR {fee?.toLocaleString() || '—'}</strong></p>
+                            </div>
+
+                            {error && (
+                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                                    <AlertCircle size={14} className="text-red-500 shrink-0" />
+                                    <p className="text-sm text-red-700">{error}</p>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-1">
+                                <button onClick={onClose}
+                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                                    Cancel
+                                </button>
+                                <button onClick={handleProceedToPayment} disabled={!date || !slot}
+                                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                    Next: Pay <ChevronRight size={15} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── Step 2: Payment ── */}
+                    {!paymentScreen && step === 2 && (
+                        <div className="space-y-4">
+                            {/* Booking summary */}
+                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-1.5">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Booking Summary</p>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Doctor</span>
+                                    <span className="font-semibold text-slate-800">Dr. {doctor.firstName} {doctor.lastName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Specialization</span>
+                                    <span className="font-medium text-slate-700">{doctor.specialization}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Date</span>
+                                    <span className="font-semibold text-slate-800">{new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Time</span>
+                                    <span className="font-semibold text-slate-800">{slot}</span>
+                                </div>
+                                <div className="border-t border-slate-200 mt-2 pt-2 flex justify-between">
+                                    <span className="text-sm font-bold text-slate-700">Total</span>
+                                    <span className="font-bold text-blue-600">LKR {fee?.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            {/* Method selector (only if no transaction yet) */}
+                            {!transactionId && (
+                                <>
+                                    <p className="text-sm font-semibold text-slate-700">Choose Payment Method</p>
+                                    <div className="space-y-2">
+                                        {PAYMENT_METHODS.map(m => (
+                                            <button key={m.id} onClick={() => { setSelectedMethod(m.id); setError(''); }}
+                                                className={`w-full text-left p-3.5 rounded-xl border-2 transition-all ${selectedMethod === m.id
+                                                    ? `${m.border} ${m.bg} shadow-sm`
+                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                    }`}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-2xl">{m.icon}</span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-semibold text-sm text-slate-800">{m.label}</span>
+                                                            {m.recommended && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white">RECOMMENDED</span>}
+                                                        </div>
+                                                        <p className="text-xs text-slate-500 mt-0.5">{m.subtitle}</p>
+                                                    </div>
+                                                    <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${selectedMethod === m.id ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                                                        }`}>
+                                                        {selectedMethod === m.id && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                    </div>
+                                                </div>
+                                                {selectedMethod === m.id && <p className="text-xs text-slate-500 mt-2 ml-9">{m.description}</p>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* PayHere → initiate then popup */}
+                            {!transactionId && selectedMethod === 'PAYHERE' && (
+                                <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-2">
+                                    <ShieldCheck size={15} className="text-orange-500 mt-0.5 shrink-0" />
+                                    <p className="text-xs text-orange-700">
+                                        You'll be redirected to PayHere's secure sandbox gateway. Booking is confirmed instantly on success.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Bank Transfer reference form */}
+                            {transactionId && selectedMethod === 'BANK_TRANSFER' && (
+                                <div className="space-y-3">
+                                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+                                        <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Bank Details</p>
+                                        {Object.entries(BANK_DETAILS).map(([k, v]) => (
+                                            <div key={k} className="flex justify-between text-sm">
+                                                <span className="text-slate-500 capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                                                <span className="font-semibold text-slate-800 font-mono">{v}</span>
+                                            </div>
+                                        ))}
+                                        <p className="text-xs text-slate-500 pt-1 border-t border-blue-200">
+                                            Use receipt number <strong>{transactionId?.slice(-8).toUpperCase()}</strong> as transfer reference.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Bank Transaction Reference *</label>
+                                        <input type="text" value={paymentRef} onChange={e => setPaymentRef(e.target.value)}
+                                            placeholder="e.g. TXN202600123456"
+                                            className="input-field w-full" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Additional Note <span className="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" value={paymentNote} onChange={e => setPaymentNote(e.target.value)}
+                                            placeholder="Branch name, transfer time, etc."
+                                            className="input-field w-full" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* PayPal reference form */}
+                            {transactionId && selectedMethod === 'PAYPAL' && (
+                                <div className="space-y-3">
+                                    <div className="p-4 bg-sky-50 border border-sky-200 rounded-xl">
+                                        <p className="text-xs font-bold text-sky-700 uppercase tracking-wider mb-2">PayPal Details</p>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Send to</span>
+                                            <span className="font-semibold text-slate-800 font-mono">{PAYPAL_EMAIL}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm mt-1">
+                                            <span className="text-slate-500">Amount</span>
+                                            <span className="font-semibold text-slate-800">LKR {fee?.toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 pt-2 border-t border-sky-200 mt-2">
+                                            Add <strong>{transactionId?.slice(-8).toUpperCase()}</strong> in the PayPal note.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">PayPal Transaction ID *</label>
+                                        <input type="text" value={paymentRef} onChange={e => setPaymentRef(e.target.value)}
+                                            placeholder="e.g. 3JU110429T504672Y"
+                                            className="input-field w-full" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Note <span className="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" value={paymentNote} onChange={e => setPaymentNote(e.target.value)}
+                                            placeholder="Any additional info"
+                                            className="input-field w-full" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {error && (
+                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                                    <AlertCircle size={14} className="text-red-500 shrink-0" />
+                                    <p className="text-sm text-red-700">{error}</p>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-1">
+                                {!transactionId ? (
+                                    <>
+                                        <button onClick={() => { setStep(1); setSelectedMethod(null); setError(''); }}
+                                            className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                                            Back
+                                        </button>
+                                        <button
+                                            onClick={handleInitiatePayment}
+                                            disabled={loading || !selectedMethod}
+                                            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                                            {loading ? <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Processing…</> :
+                                                selectedMethod === 'PAYHERE' ? <><Lock size={14} /> Pay via PayHere</> :
+                                                    'Proceed'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={handleDummySubmit}
+                                        disabled={loading || !paymentRef.trim()}
+                                        className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                                        {loading ? <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Submitting…</> :
+                                            <><CheckCircle size={14} /> Submit Payment Reference</>}
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400">
+                                <Lock size={11} /> Secured by 256-bit SSL
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -243,6 +705,16 @@ const PatientBookAppointment = () => {
     const [loading, setLoading] = useState(false);
     const [bookTarget, setBookTarget] = useState(null);
     const [highlightedSpecs, setHighlightedSpecs] = useState(new Set());
+    const [analytics, setAnalytics] = useState(null);
+    const { user } = useAuthStore();
+
+    useEffect(() => {
+        if (user) {
+            api.get('/patients/analytics')
+                .then(res => setAnalytics(res.data))
+                .catch(err => console.error('Failed to load patient analytics', err));
+        }
+    }, [user]);
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files || []);
@@ -288,16 +760,84 @@ const PatientBookAppointment = () => {
                 />
             )}
 
-            <div className="space-y-8 max-w-4xl mx-auto">
+            <div className="space-y-10 max-w-5xl mx-auto pb-12">
+
+                {/* ── AI Generated Welcome Banner ── */}
+                <div className="relative w-full h-64 md:h-80 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 mb-8 animate-fade-down">
+                    <div
+                        className="absolute inset-0 bg-cover bg-center"
+                        style={{ backgroundImage: "url('/images/patient_banner.png')" }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-teal-900/60 via-indigo-900/40 to-transparent mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
+
+                    <div className="absolute inset-0 p-10 md:p-14 flex flex-col justify-center">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-white text-xs font-bold uppercase tracking-widest w-fit mb-4 backdrop-blur-md shadow-sm">
+                            <Sparkles size={14} className="text-teal-200" /> AI Patient Dashboard
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-lg mb-2">
+                            Welcome to Medicare
+                        </h1>
+                        <p className="text-teal-50 text-lg md:text-xl font-medium max-w-lg drop-shadow-md">
+                            Describe your symptoms to our AI engine below and we'll connect you instantly with the finest specialists.
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── Patient Analytics Metrics ── */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 animate-fade-up anim-delay-1">
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-6 group hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110 bg-gradient-to-br from-emerald-400 to-emerald-600">
+                                <Calendar size={22} className="text-white" />
+                            </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Upcoming Visits</p>
+                        <h3 className="text-3xl font-extrabold text-slate-900">{analytics?.upcomingAppointments || 0}</h3>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-6 group hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110 bg-gradient-to-br from-blue-400 to-blue-600">
+                                <Stethoscope size={22} className="text-white" />
+                            </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Total Bookings</p>
+                        <h3 className="text-3xl font-extrabold text-slate-900">{analytics?.totalAppointments || 0}</h3>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-6 group hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110 bg-gradient-to-br from-purple-400 to-purple-600">
+                                <Activity size={22} className="text-white" />
+                            </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Completed Visits</p>
+                        <h3 className="text-3xl font-extrabold text-slate-900">{analytics?.completedAppointments || 0}</h3>
+                    </div>
+
+                    <div className="bg-white/80 backdrop-blur-xl border border-white/80 shadow-xl shadow-blue-900/5 rounded-3xl p-6 group hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-200 group-hover:scale-110 bg-gradient-to-br from-orange-400 to-orange-600">
+                                <Wallet size={22} className="text-white" />
+                            </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500 mb-1">Total Spent</p>
+                        <h3 className="text-3xl font-extrabold text-slate-900"><span className="text-lg text-slate-400 font-bold mr-1">Rs.</span>{(analytics?.totalSpent || 0).toLocaleString()}</h3>
+                    </div>
+                </div>
+
                 {/* ── Symptom form ── */}
-                <div className="card p-6">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/30">
-                            <Search size={18} className="text-white" />
+                <div className="bg-white rounded-[2rem] p-8 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full blur-[80px] -z-10 group-hover:scale-110 transition-transform duration-700" />
+
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <Search size={24} className="text-white" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-slate-900 text-lg">Enter Your Symptoms</h2>
-                            <p className="text-sm text-slate-400">Describe what you're feeling — we'll find the right doctor</p>
+                            <h2 className="font-extrabold text-slate-900 text-2xl tracking-tight">AI Symptom Check</h2>
+                            <p className="text-slate-500 font-medium">Describe what you're feeling — we'll find the right doctor</p>
                         </div>
                     </div>
 

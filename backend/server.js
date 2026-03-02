@@ -6,6 +6,7 @@ const authRoutes = require('./src/routes/authRoutes');
 const doctorRoutes = require('./src/routes/doctorRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const patientRoutes = require('./src/routes/patientRoutes');
+const paymentRoutes = require('./src/routes/paymentRoutes');
 
 // Connect to Database
 connectDB();
@@ -21,6 +22,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/doctors', doctorRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/patients', patientRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {
