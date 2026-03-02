@@ -1,6 +1,7 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Journal = require('../models/Journal');
 
 // Keyword → specialization map for AI-style recommendation
 const KEYWORD_SPEC_MAP = {

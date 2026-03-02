@@ -27,8 +27,13 @@ const appointmentSchema = new mongoose.Schema(
         },
         paymentStatus: {
             type: String,
-            enum: ['PAID', 'UNPAID'],
-            default: 'UNPAID',
+            enum: ['PENDING_PAYMENT', 'PAID', 'FAILED', 'PENDING_APPROVAL', 'UNPAID'],
+            default: 'PENDING_PAYMENT',
+        },
+        paymentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Transaction',
+            default: null,
         },
         symptoms: {
             type: [String],

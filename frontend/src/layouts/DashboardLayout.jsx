@@ -100,8 +100,11 @@ const DashboardLayout = ({ allowedRoles }) => {
     ];
 
     const adminLinks = [
-        { label: 'Pending Reviews', path: '/admin', icon: ShieldCheck },
+        { label: 'Dashboard', path: '/admin', icon: ShieldCheck },
         { label: 'All Doctors', path: '/admin/doctors', icon: Users },
+        { label: 'User Management', path: '/admin/users', icon: User },
+        { label: 'Payments', path: '/admin/payments', icon: CreditCard },
+        { label: 'Reports', path: '/admin/reports', icon: FileText },
     ];
 
     const patientLinks = [

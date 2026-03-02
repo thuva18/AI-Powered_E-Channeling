@@ -24,10 +24,10 @@ const GENDERS = ['Male', 'Female', 'Other'];
 // ── Empty prescription row ────────────────────────────────────────────────────
 const emptyRx = () => ({ medication: '', dosage: '', frequency: '', duration: '' });
 
-// ── JournalModal — add/edit form ──────────────────────────────────────────────
-const JournalModal = ({ entry, onClose, onSave }) => {
+const JournalModal = ({ entry, patients, onClose, onSave }) => {
     const isEdit = !!entry?._id;
     const [form, setForm] = useState({
+        patientId: entry?.patientId ? (typeof entry.patientId === 'object' ? entry.patientId._id : entry.patientId) : '',
         patientName: entry?.patientName || '',
         patientAge: entry?.patientAge || '',
         patientGender: entry?.patientGender || '',
@@ -104,6 +104,33 @@ const JournalModal = ({ entry, onClose, onSave }) => {
                             <User size={14} /> Patient Information
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
+                            <div className="col-span-2 space-y-1.5">
+                                <label className="block text-sm font-semibold text-slate-700">Link to Registered Patient (Optional)</label>
+                                <select
+                                    value={form.patientId}
+                                    onChange={(e) => {
+                                        const pid = e.target.value;
+                                        setForm(p => ({ ...p, patientId: pid }));
+                                        if (pid) {
+                                            const pData = patients.find(x => x._id === pid);
+                                            if (pData) {
+                                                const age = pData.dob ? Math.floor((new Date() - new Date(pData.dob)) / 31557600000) : '';
+                                                setForm(prev => ({
+                                                    ...prev,
+                                                    patientName: pData.name,
+                                                    contactNumber: pData.phone || prev.contactNumber,
+                                                    patientGender: pData.gender || prev.patientGender,
+                                                    patientAge: age || prev.patientAge
+                                                }));
+                                            }
+                                        }
+                                    }}
+                                    className="input-field appearance-none"
+                                >
+                                    <option value="">-- No link (External patient) --</option>
+                                    {patients?.map(p => <option key={p._id} value={p._id}>{p.name} ({p.totalVisits} recent visits)</option>)}
+                                </select>
+                            </div>
                             <Input label="Patient Name *" id="pname" placeholder="Full name" value={form.patientName} onChange={set('patientName')} className="col-span-2" />
                             <Input label="Age" id="page" type="number" placeholder="e.g. 45" value={form.patientAge} onChange={set('patientAge')} />
                             <div className="space-y-1.5">
@@ -207,11 +234,18 @@ const JournalCard = ({ entry, onEdit, onDelete }) => {
                 onClick={() => setExpanded(e => !e)}
             >
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm relative">
                         {entry.patientName?.[0]?.toUpperCase() || 'P'}
+                        {entry.patientId && (
+                            <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center" title="Registered Patient">
+                                <CheckCircle size={10} className="text-white" />
+                            </div>
+                        )}
                     </div>
                     <div>
-                        <p className="font-bold text-slate-800 text-sm">{entry.patientName}</p>
+                        <p className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                            {entry.patientName}
+                        </p>
                         <p className="text-xs text-slate-400">
                             {entry.patientAge ? `${entry.patientAge} yrs · ` : ''}{entry.patientGender || '—'} ·{' '}
                             {new Date(entry.visitDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -324,6 +358,7 @@ const JournalToast = ({ toast }) => {
 // ── Main page ─────────────────────────────────────────────────────────────────
 const PersonalJournal = () => {
     const [entries, setEntries] = useState([]);
+    const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(null);  // null | 'new' | entryObj
     const [search, setSearch] = useState('');
@@ -339,8 +374,12 @@ const PersonalJournal = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/doctors/journal');
-            setEntries(data);
+            const [jRes, pRes] = await Promise.all([
+                api.get('/doctors/journal'),
+                api.get('/doctors/patients')
+            ]);
+            setEntries(jRes.data);
+            setPatients(pRes.data);
         } catch (e) {
             console.error(e);
         } finally {
@@ -379,6 +418,7 @@ const PersonalJournal = () => {
             {modal && (
                 <JournalModal
                     entry={modal === 'new' ? null : modal}
+                    patients={patients}
                     onClose={() => setModal(null)}
                     onSave={handleSave}
                 />

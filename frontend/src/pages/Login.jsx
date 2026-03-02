@@ -70,20 +70,20 @@ const Login = () => {
     return (
         <div className="space-y-0">
             {/* ── Gradient header strip ── */}
-            <div className={`rounded-2xl bg-gradient-to-br ${accentFrom} via-blue-500 ${accentTo} p-6 mb-7 text-white text-center relative overflow-hidden`}>
-                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-                <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-white/10" />
+            <div className={`rounded-2xl bg-gradient-to-br from-blue-600/90 to-indigo-700/90 border border-blue-500/50 p-6 mb-7 text-white text-center relative overflow-hidden backdrop-blur-md shadow-lg shadow-blue-500/20`}>
+                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-cyan-400/20 blur-xl" />
+                <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-blue-400/20 blur-xl" />
                 <div className="relative z-10">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm mb-3 shadow-lg">
-                        {isPatient ? <Heart size={22} className="text-white" /> : <Activity size={22} className="text-white" />}
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-sm mb-3 shadow-lg">
+                        {isPatient ? <Heart size={22} className="text-white drop-shadow-md" /> : <Activity size={22} className="text-white drop-shadow-md" />}
                     </div>
-                    <h1 className="text-xl font-bold mb-0.5">Welcome back</h1>
-                    <p className="text-blue-100 text-xs font-medium">Sign in to your MediPortal account</p>
+                    <h1 className="text-xl font-bold mb-0.5 text-white tracking-wide">Welcome back</h1>
+                    <p className="text-blue-100/90 text-xs font-medium">Sign in to your secure portal</p>
                 </div>
             </div>
 
             {/* ── Tab switcher ── */}
-            <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
+            <div className="flex bg-slate-100 border border-slate-200/60 rounded-xl p-1 mb-6 backdrop-blur-sm">
                 {[
                     { key: 'doctor', label: 'Doctor', Icon: Stethoscope },
                     { key: 'patient', label: 'Patient', Icon: Heart },
@@ -91,46 +91,44 @@ const Login = () => {
                     <button
                         key={key}
                         onClick={() => { setTab(key); setServerError(''); setForm({ email: '', password: '' }); setTouched({ email: false, password: false }); }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${tab === key
-                            ? key === 'patient'
-                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20'
-                                : 'bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md shadow-blue-500/20'
-                            : 'text-slate-500 hover:text-slate-700'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${tab === key
+                            ? 'bg-white border border-slate-200/50 text-blue-700 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
                     >
-                        <Icon size={15} /> {label}
+                        <Icon size={15} className={tab === key ? 'text-blue-600' : ''} /> {label}
                     </button>
                 ))}
             </div>
 
-            <p className="text-sm font-medium text-slate-500 mb-6">Access your {isPatient ? 'healthcare' : 'practice'} dashboard</p>
+            <p className="text-sm font-medium text-slate-500 mb-6 text-center">Access your {isPatient ? 'health records' : 'practice'} securely</p>
 
             {serverError && (
-                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-fade-in">
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
                     <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
                     <p className="text-sm text-red-700 font-medium leading-relaxed">{serverError}</p>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 {/* Email */}
                 <div className="space-y-1.5">
                     <label className="block text-sm font-semibold text-slate-700">Email Address</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail size={15} className="text-slate-400" />
+                            <Mail size={16} className="text-slate-400" />
                         </div>
                         <input
                             id="email" type="email" autoComplete="email"
                             placeholder={isPatient ? 'patient@email.com' : 'doctor@hospital.com'}
                             value={form.email} onChange={set('email')} onBlur={blur('email')}
-                            className={`input-field pr-9 ${errors.email ? 'border-red-400' : touched.email && form.email && !errors.email ? 'border-emerald-400' : ''}`}
-                            style={{ paddingLeft: '38px' }}
+                            className={`w-full bg-white/50 backdrop-blur-sm border ${errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : touched.email && form.email && !errors.email ? 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'} text-slate-900 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-4 transition-all duration-300 shadow-sm`}
+                            style={{ paddingLeft: '40px', paddingTop: '12px', paddingBottom: '12px' }}
                         />
                         <div className="absolute inset-y-0 right-3 flex items-center">
                             <FieldStatus valid={!!form.email && !errors.email} touched={touched.email} />
                         </div>
                     </div>
-                    {errors.email && <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {errors.email}</p>}
+                    {errors.email && <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5 mt-1"><AlertCircle size={12} /> {errors.email}</p>}
                 </div>
 
                 {/* Password */}
@@ -138,63 +136,63 @@ const Login = () => {
                     <label className="block text-sm font-semibold text-slate-700">Password</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock size={15} className="text-slate-400" />
+                            <Lock size={16} className="text-slate-400" />
                         </div>
                         <input
                             id="password" type={showPw ? 'text' : 'password'} autoComplete="current-password"
                             placeholder="••••••••"
                             value={form.password} onChange={set('password')} onBlur={blur('password')}
-                            className={`input-field ${errors.password ? 'border-red-400' : ''}`}
-                            style={{ paddingLeft: '38px', paddingRight: '70px' }}
+                            className={`w-full bg-white/50 backdrop-blur-sm border ${errors.password ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'} text-slate-900 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-4 transition-all duration-300 shadow-sm`}
+                            style={{ paddingLeft: '40px', paddingRight: '70px', paddingTop: '12px', paddingBottom: '12px' }}
                         />
                         <button type="button" onClick={() => setShowPw(v => !v)}
-                            className="absolute inset-y-0 right-9 flex items-center px-2 text-slate-400 hover:text-slate-600" tabIndex={-1}>
-                            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                            className="absolute inset-y-0 right-10 flex items-center px-2 text-slate-400 hover:text-blue-500 transition-colors" tabIndex={-1}>
+                            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                         <div className="absolute inset-y-0 right-3 flex items-center">
                             <FieldStatus valid={!!form.password} touched={touched.password} />
                         </div>
                     </div>
-                    {errors.password && <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {errors.password}</p>}
+                    {errors.password && <p className="text-xs font-semibold text-red-500 flex items-center gap-1.5 mt-1"><AlertCircle size={12} /> {errors.password}</p>}
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-4">
                     <button type="submit" disabled={loading}
-                        className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm transition-all duration-200
-                            bg-gradient-to-r ${accentFrom} ${accentTo} text-white shadow-lg ${accentShadow} ${accentHoverFrom} ${accentHoverTo} active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed`}>
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-300
+                            bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed`}>
                         {loading ? (
-                            <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg> Signing in…</>
-                        ) : (<>Sign In <ArrowRight size={16} /></>)}
+                            <><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg> Authenticating…</>
+                        ) : (<>Secure Sign In <ArrowRight size={18} /></>)}
                     </button>
                 </div>
             </form>
 
             {/* Demo credentials */}
             {!isPatient && (
-                <div className="mt-5 border border-dashed border-slate-200 rounded-xl p-4 bg-slate-50/80">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <span className="h-4 w-4 rounded bg-amber-100 text-amber-600 flex items-center justify-center text-[9px] font-black">i</span>
+                <div className="mt-8 border border-slate-200/60 rounded-xl p-5 bg-white/50 backdrop-blur-md relative overflow-hidden group shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-200">i</span>
                         Demo Admin Credentials
                     </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 relative z-10">
                         <div>
-                            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Email</p>
-                            <p className="text-xs text-slate-700 font-mono">admin@mediportal.com</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Email</p>
+                            <p className="text-xs text-slate-700 font-mono mt-0.5">admin@mediportal.com</p>
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Password</p>
-                            <p className="text-xs text-slate-700 font-mono">admin123</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Password</p>
+                            <p className="text-xs text-slate-700 font-mono mt-0.5">admin123</p>
                         </div>
                     </div>
                 </div>
             )}
 
             {/* Link to appropriate registration page */}
-            <p className="text-center text-sm font-medium text-slate-500 mt-6">
+            <p className="text-center text-sm font-medium text-slate-500 mt-8">
                 Don't have an account?{' '}
-                <Link to={isPatient ? '/patient/register' : '/register'} className={`font-bold hover:underline 
-                    ${isPatient ? 'text-blue-600 hover:text-blue-700' : 'text-blue-600 hover:text-blue-800'}`}>
-                    Create {isPatient ? 'Patient' : 'Doctor'} Account
+                <Link to={isPatient ? '/patient/register' : '/register'} className="font-bold text-blue-600 hover:text-indigo-600 hover:underline transition-colors">
+                    Create {isPatient ? 'Patient' : 'Doctor'} Profile
                 </Link>
             </p>
         </div>

@@ -219,11 +219,61 @@ const getAnalytics = async (req, res) => {
     }
 };
 
+// @desc    Get patients who have booked appointments with the doctor
+// @route   GET /api/v1/doctors/patients
+// @access  Private/Doctor
+const getPatients = async (req, res) => {
+    try {
+        const doctor = await Doctor.findOne({ userId: req.user._id });
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+        // Aggregate patients from appointments
+        const patients = await Appointment.aggregate([
+            { $match: { doctorId: doctor._id } },
+            {
+                $group: {
+                    _id: '$patientId',
+                    lastVisit: { $max: '$appointmentDate' },
+                    totalVisits: { $sum: 1 },
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'patientDetails'
+                }
+            },
+            { $unwind: '$patientDetails' },
+            {
+                $project: {
+                    _id: 1,
+                    lastVisit: 1,
+                    totalVisits: 1,
+                    name: { $concat: ['$patientDetails.patientProfile.firstName', ' ', '$patientDetails.patientProfile.lastName'] },
+                    email: '$patientDetails.email',
+                    phone: '$patientDetails.patientProfile.phone',
+                    gender: '$patientDetails.patientProfile.gender',
+                    dob: '$patientDetails.patientProfile.dateOfBirth',
+                }
+            },
+            { $sort: { lastVisit: -1 } }
+        ]);
+
+        res.json(patients);
+    } catch (error) {
+        console.error('getPatients error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getProfile,
     updateProfile,
     updateAvailability,
     getAppointments,
     updateAppointmentStatus,
-    getAnalytics
+    getAnalytics,
+    getPatients,
 };
