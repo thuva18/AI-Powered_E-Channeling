@@ -7,6 +7,12 @@ const {
     cancelAppointment,
     getMyProfile,
     updateMyProfile,
+<<<<<<< Updated upstream
+=======
+    deleteMyProfile,
+    getPatientAnalytics,
+    getJournals,
+>>>>>>> Stashed changes
 } = require('../controllers/patientController');
 const { protect, patientOnly } = require('../middlewares/authMiddleware');
 
