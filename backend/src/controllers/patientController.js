@@ -203,9 +203,6 @@ const updateMyProfile = async (req, res) => {
     }
 };
 
-<<<<<<< Updated upstream
-module.exports = { getApprovedDoctors, getMyAppointments, bookAppointment, cancelAppointment, getMyProfile, updateMyProfile };
-=======
 // @desc    Delete current patient's own profile and account
 // @route   DELETE /api/v1/patients/profile
 // @access  Private/Patient
@@ -293,4 +290,3 @@ module.exports = {
     getPatientAnalytics,
     getJournals,
 };
->>>>>>> Stashed changes

@@ -7,19 +7,16 @@ const {
     cancelAppointment,
     getMyProfile,
     updateMyProfile,
-<<<<<<< Updated upstream
-=======
     deleteMyProfile,
     getPatientAnalytics,
     getJournals,
->>>>>>> Stashed changes
 } = require('../controllers/patientController');
 const { protect, patientOnly } = require('../middlewares/authMiddleware');
 
 router.use(protect);
 router.use(patientOnly);
 
-router.route('/profile').get(getMyProfile).put(updateMyProfile);
+router.route('/profile').get(getMyProfile).put(updateMyProfile).delete(deleteMyProfile);
 router.get('/analytics', getPatientAnalytics);
 router.get('/doctors', getApprovedDoctors);
 router.get('/journals', getJournals);
