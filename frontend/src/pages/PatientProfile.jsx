@@ -3,7 +3,7 @@ import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import {
     User, Mail, Phone, Calendar, Save, CheckCircle,
-    AlertCircle, IdCard, Shield, Edit3,
+    AlertCircle, IdCard, Shield, Edit3, Trash2, XCircle
 } from 'lucide-react';
 
 const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
@@ -18,6 +18,8 @@ const PatientProfile = () => {
         firstName: '', lastName: '', phone: '', nic: '', dateOfBirth: '',
     });
     const [errors, setErrors] = useState({});
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -74,6 +76,19 @@ const PatientProfile = () => {
             showToast(err.response?.data?.message || 'Failed to update profile.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setDeleting(true);
+        try {
+            await api.delete('/patients/profile');
+            updateUser(null);
+            window.location.href = '/';
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to delete account', 'error');
+            setDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -173,7 +188,15 @@ const PatientProfile = () => {
                     />
                 </div>
 
-                <div className="flex justify-end mt-4">
+                <div className="flex items-center justify-between mt-6">
+                    <button
+                        type="button"
+                        onClick={() => setShowDeleteModal(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
+                        <Trash2 size={16} /> Delete Account
+                    </button>
+
                     <button
                         type="submit"
                         disabled={saving}
@@ -189,6 +212,44 @@ const PatientProfile = () => {
                     </button>
                 </div>
             </form>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-fade-up border border-slate-100 relative">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-full bg-red-100 mx-auto mb-5 text-red-600">
+                            <Trash2 size={24} />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 text-center">Delete Account</h3>
+                        <p className="text-sm font-medium text-slate-500 mt-2 text-center">
+                            Are you absolutely sure you want to delete your account? This action is <strong className="text-red-500">permanent</strong> and cannot be undone. All your appointments and data will be lost.
+                        </p>
+
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                disabled={deleting}
+                                className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="flex-1 py-3 px-4 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-500/20 hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {deleting ? (
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                ) : <Trash2 size={16} />}
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

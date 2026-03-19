@@ -91,7 +91,7 @@ const BANK_DETAILS = {
 const PAYPAL_EMAIL = 'payments@mediportal.lk';
 
 // ── BookingModal ───────────────────────────────────────────────────────────────
-const BookingModal = ({ doctor, onClose, onBooked }) => {
+const BookingModal = ({ doctor, onClose, onBooked, symptomDescription = '', symptomImageFiles = [] }) => {
     const navigate = useNavigate();
     // Step 1: slot selection, Step 2: payment
     const [step, setStep] = useState(1);
@@ -106,6 +106,19 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
     const [error, setError] = useState('');
     const [paymentScreen, setPaymentScreen] = useState(null); // null | 'pending' | 'success' | 'failed' | 'polling'
     const [receiptId, setReceiptId] = useState(null);
+    const [base64Images, setBase64Images] = useState([]);
+
+    // Convert symptom image files to base64 on mount
+    useEffect(() => {
+        if (!symptomImageFiles || symptomImageFiles.length === 0) return;
+        Promise.all(
+            symptomImageFiles.map(file => new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(file);
+            }))
+        ).then(setBase64Images);
+    }, [symptomImageFiles]);
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -147,6 +160,9 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                 appointmentDate: date,
                 timeSlot: slot,
                 method: selectedMethod,
+                symptomDescription: symptomDescription || '',
+                symptoms: symptomDescription ? symptomDescription.split(/[,;.]+/).map(s => s.trim()).filter(Boolean) : [],
+                symptomImages: base64Images,
             });
 
             setTransactionId(data.transactionId);
@@ -406,6 +422,26 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                     {/* ── Step 1: Date & Slot ── */}
                     {!paymentScreen && step === 1 && (
                         <div className="space-y-4">
+
+                            {/* Symptom summary (read-only) */}
+                            {(symptomDescription || base64Images.length > 0) && (
+                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2">
+                                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Your Submitted Symptoms</p>
+                                    {symptomDescription && (
+                                        <p className="text-sm text-slate-700 leading-relaxed">{symptomDescription}</p>
+                                    )}
+                                    {base64Images.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {base64Images.map((src, idx) => (
+                                                <img key={idx} src={src} alt={`symptom-${idx}`}
+                                                    className="h-14 w-14 object-cover rounded-lg border border-blue-200 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                                    onClick={() => window.open(src, '_blank')} />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Date picker */}
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-semibold text-slate-700">Select Date</label>
@@ -757,6 +793,8 @@ const PatientBookAppointment = () => {
                     doctor={bookTarget}
                     onClose={() => setBookTarget(null)}
                     onBooked={() => setBookTarget(null)}
+                    symptomDescription={symptoms}
+                    symptomImageFiles={images}
                 />
             )}
 

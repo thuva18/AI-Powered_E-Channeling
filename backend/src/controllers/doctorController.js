@@ -268,6 +268,26 @@ const getPatients = async (req, res) => {
     }
 };
 
+// @desc    Get all appointments this doctor has had with a specific patient
+// @route   GET /api/v1/doctors/patients/:patientId/appointments
+// @access  Private/Doctor
+const getPatientAppointments = async (req, res) => {
+    try {
+        const doctor = await Doctor.findOne({ userId: req.user._id });
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+        const appointments = await Appointment.find({
+            doctorId: doctor._id,
+            patientId: req.params.patientId,
+        }).sort({ appointmentDate: -1 });
+
+        res.json(appointments);
+    } catch (error) {
+        console.error('getPatientAppointments error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 module.exports = {
     getProfile,
     updateProfile,
@@ -276,4 +296,5 @@ module.exports = {
     updateAppointmentStatus,
     getAnalytics,
     getPatients,
+    getPatientAppointments,
 };
