@@ -17,7 +17,7 @@ const generatePayhereHash = (merchantId, orderId, amount, currency, merchantSecr
 // POST /api/v1/payments/initiate
 // Body: { doctorId, appointmentDate, timeSlot, symptomDescription, symptoms, method }
 const initiatePayment = async (req, res) => {
-    const { doctorId, appointmentDate, timeSlot, symptomDescription, symptoms, method } = req.body;
+    const { doctorId, appointmentDate, timeSlot, symptomDescription, symptoms, symptomImages, method } = req.body;
 
     if (!doctorId || !appointmentDate || !timeSlot || !method) {
         return res.status(400).json({ message: 'Doctor, date, time slot and payment method are required' });
@@ -53,6 +53,7 @@ const initiatePayment = async (req, res) => {
             timeSlot,
             symptomDescription: symptomDescription || '',
             symptoms: symptoms || [],
+            symptomImages: symptomImages || [],
             consultationFeeCharged: doctor.consultationFee,
             status: 'PENDING',
             paymentStatus: 'PENDING_PAYMENT',
@@ -148,12 +149,12 @@ const payhereNotify = async (req, res) => {
         const appointment = await Appointment.findById(transaction.appointmentId);
 
         if (status_code === '2') {
-            // SUCCESS
+            // SUCCESS — payment confirmed, but doctor still needs to approve
             transaction.status = 'SUCCESS';
             transaction.paidAt = new Date();
             if (appointment) {
                 appointment.paymentStatus = 'PAID';
-                appointment.status = 'ACCEPTED';
+                // Keep status PENDING so the doctor can Accept/Reject
                 await appointment.save();
             }
         } else if (status_code === '-1' || status_code === '-2' || status_code === '-3') {
@@ -331,9 +332,10 @@ const adminApproveTransaction = async (req, res) => {
         transaction.paidAt = new Date();
         await transaction.save();
 
+        // Payment approved by admin — appointment payment confirmed, but doctor still approves clinically
         await Appointment.findByIdAndUpdate(transaction.appointmentId, {
             paymentStatus: 'PAID',
-            status: 'ACCEPTED',
+            // Keep status PENDING so the doctor can Accept/Reject
         });
 
         res.json({ message: 'Transaction approved successfully', transaction });

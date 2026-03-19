@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { Badge, EmptyState, SectionHeader } from '../components/ui/Common';
 import { Button } from '../components/ui/Button';
-import { CheckCircle, XCircle, RefreshCw, Calendar, Clock, CheckSquare, AlertCircle } from 'lucide-react';
+import {
+    CheckCircle, XCircle, RefreshCw, Calendar, Clock, CheckSquare, AlertCircle,
+    ChevronDown, ChevronUp, ImageIcon, FileText, Tag,
+} from 'lucide-react';
 
 // ── Inline toast ───────────────────────────────────────────────────────────────
 const Toast = ({ toast }) => {
@@ -31,8 +34,8 @@ const ConfirmDialog = ({ action, onConfirm, onCancel }) => {
             <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-fade-up border border-slate-100">
                 <div className="flex items-center gap-4 mb-4">
                     <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${action.status === 'ACCEPTED' ? 'bg-emerald-100 text-emerald-600' :
-                            action.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
-                                'bg-blue-100 text-blue-600'
+                        action.status === 'REJECTED' ? 'bg-red-100 text-red-600' :
+                            'bg-blue-100 text-blue-600'
                         }`}>
                         {action.status === 'ACCEPTED' && <CheckCircle size={24} />}
                         {action.status === 'REJECTED' && <XCircle size={24} />}
@@ -56,6 +59,112 @@ const ConfirmDialog = ({ action, onConfirm, onCancel }) => {
     );
 };
 
+// ── Image Lightbox ─────────────────────────────────────────────────────────────
+const ImageLightbox = ({ src, onClose }) => {
+    if (!src) return null;
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in" onClick={onClose}>
+            <img src={src} alt="symptom" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl border border-white/20" onClick={e => e.stopPropagation()} />
+            <button onClick={onClose} className="absolute top-5 right-5 h-9 w-9 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center font-bold transition-colors">
+                ✕
+            </button>
+        </div>
+    );
+};
+
+// ── Symptom Detail Panel ───────────────────────────────────────────────────────
+const PAYMENT_METHOD_META = {
+    PAYHERE: { label: 'Paid via PayHere', icon: '🏦', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+    BANK_TRANSFER: { label: 'Paid via Bank Transfer (Admin verified)', icon: '🏛️', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    PAYPAL: { label: 'Paid via PayPal (Admin verified)', icon: '💳', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+};
+
+const SymptomPanel = ({ apt }) => {
+    const [lightboxSrc, setLightboxSrc] = useState(null);
+    const hasSymptoms = apt.symptomDescription || (apt.symptoms && apt.symptoms.length > 0);
+    const hasImages = apt.symptomImages && apt.symptomImages.length > 0;
+    const paymentMeta = PAYMENT_METHOD_META[apt.paymentMethod];
+
+    return (
+        <>
+            {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+            <div className="px-8 py-5 bg-blue-50/40 border-t border-blue-100/60 space-y-4">
+
+                {/* Payment verification badge */}
+                {apt.paymentStatus === 'PAID' && paymentMeta && (
+                    <div className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border ${paymentMeta.color}`}>
+                        <span>{paymentMeta.icon}</span> {paymentMeta.label}
+                        <span className="ml-1 text-emerald-600 font-bold">✓ Payment Confirmed</span>
+                    </div>
+                )}
+                {apt.paymentStatus !== 'PAID' && (
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border bg-amber-50 text-amber-700 border-amber-200">
+                        ⏳ Payment Pending
+                    </div>
+                )}
+
+                {/* Symptom description */}
+                {apt.symptomDescription && (
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider">
+                            <FileText size={13} /> Symptom Description
+                        </div>
+                        <p className="text-sm text-slate-700 leading-relaxed bg-white rounded-xl px-4 py-3 border border-blue-100 shadow-sm">
+                            {apt.symptomDescription}
+                        </p>
+                    </div>
+                )}
+
+                {/* Symptom tags */}
+                {apt.symptoms && apt.symptoms.length > 0 && (
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider">
+                            <Tag size={13} /> Symptom Tags
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {apt.symptoms.map((s, idx) => (
+                                <span key={idx} className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200">
+                                    {s}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Symptom images */}
+                {hasImages && (
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 uppercase tracking-wider">
+                            <ImageIcon size={13} /> Uploaded Images ({apt.symptomImages.length})
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {apt.symptomImages.map((src, idx) => (
+                                <div key={idx} className="relative group cursor-pointer" onClick={() => setLightboxSrc(src)}>
+                                    <img
+                                        src={src}
+                                        alt={`symptom-image-${idx + 1}`}
+                                        className="h-20 w-20 object-cover rounded-xl border-2 border-blue-200 shadow-sm group-hover:border-blue-400 group-hover:shadow-md group-hover:scale-105 transition-all duration-200"
+                                    />
+                                    <div className="absolute inset-0 rounded-xl bg-blue-600/0 group-hover:bg-blue-600/10 transition-colors" />
+                                </div>
+                            ))}
+                        </div>
+                        <p className="text-xs text-slate-400">Click an image to view full size</p>
+                    </div>
+                )}
+
+                {!hasSymptoms && !hasImages && (
+                    <div className="flex items-center gap-2 text-slate-400 text-sm italic">
+                        <FileText size={14} />
+                        No symptoms or images submitted by the patient.
+                    </div>
+                )}
+            </div>
+        </>
+    );
+};
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 const DoctorAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,6 +172,7 @@ const DoctorAppointments = () => {
     const [updating, setUpdating] = useState(null);
     const [toast, setToast] = useState(null);
     const [confirm, setConfirm] = useState(null); // { id, status }
+    const [expandedId, setExpandedId] = useState(null); // which row is expanded
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -93,7 +203,6 @@ const DoctorAppointments = () => {
         setUpdating(id + status);
         try {
             await api.patch(`/doctors/appointments/${id}/status`, { status });
-            // Optimistic update — no full reload needed
             setAppointments(prev =>
                 prev.map(apt => apt._id === id ? { ...apt, status } : apt)
             );
@@ -104,6 +213,10 @@ const DoctorAppointments = () => {
         } finally {
             setUpdating(null);
         }
+    };
+
+    const toggleExpand = (id) => {
+        setExpandedId(prev => (prev === id ? null : id));
     };
 
     const filters = ['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED'];
@@ -172,73 +285,105 @@ const DoctorAppointments = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-slate-200/60 bg-slate-50/50">
-                                    {['Patient', 'Date', 'Time Slot', 'Status', 'Payment', 'Actions'].map((h) => (
+                                    {['Patient', 'Date', 'Time Slot', 'Status', 'Payment', 'Actions', 'Details'].map((h) => (
                                         <th key={h} className="px-8 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100/50">
                                 {filtered.map((apt) => (
-                                    <tr key={apt._id} className={`hover:bg-blue-50/30 transition-all ${updating === apt._id + apt.status ? 'opacity-50 scale-[0.99]' : ''}`}>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-50 border border-blue-200 flex items-center justify-center text-blue-700 text-base font-bold shrink-0 shadow-sm">
-                                                    {apt.patientId?.email?.[0]?.toUpperCase() || 'P'}
+                                    <>
+                                        <tr
+                                            key={apt._id}
+                                            className={`hover:bg-blue-50/30 transition-all ${updating === apt._id + apt.status ? 'opacity-50 scale-[0.99]' : ''} ${expandedId === apt._id ? 'bg-blue-50/20' : ''}`}
+                                        >
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-50 border border-blue-200 flex items-center justify-center text-blue-700 text-base font-bold shrink-0 shadow-sm">
+                                                        {apt.patientId?.email?.[0]?.toUpperCase() || 'P'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-base font-bold text-slate-900">{apt.patientId?.email || 'Patient'}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-base font-bold text-slate-900">{apt.patientId?.email || 'Patient'}</p>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                                    <Calendar size={15} className="text-blue-500" />
+                                                    {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                                <Calendar size={15} className="text-blue-500" />
-                                                {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                                <Clock size={15} className="text-amber-500" />
-                                                {apt.timeSlot || '—'}
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5"><Badge status={apt.status} /></td>
-                                        <td className="px-8 py-5"><Badge status={apt.paymentStatus} /></td>
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                {apt.status === 'PENDING' && (
-                                                    <>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                                    <Clock size={15} className="text-amber-500" />
+                                                    {apt.timeSlot || '—'}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5"><Badge status={apt.status} /></td>
+                                            <td className="px-8 py-5"><Badge status={apt.paymentStatus} /></td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {apt.status === 'PENDING' && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleStatusRequest(apt._id, 'ACCEPTED')}
+                                                                disabled={!!updating}
+                                                                className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50"
+                                                            >
+                                                                <CheckCircle size={15} /> Accept
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleStatusRequest(apt._id, 'REJECTED')}
+                                                                disabled={!!updating}
+                                                                className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/30 hover:border-transparent active:scale-95 transition-all disabled:opacity-50"
+                                                            >
+                                                                <XCircle size={15} /> Reject
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {apt.status === 'ACCEPTED' && (
                                                         <button
-                                                            onClick={() => handleStatusRequest(apt._id, 'ACCEPTED')}
+                                                            onClick={() => handleStatusRequest(apt._id, 'COMPLETED')}
                                                             disabled={!!updating}
-                                                            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-95 transition-all disabled:opacity-50"
+                                                            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 transition-all disabled:opacity-50"
                                                         >
-                                                            <CheckCircle size={15} /> Accept
+                                                            <CheckSquare size={15} /> Complete
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleStatusRequest(apt._id, 'REJECTED')}
-                                                            disabled={!!updating}
-                                                            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/30 hover:border-transparent active:scale-95 transition-all disabled:opacity-50"
-                                                        >
-                                                            <XCircle size={15} /> Reject
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {apt.status === 'ACCEPTED' && (
-                                                    <button
-                                                        onClick={() => handleStatusRequest(apt._id, 'COMPLETED')}
-                                                        disabled={!!updating}
-                                                        className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 transition-all disabled:opacity-50"
-                                                    >
-                                                        <CheckSquare size={15} /> Complete
-                                                    </button>
-                                                )}
-                                                {(apt.status === 'REJECTED' || apt.status === 'COMPLETED') && (
-                                                    <span className="text-sm font-bold text-slate-400 italic bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">—</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
+                                                    )}
+                                                    {(apt.status === 'REJECTED' || apt.status === 'COMPLETED') && (
+                                                        <span className="text-sm font-bold text-slate-400 italic bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">—</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {/* Details toggle */}
+                                            <td className="px-8 py-5">
+                                                <button
+                                                    onClick={() => toggleExpand(apt._id)}
+                                                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all border ${expandedId === apt._id
+                                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'
+                                                        }`}
+                                                >
+                                                    {expandedId === apt._id ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                                    {expandedId === apt._id ? 'Hide' : 'View'}
+                                                    {(apt.symptomImages?.length > 0) && (
+                                                        <span className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 text-[10px] font-bold">
+                                                            <ImageIcon size={9} />{apt.symptomImages.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        {/* Expandable symptom detail row */}
+                                        {expandedId === apt._id && (
+                                            <tr key={`${apt._id}-detail`} className="bg-blue-50/20">
+                                                <td colSpan={7} className="p-0">
+                                                    <SymptomPanel apt={apt} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 ))}
                             </tbody>
                         </table>
