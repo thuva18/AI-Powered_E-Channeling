@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Input, Textarea } from '../components/ui/Input';
+<<<<<<< Updated upstream
 import { Badge, EmptyState, SectionHeader } from '../components/ui/Common';
+=======
+import { EmptyState, SectionHeader } from '../components/ui/Common';
+>>>>>>> Stashed changes
 import {
     BookOpen, Plus, Trash2, Edit3, X, Save,
     User, Calendar, Phone, Pill, ChevronRight, ChevronDown,
@@ -59,7 +63,11 @@ const JournalModal = ({ entry, patients, onClose, onSave }) => {
             if (isEdit) await api.put(`/doctors/journal/${entry._id}`, form);
             else await api.post('/doctors/journal', form);
             onSave();
+<<<<<<< Updated upstream
         } catch (e) {
+=======
+        } catch { // e
+>>>>>>> Stashed changes
             setError('Failed to save entry. Please try again.');
         } finally {
             setSaving(false);

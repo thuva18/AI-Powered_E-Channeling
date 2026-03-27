@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import {
     CreditCard, CheckCircle, Clock, XCircle, AlertCircle, RefreshCw,
+<<<<<<< Updated upstream
     Building2, Wallet, User, Stethoscope, Calendar, ChevronDown,
+=======
+    Stethoscope, Calendar, ChevronDown,
+>>>>>>> Stashed changes
     ClipboardList, Filter, ShieldCheck,
 } from 'lucide-react';
 

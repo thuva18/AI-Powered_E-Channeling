@@ -59,7 +59,11 @@ const ViewReportModal = ({ report, onClose }) => {
                         <div>
                             <p className="text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">{report.type === 'advanced' ? 'Advanced' : 'Standard'} Report</p>
                             <h2 className="text-xl font-bold">{report.name}</h2>
+<<<<<<< Updated upstream
                             <p className="text-blue-200 text-sm mt-1">{report.dateFrom} → {report.dateTo} · Saved {fmtDate(report.savedAt)}</p>
+=======
+                            <p className="text-blue-200 text-sm mt-1">{report.dateFrom} → {report.dateTo} · Saved {fmtDate(report.createdAt)}</p>
+>>>>>>> Stashed changes
                         </div>
                         <button onClick={onClose} className="h-9 w-9 rounded-xl bg-white/20 hover:bg-white/30 flex items-center justify-center"><X size={16} /></button>
                     </div>
@@ -704,11 +708,18 @@ const HistoryTab = ({ savedReports, setSavedReports, showToast, setViewReport, s
                                     <p className="text-xs text-slate-700 font-medium">{r.dateFrom}</p>
                                     <p className="text-[10px] text-slate-400">to {r.dateTo}</p>
                                 </td>
+<<<<<<< Updated upstream
                                 <td className="px-5 py-4"><span className="text-xs text-slate-400">{fmtDate(r.savedAt)}</span></td>
                                 <td className="px-5 py-4">
                                     <div className="flex items-center gap-1.5">
                                         <button onClick={() => setViewReport(r)} className="h-7 w-7 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600" title="View"><Eye size={13} /></button>
                                         <button onClick={() => onEdit(r)} className="h-7 w-7 rounded-lg bg-amber-50 hover:bg-amber-100 flex items-center justify-center text-amber-600" title="Edit"><Pencil size={13} /></button>
+=======
+                                <td className="px-5 py-4"><span className="text-xs text-slate-400">{fmtDate(r.createdAt)}</span></td>
+                                <td className="px-5 py-4">
+                                    <div className="flex items-center gap-1.5">
+                                        <button onClick={() => setViewReport(r)} className="h-7 w-7 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600" title="View"><Eye size={13} /></button>
+>>>>>>> Stashed changes
                                         <button onClick={() => handleDownloadAgain(r)} className="h-7 w-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500" title="Re-download PDF"><Download size={13} /></button>
                                         <button onClick={() => setDeleteId(r._id)} className="h-7 w-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500" title="Delete"><Trash2 size={13} /></button>
                                     </div>

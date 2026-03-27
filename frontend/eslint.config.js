@@ -29,6 +29,12 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+<<<<<<< Updated upstream
+=======
+      'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
+      'no-unused-vars': 'warn',
+>>>>>>> Stashed changes
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
