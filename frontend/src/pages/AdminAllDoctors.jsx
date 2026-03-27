@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+<<<<<<< Updated upstream
 import {
     Users, RefreshCw, CheckCircle, XCircle, Clock, Trash2,
     Shield, ShieldCheck, ShieldX, Search, IdCard, Phone,
@@ -24,6 +25,60 @@ const ConfirmModal = ({ action, onConfirm, onCancel }) => {
         : isApprove
             ? 'This will grant the doctor full dashboard access.'
             : 'This will deny the doctor access to the platform.';
+=======
+import {
+    Users, RefreshCw, CheckCircle, XCircle, Clock, Trash2,
+    ShieldCheck, ShieldX, Search, IdCard, Phone,
+} from 'lucide-react';
+
+const STATUS_CFG = {
+    APPROVED: { label: 'Approved', cls: 'bg-emerald-100 text-emerald-700', Icon: ShieldCheck },
+    PENDING: { label: 'Pending', cls: 'bg-amber-100 text-amber-700', Icon: Clock },
+    REJECTED: { label: 'Rejected', cls: 'bg-red-100 text-red-700', Icon: ShieldX },
+};
+
+const FILTER_PILLS = [
+    { key: 'ALL', label: 'All', cls: 'bg-slate-100 text-slate-700 border-slate-200', active: 'bg-slate-800 text-white border-slate-800' },
+    { key: 'APPROVED', label: 'Approved', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', active: 'bg-emerald-600 text-white border-emerald-600' },
+    { key: 'PENDING', label: 'Pending', cls: 'bg-amber-50 text-amber-700 border-amber-200', active: 'bg-amber-500 text-white border-amber-500' },
+    { key: 'REJECTED', label: 'Rejected', cls: 'bg-red-50 text-red-700 border-red-200', active: 'bg-red-500 text-white border-red-500' },
+];
+
+const ACTION_CFG = {
+    delete: {
+        label: 'Delete',
+        Icon: Trash2,
+        iconWrapCls: 'bg-red-50',
+        iconCls: 'text-red-500',
+        buttonCls: 'bg-red-500 hover:bg-red-600',
+        description: 'This will permanently remove the doctor and their account. This action cannot be undone.',
+    },
+    APPROVED: {
+        label: 'Approve',
+        Icon: CheckCircle,
+        iconWrapCls: 'bg-emerald-50',
+        iconCls: 'text-emerald-500',
+        buttonCls: 'bg-emerald-500 hover:bg-emerald-600',
+        description: 'This will grant the doctor full dashboard access.',
+    },
+    REJECTED: {
+        label: 'Reject',
+        Icon: XCircle,
+        iconWrapCls: 'bg-red-50',
+        iconCls: 'text-red-500',
+        buttonCls: 'bg-red-500 hover:bg-red-600',
+        description: 'This will deny the doctor access to the platform.',
+    },
+};
+
+const getDoctorName = (doctor) => `${doctor.firstName} ${doctor.lastName}`;
+
+// ── Confirmation Modal ────────────────────────────────────────────────────────
+const ConfirmModal = ({ action, onConfirm, onCancel }) => {
+    if (!action) return null;
+    const cfg = action.type === 'delete' ? ACTION_CFG.delete : ACTION_CFG[action.status];
+    const { label, Icon, description, iconWrapCls, iconCls, buttonCls } = cfg;
+>>>>>>> Stashed changes
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -31,21 +86,37 @@ const ConfirmModal = ({ action, onConfirm, onCancel }) => {
             onClick={onCancel}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fade-up"
                 onClick={e => e.stopPropagation()}>
+<<<<<<< Updated upstream
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-${color}-50`}>
                     <Icon size={28} className={`text-${color}-500`} />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 text-center mb-1">{label} Doctor?</h3>
                 <p className="text-sm text-slate-500 text-center mb-1">Dr. <strong>{action.name}</strong></p>
                 <p className="text-xs text-slate-400 text-center mb-5">{desc}</p>
+=======
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${iconWrapCls}`}>
+                    <Icon size={28} className={iconCls} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 text-center mb-1">{label} Doctor?</h3>
+                <p className="text-sm text-slate-500 text-center mb-1">Dr. <strong>{action.name}</strong></p>
+                <p className="text-xs text-slate-400 text-center mb-5">{description}</p>
+>>>>>>> Stashed changes
                 <div className="flex gap-3">
                     <button onClick={onCancel}
                         className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
                         Cancel
                     </button>
+<<<<<<< Updated upstream
                     <button onClick={onConfirm}
                         className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 shadow-sm bg-${color}-500 hover:bg-${color}-600`}>
                         {label}
                     </button>
+=======
+                    <button onClick={onConfirm}
+                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95 shadow-sm ${buttonCls}`}>
+                        {label}
+                    </button>
+>>>>>>> Stashed changes
                 </div>
             </div>
         </div>
@@ -81,8 +152,13 @@ const AdminAllDoctors = () => {
 
     useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
 
+<<<<<<< Updated upstream
     const openApprove = (doc, status) => setConfirm({ type: 'approve', id: doc._id, name: `${doc.firstName} ${doc.lastName}`, status });
     const openDelete = (doc) => setConfirm({ type: 'delete', id: doc._id, name: `${doc.firstName} ${doc.lastName}` });
+=======
+    const openApprove = (doc, status) => setConfirm({ type: 'approve', id: doc._id, name: getDoctorName(doc), status });
+    const openDelete = (doc) => setConfirm({ type: 'delete', id: doc._id, name: getDoctorName(doc) });
+>>>>>>> Stashed changes
 
     const handleConfirm = async () => {
         const { id, name, type, status } = confirm;
@@ -150,6 +226,7 @@ const AdminAllDoctors = () => {
                     </button>
                 </div>
 
+<<<<<<< Updated upstream
                 {/* Stats Pills */}
                 <div className="flex flex-wrap gap-2">
                     {[
@@ -161,6 +238,14 @@ const AdminAllDoctors = () => {
                         <button key={key} onClick={() => setFilter(key)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold transition-all ${filter === key ? active : cls}`}>
                             {label}
+=======
+                {/* Stats Pills */}
+                <div className="flex flex-wrap gap-2">
+                    {FILTER_PILLS.map(({ key, label, cls, active }) => (
+                        <button key={key} onClick={() => setFilter(key)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold transition-all ${filter === key ? active : cls}`}>
+                            {label}
+>>>>>>> Stashed changes
                             <span className={`inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold px-1 ${filter === key ? 'bg-white/20' : 'bg-black/5'}`}>
                                 {counts[key]}
                             </span>

@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+=======
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+>>>>>>> Stashed changes
 import LandingPage from './pages/LandingPage';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -21,9 +25,12 @@ import AdminPayments from './pages/AdminPayments';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminReports from './pages/AdminReports';
 import PaymentReceipt from './pages/PaymentReceipt';
+<<<<<<< Updated upstream
 import { EmptyState } from './components/ui/Common';
 import { Users } from 'lucide-react';
 
+=======
+>>>>>>> Stashed changes
 const App = () => {
   return (
     <BrowserRouter>

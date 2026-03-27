@@ -3,7 +3,11 @@ import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import {
     User, Mail, Phone, Calendar, Save, CheckCircle,
+<<<<<<< Updated upstream
     AlertCircle, IdCard, Shield, Edit3, Trash2, XCircle
+=======
+    AlertCircle, IdCard, Shield, Edit3,
+>>>>>>> Stashed changes
 } from 'lucide-react';
 
 const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
@@ -18,8 +22,11 @@ const PatientProfile = () => {
         firstName: '', lastName: '', phone: '', nic: '', dateOfBirth: '',
     });
     const [errors, setErrors] = useState({});
+<<<<<<< Updated upstream
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
+=======
+>>>>>>> Stashed changes
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -79,6 +86,7 @@ const PatientProfile = () => {
         }
     };
 
+<<<<<<< Updated upstream
     const handleDelete = async () => {
         setDeleting(true);
         try {
@@ -92,6 +100,8 @@ const PatientProfile = () => {
         }
     };
 
+=======
+>>>>>>> Stashed changes
     if (loading) return (
         <div className="max-w-2xl mx-auto card p-8 space-y-4">
             {[...Array(5)].map((_, i) => <div key={i} className="skeleton h-10 rounded-xl" />)}
@@ -188,6 +198,7 @@ const PatientProfile = () => {
                     />
                 </div>
 
+<<<<<<< Updated upstream
                 <div className="flex items-center justify-between mt-6">
                     <button
                         type="button"
@@ -197,6 +208,9 @@ const PatientProfile = () => {
                         <Trash2 size={16} /> Delete Account
                     </button>
 
+=======
+                <div className="flex justify-end mt-4">
+>>>>>>> Stashed changes
                     <button
                         type="submit"
                         disabled={saving}
@@ -212,6 +226,7 @@ const PatientProfile = () => {
                     </button>
                 </div>
             </form>
+<<<<<<< Updated upstream
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
@@ -250,6 +265,8 @@ const PatientProfile = () => {
                     </div>
                 </div>
             )}
+=======
+>>>>>>> Stashed changes
         </div>
     );
 };

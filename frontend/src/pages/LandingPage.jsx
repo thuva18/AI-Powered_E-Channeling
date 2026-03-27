@@ -1,5 +1,9 @@
 import { Link } from 'react-router-dom';
+<<<<<<< Updated upstream
 import { ShieldCheck, HeartPulse, Brain, CalendarCheck, Search, ChevronRight, Stethoscope } from 'lucide-react';
+=======
+import { ShieldCheck, HeartPulse, CalendarCheck, Search, ChevronRight, Stethoscope } from 'lucide-react';
+>>>>>>> Stashed changes
 
 const LandingPage = () => {
     return (
@@ -28,7 +32,11 @@ const LandingPage = () => {
 
             {/* ── Hero Section ── */}
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center min-h-screen">
+<<<<<<< Updated upstream
                 {/* AI Generated Light Background Image */}
+=======
+                {/* Light Background Image */}
+>>>>>>> Stashed changes
                 <div
                     className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/images/unified_light_blue_bg.png')" }}
@@ -46,7 +54,11 @@ const LandingPage = () => {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                             </span>
+<<<<<<< Updated upstream
                             AI-Powered Healthcare
+=======
+                            Digital Healthcare
+>>>>>>> Stashed changes
                         </div>
 
                         <h1 className="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6 drop-shadow-sm">
@@ -57,7 +69,11 @@ const LandingPage = () => {
                         </h1>
 
                         <p className="text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+<<<<<<< Updated upstream
                             Describe your symptoms and our AI instantly connects you with the right specialist. Book appointments in seconds, entirely online.
+=======
+                            Describe your symptoms and we connect you with the right specialist. Book appointments in seconds, entirely online.
+>>>>>>> Stashed changes
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
@@ -81,14 +97,24 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-20 animate-fade-up">
                         <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Why Choose Medicare?</h2>
+<<<<<<< Updated upstream
                         <p className="text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto font-medium">Experience a frictionless healthcare journey powered by modern AI technology and verified specialists.</p>
+=======
+                        <p className="text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto font-medium">Experience a frictionless healthcare journey with verified specialists and fast online booking.</p>
+>>>>>>> Stashed changes
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         <FeatureCard
+<<<<<<< Updated upstream
                             icon={Brain}
                             title="AI Symptom Matching"
                             desc="Not sure who to see? Describe what you're feeling, and our AI will recommend the exact specialist you need."
+=======
+                            icon={Search}
+                            title="Symptom Matching"
+                            desc="Not sure who to see? Describe what you are feeling, and we will guide you to the right specialist."
+>>>>>>> Stashed changes
                             color="text-blue-600"
                             bg="bg-blue-100/50"
                         />
