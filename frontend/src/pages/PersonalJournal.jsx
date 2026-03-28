@@ -54,13 +54,24 @@ const JournalModal = ({ entry, patients, onClose, onSave }) => {
     const handleSave = async () => {
         if (!form.patientName.trim()) { setError('Patient name is required'); return; }
         if (!form.diagnosis.trim()) { setError('Diagnosis is required'); return; }
+        
+        const payload = { ...form };
+        if (!payload.patientId) delete payload.patientId;
+        if (payload.patientAge === '') delete payload.patientAge;
+        else payload.patientAge = Number(payload.patientAge);
+        if (!payload.patientGender) delete payload.patientGender;
+        if (!payload.followUpDate) delete payload.followUpDate;
+        
+        // Remove empty prescriptions
+        payload.prescription = payload.prescription.filter(rx => rx.medication.trim() !== '');
+
         setSaving(true);
         try {
-            if (isEdit) await api.put(`/doctors/journal/${entry._id}`, form);
-            else await api.post('/doctors/journal', form);
+            if (isEdit) await api.put(`/doctors/journal/${entry._id}`, payload);
+            else await api.post('/doctors/journal', payload);
             onSave();
-        } catch { // e
-            setError('Failed to save entry. Please try again.');
+        } catch (e) {
+            setError(e.response?.data?.message || 'Failed to save entry. Please try again.');
         } finally {
             setSaving(false);
         }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import api from '../services/api';
 import { Badge, EmptyState, SectionHeader } from '../components/ui/Common';
 import { Button } from '../components/ui/Button';
@@ -292,9 +292,8 @@ const DoctorAppointments = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100/50">
                                 {filtered.map((apt) => (
-                                    <>
+                                    <Fragment key={apt._id}>
                                         <tr
-                                            key={apt._id}
                                             className={`hover:bg-blue-50/30 transition-all ${updating === apt._id + apt.status ? 'opacity-50 scale-[0.99]' : ''} ${expandedId === apt._id ? 'bg-blue-50/20' : ''}`}
                                         >
                                             <td className="px-8 py-5">
@@ -383,7 +382,7 @@ const DoctorAppointments = () => {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>
