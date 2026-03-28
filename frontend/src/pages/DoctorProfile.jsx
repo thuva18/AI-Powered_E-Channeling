@@ -189,17 +189,16 @@ const DoctorProfile = () => {
                                             style={{ paddingLeft: '38px' }}
                                         />
                                         <div className="absolute inset-y-0 right-3 flex items-center">
-                                            {form.phone && (PHONE_REGEX.test(form.phone.trim())
-                                                ? <CheckCircle size={15} className="text-emerald-500" />
-                                                : <AlertCircle size={15} className="text-red-400" />
+                                            {form.phone && !PHONE_REGEX.test(form.phone.trim()) && (
+                                                <AlertCircle size={15} className="text-red-400" />
                                             )}
                                         </div>
                                     </div>
                                     {phoneError
                                         ? <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {phoneError}</p>
-                                        : form.phone && PHONE_REGEX.test(form.phone.trim())
-                                            ? <p className="text-xs font-medium text-emerald-600 flex items-center gap-1"><CheckCircle size={11} /> Valid phone number</p>
-                                            : <p className="text-xs text-slate-400">Formats: 07XXXXXXXX or +94XXXXXXXXX</p>
+                                        : (!form.phone || !PHONE_REGEX.test(form.phone.trim())) && (
+                                            <p className="text-xs text-slate-400">Formats: 07XXXXXXXX or +94XXXXXXXXX</p>
+                                        )
                                     }
                                 </div>
 
