@@ -3,11 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import {
     CreditCard, Calendar, CheckCircle, Clock, RefreshCw, Receipt,
-<<<<<<< Updated upstream
-    XCircle, AlertCircle, Building2, Wallet, BarChart3, Filter,
-=======
     XCircle, AlertCircle, BarChart3, Filter,
->>>>>>> Stashed changes
 } from 'lucide-react';
 
 const METHOD_META = {

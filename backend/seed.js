@@ -164,21 +164,12 @@ const seed = async () => {
     console.log(`✓ Created ${patients.length} patients  (password: patient123)`);
 
     // ── 3. Create doctors + their user accounts ────────────────────────────────
-<<<<<<< Updated upstream
-    const doctorDocs = [];
-    for (const ds of DOCTOR_SEEDS) {
-        const userHash = await bcrypt.hash('doctor123', 10);
-        const userDoc = await User.create({ email: ds.email, passwordHash: userHash, role: 'DOCTOR' });
-        const doctorDoc = await Doctor.create({
-            userId: userDoc._id,
-=======
     const doctorDocs = [];
     for (const ds of DOCTOR_SEEDS) {
         // Pass plain password here; User pre-save hook hashes it once.
         const userDoc = await User.create({ email: ds.email, passwordHash: 'doctor123', role: 'DOCTOR' });
         const doctorDoc = await Doctor.create({
             userId: userDoc._id,
->>>>>>> Stashed changes
             firstName: ds.firstName,
             lastName: ds.lastName,
             slmcNumber: ds.slmcNumber,

@@ -3,11 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import {
     Receipt, Calendar, Clock, User, Stethoscope, CreditCard,
-<<<<<<< Updated upstream
-    CheckCircle, Printer, ArrowLeft, ShieldCheck, Building2, Wallet,
-=======
     CheckCircle, Printer, ArrowLeft, ShieldCheck, Wallet,
->>>>>>> Stashed changes
 } from 'lucide-react';
 
 const METHOD_LABELS = {

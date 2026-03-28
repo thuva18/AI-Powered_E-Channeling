@@ -1,33 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-<<<<<<< Updated upstream
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import {
-    Search, Stethoscope, Star, Calendar, Clock, CheckCircle, AlertCircle,
-    ChevronRight, X, Upload, ImageIcon, Sparkles, MapPin, CreditCard,
-    Building2, Wallet, ArrowLeft, ShieldCheck, Lock, ExternalLink, Receipt,
-    RefreshCw, XCircle, TrendingUp, Activity,
-} from 'lucide-react';
-import useAuthStore from '../store/authStore';
-
-// ── Keyword → specialization map (mirrors backend) ────────────────────────────
-const KEYWORD_SPEC_MAP = {
-    heart: 'Cardiologist', chest: 'Cardiologist', cardiac: 'Cardiologist',
-    palpitation: 'Cardiologist', blood: 'Cardiologist',
-    skin: 'Dermatologist', rash: 'Dermatologist', acne: 'Dermatologist', eczema: 'Dermatologist',
-    headache: 'Neurologist', migraine: 'Neurologist', seizure: 'Neurologist',
-    stomach: 'Gastroenterologist', abdomen: 'Gastroenterologist', nausea: 'Gastroenterologist',
-    allergy: 'Allergist', asthma: 'Pulmonologist', breath: 'Pulmonologist',
-    thyroid: 'Endocrinologist', diabetes: 'Endocrinologist',
-    child: 'Pediatrician', fever: 'General Physician', cold: 'General Physician',
-    fatigue: 'General Physician', flu: 'General Physician',
-    joint: 'Rheumatologist', arthritis: 'Rheumatologist',
-    ear: 'Otolaryngologist', throat: 'Otolaryngologist',
-    gynec: 'Gynecologist', period: 'Gynecologist', pregnancy: 'Gynecologist',
-};
-
-const SPEC_COLORS = {
-=======
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import {
@@ -39,7 +10,6 @@ import {
 import useAuthStore from '../store/authStore';
 import CustomCalendar from '../components/CustomCalendar';
 const SPEC_COLORS = {
->>>>>>> Stashed changes
     'Cardiologist': 'bg-red-100 text-red-700',
     'Dermatologist': 'bg-pink-100 text-pink-700',
     'Neurologist': 'bg-purple-100 text-purple-700',
@@ -105,20 +75,12 @@ const BANK_DETAILS = {
 const PAYPAL_EMAIL = 'payments@mediportal.lk';
 
 // ── BookingModal ───────────────────────────────────────────────────────────────
-<<<<<<< Updated upstream
-const BookingModal = ({ doctor, onClose, onBooked, symptomDescription = '', symptomImageFiles = [] }) => {
-    const navigate = useNavigate();
-    // Step 1: slot selection, Step 2: payment
-    const [step, setStep] = useState(1);
-    const [date, setDate] = useState('');
-=======
 const BookingModal = ({ doctor, onClose, onBooked }) => {
     
     // Step 1: slot selection, Step 2: payment
     const [step, setStep] = useState(1);
     const [searchParams] = useSearchParams();
     const [date, setDate] = useState(searchParams.get('date') || '');
->>>>>>> Stashed changes
     const [slot, setSlot] = useState('');
     // Payment state
     const [selectedMethod, setSelectedMethod] = useState(null);
@@ -129,22 +91,6 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
     const [error, setError] = useState('');
     const [paymentScreen, setPaymentScreen] = useState(null); // null | 'pending' | 'success' | 'failed' | 'polling'
     const [receiptId, setReceiptId] = useState(null);
-<<<<<<< Updated upstream
-    const [base64Images, setBase64Images] = useState([]);
-
-    // Convert symptom image files to base64 on mount
-    useEffect(() => {
-        if (!symptomImageFiles || symptomImageFiles.length === 0) return;
-        Promise.all(
-            symptomImageFiles.map(file => new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.readAsDataURL(file);
-            }))
-        ).then(setBase64Images);
-    }, [symptomImageFiles]);
-=======
->>>>>>> Stashed changes
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -186,12 +132,6 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                 appointmentDate: date,
                 timeSlot: slot,
                 method: selectedMethod,
-<<<<<<< Updated upstream
-                symptomDescription: symptomDescription || '',
-                symptoms: symptomDescription ? symptomDescription.split(/[,;.]+/).map(s => s.trim()).filter(Boolean) : [],
-                symptomImages: base64Images,
-=======
->>>>>>> Stashed changes
             });
 
             setTransactionId(data.transactionId);
@@ -451,34 +391,6 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                     {/* ── Step 1: Date & Slot ── */}
                     {!paymentScreen && step === 1 && (
                         <div className="space-y-4">
-<<<<<<< Updated upstream
-
-                            {/* Symptom summary (read-only) */}
-                            {(symptomDescription || base64Images.length > 0) && (
-                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2">
-                                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Your Submitted Symptoms</p>
-                                    {symptomDescription && (
-                                        <p className="text-sm text-slate-700 leading-relaxed">{symptomDescription}</p>
-                                    )}
-                                    {base64Images.length > 0 && (
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                            {base64Images.map((src, idx) => (
-                                                <img key={idx} src={src} alt={`symptom-${idx}`}
-                                                    className="h-14 w-14 object-cover rounded-lg border border-blue-200 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
-                                                    onClick={() => window.open(src, '_blank')} />
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Date picker */}
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-semibold text-slate-700">Select Date</label>
-                                <input type="date" min={today} value={date}
-                                    onChange={e => { setDate(e.target.value); setSlot(''); setError(''); }}
-                                    className="input-field w-full" />
-=======
                             {/* Date picker */}
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-semibold text-slate-700">Select Date</label>
@@ -495,7 +407,6 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
                                         setError('');
                                     }}
                                 />
->>>>>>> Stashed changes
                                 {date && slots.length === 0 && (
                                     <p className="text-xs text-amber-600 flex items-center gap-1">
                                         <AlertCircle size={11} /> No availability on this day. Try another date.
@@ -726,27 +637,12 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
 };
 
 // ── DoctorCard ────────────────────────────────────────────────────────────────
-<<<<<<< Updated upstream
-const DoctorCard = ({ doctor, onBook, highlighted }) => {
-=======
 const DoctorCard = ({ doctor, onBook }) => {
->>>>>>> Stashed changes
     const specColor = SPEC_COLORS[doctor.specialization] || 'bg-slate-100 text-slate-700';
     const days = doctor.availability?.map(a => a.day.slice(0, 3)).join(', ') || 'Not set';
 
     return (
-<<<<<<< Updated upstream
-        <div className={`card p-5 flex flex-col gap-4 hover:shadow-lg transition-all duration-300 border-2 ${highlighted ? 'border-blue-400 shadow-md shadow-blue-500/10' : 'border-transparent'
-            } animate-fade-up`}>
-            {highlighted && (
-                <div className="flex items-center gap-1.5 -mb-1">
-                    <Sparkles size={13} className="text-blue-500" />
-                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">Recommended</span>
-                </div>
-            )}
-=======
         <div className="card p-5 flex flex-col gap-4 hover:shadow-lg transition-all duration-300 border-2 border-transparent animate-fade-up">
->>>>>>> Stashed changes
             <div className="flex items-start gap-4">
                 {/* Avatar */}
                 <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md shrink-0">
@@ -792,20 +688,11 @@ const PatientBookAppointment = () => {
     const [symptoms, setSymptoms] = useState('');
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
-<<<<<<< Updated upstream
-    const [doctors, setDoctors] = useState([]);
-    const [searched, setSearched] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [bookTarget, setBookTarget] = useState(null);
-    const [highlightedSpecs, setHighlightedSpecs] = useState(new Set());
-    const [analytics, setAnalytics] = useState(null);
-=======
     const [doctors, setDoctors] = useState([]);
     const [searched, setSearched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bookTarget, setBookTarget] = useState(null);
     const [analytics, setAnalytics] = useState(null);
->>>>>>> Stashed changes
     const { user } = useAuthStore();
 
     useEffect(() => {
@@ -828,29 +715,12 @@ const PatientBookAppointment = () => {
         setPreviews(prev => prev.filter((_, i) => i !== idx));
     };
 
-<<<<<<< Updated upstream
-    const handleSearch = useCallback(async () => {
-        if (!symptoms.trim()) return;
-        setLoading(true);
-
-        // Compute highlighted specializations for frontend highlighting
-        const lower = symptoms.toLowerCase();
-        const matched = new Set();
-        Object.entries(KEYWORD_SPEC_MAP).forEach(([kw, spec]) => {
-            if (lower.includes(kw)) matched.add(spec);
-        });
-        setHighlightedSpecs(matched);
-
-        try {
-            const { data } = await api.get(`/patients/doctors?symptoms=${encodeURIComponent(symptoms)}`);
-=======
     const handleSearch = useCallback(async () => {
         if (!symptoms.trim()) return;
         setLoading(true);
 
         try {
             const { data } = await api.get(`/patients/doctors?symptoms=${encodeURIComponent(symptoms)}`);
->>>>>>> Stashed changes
             setDoctors(data);
             setSearched(true);
         } catch {
@@ -866,21 +736,12 @@ const PatientBookAppointment = () => {
                     doctor={bookTarget}
                     onClose={() => setBookTarget(null)}
                     onBooked={() => setBookTarget(null)}
-<<<<<<< Updated upstream
-                    symptomDescription={symptoms}
-                    symptomImageFiles={images}
-=======
->>>>>>> Stashed changes
                 />
             )}
 
             <div className="space-y-10 max-w-5xl mx-auto pb-12">
 
-<<<<<<< Updated upstream
-                {/* ── AI Generated Welcome Banner ── */}
-=======
                 {/* ── Welcome Banner ── */}
->>>>>>> Stashed changes
                 <div className="relative w-full h-64 md:h-80 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 mb-8 animate-fade-down">
                     <div
                         className="absolute inset-0 bg-cover bg-center"
@@ -891,21 +752,13 @@ const PatientBookAppointment = () => {
 
                     <div className="absolute inset-0 p-10 md:p-14 flex flex-col justify-center">
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 border border-white/30 text-white text-xs font-bold uppercase tracking-widest w-fit mb-4 backdrop-blur-md shadow-sm">
-<<<<<<< Updated upstream
-                            <Sparkles size={14} className="text-teal-200" /> AI Patient Dashboard
-=======
                             <Sparkles size={14} className="text-teal-200" /> Patient Dashboard
->>>>>>> Stashed changes
                         </div>
                         <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-lg mb-2">
                             Welcome to Medicare
                         </h1>
                         <p className="text-teal-50 text-lg md:text-xl font-medium max-w-lg drop-shadow-md">
-<<<<<<< Updated upstream
-                            Describe your symptoms to our AI engine below and we'll connect you instantly with the finest specialists.
-=======
                             Describe your symptoms below and we will connect you with the right specialists.
->>>>>>> Stashed changes
                         </p>
                     </div>
                 </div>
@@ -962,11 +815,7 @@ const PatientBookAppointment = () => {
                             <Search size={24} className="text-white" />
                         </div>
                         <div>
-<<<<<<< Updated upstream
-                            <h2 className="font-extrabold text-slate-900 text-2xl tracking-tight">AI Symptom Check</h2>
-=======
                             <h2 className="font-extrabold text-slate-900 text-2xl tracking-tight">Symptom Check</h2>
->>>>>>> Stashed changes
                             <p className="text-slate-500 font-medium">Describe what you're feeling — we'll find the right doctor</p>
                         </div>
                     </div>
@@ -1046,25 +895,6 @@ const PatientBookAppointment = () => {
                 </div>
 
                 {/* ── Doctor results ── */}
-<<<<<<< Updated upstream
-                {searched && (
-                    <div className="space-y-4 animate-fade-up">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="font-bold text-slate-900 text-lg">
-                                    {highlightedSpecs.size > 0
-                                        ? `Recommended Doctors`
-                                        : 'Available Doctors'}
-                                </h2>
-                                {highlightedSpecs.size > 0 && (
-                                    <p className="text-sm text-slate-400 mt-0.5">
-                                        Specialists in <strong className="text-blue-600">{[...highlightedSpecs].join(', ')}</strong> shown first
-                                    </p>
-                                )}
-                            </div>
-                            <span className="text-sm text-slate-400">{doctors.length} found</span>
-                        </div>
-=======
                 {searched && (
                     <div className="space-y-4 animate-fade-up">
                         <div className="flex items-center justify-between">
@@ -1073,7 +903,6 @@ const PatientBookAppointment = () => {
                             </div>
                             <span className="text-sm text-slate-400">{doctors.length} found</span>
                         </div>
->>>>>>> Stashed changes
 
                         {doctors.length === 0 ? (
                             <div className="card p-10 text-center">
@@ -1083,17 +912,6 @@ const PatientBookAppointment = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-<<<<<<< Updated upstream
-                                {doctors.map(doc => (
-                                    <DoctorCard
-                                        key={doc._id}
-                                        doctor={doc}
-                                        onBook={setBookTarget}
-                                        highlighted={highlightedSpecs.has(doc.specialization)}
-                                    />
-                                ))}
-                            </div>
-=======
                                 {doctors.map(doc => (
                                     <DoctorCard
                                         key={doc._id}
@@ -1102,7 +920,6 @@ const PatientBookAppointment = () => {
                                     />
                                 ))}
                             </div>
->>>>>>> Stashed changes
                         )}
                     </div>
                 )}
@@ -1112,7 +929,4 @@ const PatientBookAppointment = () => {
 };
 
 export default PatientBookAppointment;
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes

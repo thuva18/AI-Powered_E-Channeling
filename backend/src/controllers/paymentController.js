@@ -7,13 +7,6 @@ const User = require('../models/User');
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 // PayHere MD5 hash generation
-<<<<<<< Updated upstream
-const generatePayhereHash = (merchantId, orderId, amount, currency, merchantSecret) => {
-    const secretHash = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
-    const raw = `${merchantId}${orderId}${amount.toFixed(2)}${currency}${secretHash}`;
-    return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
-};
-=======
 const generatePayhereHash = (merchantId, orderId, amount, currency, merchantSecret) => {
     const secretHash = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
     const raw = `${merchantId}${orderId}${amount.toFixed(2)}${currency}${secretHash}`;
@@ -41,7 +34,6 @@ const sendServerError = (res, error, exposeMessage = false) =>
 
 const findPatientTransaction = (transactionId, patientId) =>
     Transaction.findOne({ _id: transactionId, patientId });
->>>>>>> Stashed changes
 
 // ── 1. Initiate Payment ────────────────────────────────────────────────────────
 // POST /api/v1/payments/initiate
@@ -53,16 +45,9 @@ const initiatePayment = async (req, res) => {
         return res.status(400).json({ message: 'Doctor, date, time slot and payment method are required' });
     }
 
-<<<<<<< Updated upstream
-    const validMethods = ['PAYHERE', 'BANK_TRANSFER', 'PAYPAL'];
-    if (!validMethods.includes(method)) {
-        return res.status(400).json({ message: 'Invalid payment method' });
-    }
-=======
     if (!PAYMENT_METHODS.includes(method)) {
         return res.status(400).json({ message: 'Invalid payment method' });
     }
->>>>>>> Stashed changes
 
     try {
         const doctor = await Doctor.findById(doctorId);
@@ -151,17 +136,10 @@ const initiatePayment = async (req, res) => {
         }
 
         res.status(201).json(responseData);
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         sendServerError(res, error, true);
     }
 };
->>>>>>> Stashed changes
 
 // ── 2. PayHere Notify (server-to-server webhook — public) ──────────────────────
 // POST /api/v1/payments/payhere-notify
@@ -200,15 +178,9 @@ const payhereNotify = async (req, res) => {
                 // Keep status PENDING so the doctor can Accept/Reject
                 await appointment.save();
             }
-<<<<<<< Updated upstream
-        } else if (status_code === '-1' || status_code === '-2' || status_code === '-3') {
-            // CANCELLED / FAILED / CHARGEDBACK
-            transaction.status = 'FAILED';
-=======
         } else if (PAYHERE_FAILED_STATUS_CODES.includes(status_code)) {
             // CANCELLED / FAILED / CHARGEDBACK
             transaction.status = 'FAILED';
->>>>>>> Stashed changes
             if (appointment) {
                 appointment.paymentStatus = 'FAILED';
                 appointment.status = 'CANCELLED';
@@ -226,20 +198,10 @@ const payhereNotify = async (req, res) => {
 // ── 3. Submit Dummy Payment Reference ─────────────────────────────────────────
 // POST /api/v1/payments/:transactionId/dummy-submit
 const submitDummyPayment = async (req, res) => {
-<<<<<<< Updated upstream
-    const { paymentReference, paymentNote } = req.body;
-
-    try {
-        const transaction = await Transaction.findOne({
-            _id: req.params.transactionId,
-            patientId: req.user._id,
-        });
-=======
     const { paymentReference, paymentNote } = req.body;
 
     try {
         const transaction = await findPatientTransaction(req.params.transactionId, req.user._id);
->>>>>>> Stashed changes
 
         if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
         if (transaction.method === 'PAYHERE') {
@@ -270,49 +232,6 @@ const submitDummyPayment = async (req, res) => {
                 receiptNumber: transaction.receiptNumber,
             },
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
-};
-
-// ── 4. Get My Transactions (Patient) ──────────────────────────────────────────
-// GET /api/v1/payments/my-transactions
-const getMyTransactions = async (req, res) => {
-    try {
-        const transactions = await Transaction.find({ patientId: req.user._id })
-            .populate({
-                path: 'appointmentId',
-                select: 'appointmentDate timeSlot status consultationFeeCharged',
-                populate: { path: 'doctorId', select: 'firstName lastName specialization' },
-            })
-            .sort({ createdAt: -1 });
-
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-
-// ── 5. Get Receipt ─────────────────────────────────────────────────────────────
-// GET /api/v1/payments/:transactionId/receipt
-const getReceipt = async (req, res) => {
-    try {
-        const transaction = await Transaction.findOne({
-            _id: req.params.transactionId,
-            patientId: req.user._id,
-        }).populate({
-            path: 'appointmentId',
-            populate: { path: 'doctorId', select: 'firstName lastName specialization consultationFee' },
-        });
-
-        if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
-
-        const allowedStatuses = ['SUCCESS', 'APPROVED'];
-        if (!allowedStatuses.includes(transaction.status)) {
-            return res.status(403).json({ message: 'Receipt not available for this transaction' });
-        }
-=======
     } catch (error) {
         sendServerError(res, error, true);
     }
@@ -346,7 +265,6 @@ const getReceipt = async (req, res) => {
         if (!RECEIPT_ALLOWED_STATUSES.includes(transaction.status)) {
             return res.status(403).json({ message: 'Receipt not available for this transaction' });
         }
->>>>>>> Stashed changes
 
         const patient = await User.findById(req.user._id).select('email patientProfile');
         const apt = transaction.appointmentId;
@@ -379,17 +297,10 @@ const getReceipt = async (req, res) => {
                 payherePaymentId: transaction.payherePaymentId,
             },
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // ── 6. Admin: Get All Transactions ─────────────────────────────────────────────
 // GET /api/v1/payments/admin/all
@@ -398,24 +309,6 @@ const adminGetAllTransactions = async (req, res) => {
         const { status, method } = req.query;
         const filter = {};
         if (status) filter.status = status;
-<<<<<<< Updated upstream
-        if (method) filter.method = method;
-
-        const transactions = await Transaction.find(filter)
-            .populate('patientId', 'email patientProfile')
-            .populate({
-                path: 'appointmentId',
-                select: 'appointmentDate timeSlot status consultationFeeCharged',
-                populate: { path: 'doctorId', select: 'firstName lastName specialization' },
-            })
-            .sort({ createdAt: -1 });
-
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
         if (method) filter.method = method;
 
         const transactions = await Transaction.find(filter)
@@ -428,7 +321,6 @@ const adminGetAllTransactions = async (req, res) => {
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // ── 7. Admin: Approve Dummy Payment ───────────────────────────────────────────
 // PATCH /api/v1/payments/admin/:transactionId/approve
@@ -453,17 +345,10 @@ const adminApproveTransaction = async (req, res) => {
         });
 
         res.json({ message: 'Transaction approved successfully', transaction });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         sendServerError(res, error, true);
     }
 };
->>>>>>> Stashed changes
 
 // ── 8. Admin: Reject Dummy Payment ────────────────────────────────────────────
 // PATCH /api/v1/payments/admin/:transactionId/reject
@@ -486,41 +371,6 @@ const adminRejectTransaction = async (req, res) => {
         });
 
         res.json({ message: 'Transaction rejected', transaction });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
-};
-
-// ── 9. Admin: Get Pending Approvals ───────────────────────────────────────────
-// GET /api/v1/payments/admin/pending
-const adminGetPendingTransactions = async (req, res) => {
-    try {
-        const transactions = await Transaction.find({ status: 'PENDING_APPROVAL' })
-            .populate('patientId', 'email patientProfile')
-            .populate({
-                path: 'appointmentId',
-                select: 'appointmentDate timeSlot consultationFeeCharged',
-                populate: { path: 'doctorId', select: 'firstName lastName specialization' },
-            })
-            .sort({ createdAt: -1 });
-
-        res.json(transactions);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-
-// ── 10. Verify PayHere payment status (called by frontend after return) ────────
-// GET /api/v1/payments/:transactionId/status
-const getTransactionStatus = async (req, res) => {
-    try {
-        const transaction = await Transaction.findOne({
-            _id: req.params.transactionId,
-            patientId: req.user._id,
-        });
-        if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
-=======
     } catch (error) {
         sendServerError(res, error, true);
     }
@@ -560,7 +410,6 @@ const getTransactionStatus = async (req, res) => {
                 await appointment.save();
             }
         }
->>>>>>> Stashed changes
 
         res.json({
             _id: transaction._id,
@@ -570,17 +419,10 @@ const getTransactionStatus = async (req, res) => {
             amount: transaction.amount,
             paidAt: transaction.paidAt,
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 module.exports = {
     initiatePayment,

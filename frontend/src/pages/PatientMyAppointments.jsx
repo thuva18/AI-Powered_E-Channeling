@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-<<<<<<< Updated upstream
-import { Calendar, Clock, CheckCircle, XCircle, AlertTriangle, RefreshCw, Ban, Stethoscope } from 'lucide-react';
-=======
 import { Calendar, Clock, CheckCircle, XCircle, RefreshCw, Ban, Stethoscope } from 'lucide-react';
->>>>>>> Stashed changes
 
 const STATUS_CONFIG = {
     PENDING: { label: 'Pending', color: 'badge-pending', icon: Clock },

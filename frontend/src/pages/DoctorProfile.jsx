@@ -70,22 +70,6 @@ const DoctorProfile = () => {
         setSaving(true);
         try {
             const payload = {
-<<<<<<< Updated upstream
-                ...form,
-                consultationFee: Number(form.consultationFee),
-                phone: form.phone.trim(),
-                profileDetails: {
-                    ...form.profileDetails,
-                    experienceYears: Number(form.profileDetails.experienceYears),
-                    qualifications: form.profileDetails.qualifications.split(',').map(q => q.trim()).filter(Boolean),
-                },
-            };
-            const { data } = await api.put('/doctors/profile', payload);
-            updateUser({ firstName: data.firstName, lastName: data.lastName });
-            showToast('Profile updated successfully!');
-        } catch {
-            showToast('Failed to update profile.', 'error');
-=======
                 firstName: form.firstName,
                 lastName: form.lastName,
                 specialization: form.specialization,
@@ -108,7 +92,6 @@ const DoctorProfile = () => {
             console.error('Profile update error:', errorMsg);
             console.error('Full error:', error);
             showToast(errorMsg, 'error');
->>>>>>> Stashed changes
         } finally {
             setSaving(false);
         }
