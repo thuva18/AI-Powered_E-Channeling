@@ -12,11 +12,7 @@ const AuthLayout = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-50">
-<<<<<<< Updated upstream
-            {/* AI Generated Universal Light Blue Background */}
-=======
             {/* Universal Light Blue Background */}
->>>>>>> Stashed changes
             <div
                 className="absolute inset-0 z-0 bg-cover bg-center"
                 style={{ backgroundImage: "url('/images/unified_light_blue_bg.png')" }}

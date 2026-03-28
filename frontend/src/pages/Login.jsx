@@ -15,10 +15,6 @@ const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuthStore();
 
-<<<<<<< Updated upstream
-    const [tab, setTab] = useState('doctor'); // 'doctor' | 'patient'
-=======
->>>>>>> Stashed changes
     const [form, setForm] = useState({ email: '', password: '' });
     const [touched, setTouched] = useState({ email: false, password: false });
     const [showPw, setShowPw] = useState(false);
@@ -37,18 +33,6 @@ const Login = () => {
         password: touched.password && !form.password ? 'Password is required' : '',
     };
 
-<<<<<<< Updated upstream
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setTouched({ email: true, password: true });
-        if (!form.email.trim() || !form.password) return;
-
-        setServerError('');
-        setLoading(true);
-        try {
-            const { data } = await api.post('/auth/login', { email: form.email, password: form.password });
-            login(data);
-=======
     const handleSubmit = async (e) => {
         e.preventDefault();
         setTouched({ email: true, password: true });
@@ -60,7 +44,6 @@ const Login = () => {
         try {
             const { data } = await api.post('/auth/login', { email, password: form.password });
             login(data);
->>>>>>> Stashed changes
             if (data.role === 'ADMIN') navigate('/admin');
             else if (data.role === 'PATIENT') navigate('/patient');
             else navigate('/dashboard');
@@ -75,18 +58,6 @@ const Login = () => {
         }
     };
 
-<<<<<<< Updated upstream
-    const isPatient = tab === 'patient';
-    const accentFrom = isPatient ? 'from-blue-600' : 'from-blue-600';
-    const accentTo = isPatient ? 'to-indigo-500' : 'to-indigo-600';
-    const accentShadow = isPatient ? 'shadow-blue-500/25' : 'shadow-blue-500/25';
-    const accentHoverFrom = isPatient ? 'hover:from-blue-700' : 'hover:from-blue-700';
-    const accentHoverTo = isPatient ? 'hover:to-indigo-600' : 'hover:to-indigo-700';
-    const registerLink = isPatient ? '/patient/register' : '/register';
-    const registerText = isPatient ? 'New patient? Register here' : 'New doctor? Apply for an account';
-
-=======
->>>>>>> Stashed changes
     return (
         <div className="space-y-0">
             {/* ── Gradient header strip ── */}
@@ -95,40 +66,14 @@ const Login = () => {
                 <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-blue-400/20 blur-xl" />
                 <div className="relative z-10">
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-sm mb-3 shadow-lg">
-<<<<<<< Updated upstream
-                        {isPatient ? <Heart size={22} className="text-white drop-shadow-md" /> : <Activity size={22} className="text-white drop-shadow-md" />}
-=======
                         <Activity size={22} className="text-white drop-shadow-md" />
->>>>>>> Stashed changes
                     </div>
                     <h1 className="text-xl font-bold mb-0.5 text-white tracking-wide">Welcome back</h1>
                     <p className="text-blue-100/90 text-xs font-medium">Sign in to your secure portal</p>
                 </div>
             </div>
 
-<<<<<<< Updated upstream
-            {/* ── Tab switcher ── */}
-            <div className="flex bg-slate-100 border border-slate-200/60 rounded-xl p-1 mb-6 backdrop-blur-sm">
-                {[
-                    { key: 'doctor', label: 'Doctor', Icon: Stethoscope },
-                    { key: 'patient', label: 'Patient', Icon: Heart },
-                ].map(({ key, label, Icon }) => (
-                    <button
-                        key={key}
-                        onClick={() => { setTab(key); setServerError(''); setForm({ email: '', password: '' }); setTouched({ email: false, password: false }); }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${tab === key
-                            ? 'bg-white border border-slate-200/50 text-blue-700 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}`}
-                    >
-                        <Icon size={15} className={tab === key ? 'text-blue-600' : ''} /> {label}
-                    </button>
-                ))}
-            </div>
-
-            <p className="text-sm font-medium text-slate-500 mb-6 text-center">Access your {isPatient ? 'health records' : 'practice'} securely</p>
-=======
             <p className="text-sm font-medium text-slate-500 mb-6 text-center">Access your account securely</p>
->>>>>>> Stashed changes
 
             {serverError && (
                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
@@ -147,11 +92,7 @@ const Login = () => {
                         </div>
                         <input
                             id="email" type="email" autoComplete="email"
-<<<<<<< Updated upstream
-                            placeholder={isPatient ? 'patient@email.com' : 'doctor@hospital.com'}
-=======
                             placeholder="user@example.com"
->>>>>>> Stashed changes
                             value={form.email} onChange={set('email')} onBlur={blur('email')}
                             className={`w-full bg-white/50 backdrop-blur-sm border ${errors.email ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : touched.email && form.email && !errors.email ? 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-400/20' : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500/20'} text-slate-900 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-4 transition-all duration-300 shadow-sm`}
                             style={{ paddingLeft: '40px', paddingTop: '12px', paddingBottom: '12px' }}
@@ -200,35 +141,6 @@ const Login = () => {
             </form>
 
             {/* Demo credentials */}
-<<<<<<< Updated upstream
-            {!isPatient && (
-                <div className="mt-8 border border-slate-200/60 rounded-xl p-5 bg-white/50 backdrop-blur-md relative overflow-hidden group shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <span className="h-4 w-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-200">i</span>
-                        Demo Admin Credentials
-                    </p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 relative z-10">
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Email</p>
-                            <p className="text-xs text-slate-700 font-mono mt-0.5">admin@mediportal.com</p>
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Password</p>
-                            <p className="text-xs text-slate-700 font-mono mt-0.5">admin123</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Link to appropriate registration page */}
-            <p className="text-center text-sm font-medium text-slate-500 mt-8">
-                Don't have an account?{' '}
-                <Link to={isPatient ? '/patient/register' : '/register'} className="font-bold text-blue-600 hover:text-indigo-600 hover:underline transition-colors">
-                    Create {isPatient ? 'Patient' : 'Doctor'} Profile
-                </Link>
-            </p>
-=======
             <div className="mt-8 border border-slate-200/60 rounded-xl p-5 bg-white/50 backdrop-blur-md relative overflow-hidden group shadow-sm">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -261,7 +173,6 @@ const Login = () => {
                     </Link>
                 </div>
             </div>
->>>>>>> Stashed changes
         </div>
     );
 };

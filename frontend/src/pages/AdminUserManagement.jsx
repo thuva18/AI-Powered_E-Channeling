@@ -3,11 +3,7 @@ import api from '../services/api';
 import {
     Users, Stethoscope, ShieldCheck, Search, RefreshCw, PlusCircle,
     Trash2, ToggleLeft, ToggleRight, Edit2, X, CheckCircle, XCircle,
-<<<<<<< Updated upstream
-    Eye, User, Mail, Phone, Calendar, IdCard, AlertTriangle, Lock,
-=======
     Eye, User, Mail, Phone, Calendar, IdCard, AlertTriangle,
->>>>>>> Stashed changes
     ChevronLeft, ChevronRight as ChevronRightIcon, Save,
 } from 'lucide-react';
 

@@ -62,16 +62,6 @@ const Register = () => {
     const [success, setSuccess] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
-<<<<<<< Updated upstream
-    // NIC duplicate check state
-    const [nicChecking, setNicChecking] = useState(false);
-    const [nicAvailable, setNicAvailable] = useState(null); // null | true | false
-
-    const set = (field) => (e) => {
-        const value = e.target.value;
-        setFormData((p) => ({ ...p, [field]: value }));
-        if (field === 'nic') setNicAvailable(null); // reset availability when typing
-=======
     // NIC duplicate-check state
     const [nicChecking, setNicChecking] = useState(false);
     const [nicAvailable, setNicAvailable] = useState(null); // null | true | false
@@ -85,7 +75,6 @@ const Register = () => {
         setFormData((p) => ({ ...p, [field]: value }));
         if (field === 'nic') setNicAvailable(null);    // reset on typing
         if (field === 'email') setEmailAvailable(null); // reset on typing (Fix #5)
->>>>>>> Stashed changes
         if (touched[field]) {
             const err = field === 'confirmPassword'
                 ? validators.confirmPassword(value, formData.password)
@@ -122,8 +111,6 @@ const Register = () => {
         }
     }, [formData.nic]);
 
-<<<<<<< Updated upstream
-=======
     // Fix #5: Real-time email duplicate check (fires on blur if format is valid)
     const handleEmailBlur = useCallback(async () => {
         blur('email')();
@@ -144,7 +131,6 @@ const Register = () => {
         }
     }, [formData.email]);
 
->>>>>>> Stashed changes
     const validateFields = (fields) => {
         const newErrors = {};
         fields.forEach((field) => {
@@ -160,16 +146,11 @@ const Register = () => {
 
     const handleNext = () => {
         if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic'])) {
-<<<<<<< Updated upstream
-            // Also block proceed if NIC is not available
-            if (nicAvailable === false) return;
-=======
             // Fix #7: block if email/NIC taken OR availability check still pending
             const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
             const nicFormatOkNow = NIC_REGEX.test(formData.nic.trim());
             if (emailFormatOk && emailAvailable !== true) return; // pending or taken
             if (nicFormatOkNow && nicAvailable !== true) return;  // pending or taken
->>>>>>> Stashed changes
             setStep(2);
         }
     };
@@ -278,20 +259,6 @@ const Register = () => {
                         />
                     </div>
 
-<<<<<<< Updated upstream
-                    <Input
-                        label="Email Address *"
-                        id="email"
-                        type="email"
-                        icon={Mail}
-                        placeholder="doctor@hospital.com"
-                        value={formData.email}
-                        onChange={set('email')}
-                        onBlur={blur('email')}
-                        error={touched.email ? errors.email : ''}
-                        autoComplete="email"
-                    />
-=======
                     {/* Fix #5 — email availability check */}
                     <div className="space-y-1.5">
                         <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
@@ -339,7 +306,6 @@ const Register = () => {
                             <p className="text-xs font-medium text-emerald-600 flex items-center gap-1"><CheckCircle size={11} /> Email available</p>
                         ) : null}
                     </div>
->>>>>>> Stashed changes
 
                     {/* Phone */}
                     <div className="space-y-1.5">

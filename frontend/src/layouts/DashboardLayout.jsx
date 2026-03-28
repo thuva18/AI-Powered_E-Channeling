@@ -2,10 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Outlet, Navigate, NavLink, useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
-<<<<<<< Updated upstream
-=======
 import CustomCalendar from '../components/CustomCalendar';
->>>>>>> Stashed changes
 import {
     LayoutDashboard, Calendar, Users, Settings,
     LogOut, Activity, ShieldCheck, Bell, ChevronRight, BookOpen,
@@ -171,8 +168,6 @@ const DashboardLayout = ({ allowedRoles }) => {
                 ))}
             </nav>
 
-<<<<<<< Updated upstream
-=======
             {/* Quick Booking Calendar (Patient Only) */}
             {isPatient && (
                 <div className="px-3 pb-1 shrink-0">
@@ -193,7 +188,6 @@ const DashboardLayout = ({ allowedRoles }) => {
                 </div>
             )}
 
->>>>>>> Stashed changes
             {/* User card */}
             <div className="p-3 border-t border-slate-100 shrink-0">
                 <div

@@ -1,10 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-<<<<<<< Updated upstream
-import { Mail, Lock, User, Phone, IdCard, Calendar, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
-=======
 import { Mail, Lock, User, Phone, IdCard, Calendar, CheckCircle, AlertCircle, ArrowRight, Heart, ShieldCheck } from 'lucide-react';
->>>>>>> Stashed changes
 import api from '../services/api';
 
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
@@ -140,13 +136,9 @@ const PatientRegister = () => {
 
     const handleNext = () => {
         if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic', 'dateOfBirth'])) {
-<<<<<<< Updated upstream
-            if (emailAvailable === false) return;
-=======
             // Fix #7: block if email taken OR availability check still pending (null)
             const emailFormatOk = EMAIL_REGEX.test(form.email.trim());
             if (emailFormatOk && emailAvailable !== true) return;
->>>>>>> Stashed changes
             setStep(2);
         }
     };

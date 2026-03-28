@@ -1,33 +1,22 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 
-<<<<<<< Updated upstream
-=======
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 const sendServerError = (res) => res.status(500).json({ message: 'Server Error' });
 const getDoctorByUserId = (userId) => Doctor.findOne({ userId });
 
->>>>>>> Stashed changes
 // @desc    Get logged in doctor profile
 // @route   GET /api/v1/doctors/profile
 // @access  Private/Doctor
 const getProfile = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id }).populate('userId', 'email role');
-=======
         const doctor = await getDoctorByUserId(req.user._id).populate('userId', 'email role');
->>>>>>> Stashed changes
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
         }
         res.json(doctor);
     } catch (error) {
-<<<<<<< Updated upstream
-        res.status(500).json({ message: 'Server Error' });
-=======
         sendServerError(res);
->>>>>>> Stashed changes
     }
 };
 
@@ -36,26 +25,13 @@ const getProfile = async (req, res) => {
 // @access  Private/Doctor
 const updateProfile = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
         }
 
         const { firstName, lastName, specialization, consultationFee, profileDetails, phone } = req.body;
 
-<<<<<<< Updated upstream
-        doctor.firstName = firstName || doctor.firstName;
-        doctor.lastName = lastName || doctor.lastName;
-        doctor.specialization = specialization || doctor.specialization;
-        doctor.consultationFee = consultationFee !== undefined ? consultationFee : doctor.consultationFee;
-
-        if (phone !== undefined) {
-            if (!/^(07\d{8}|\+94\d{9})$/.test(phone.trim())) {
-=======
         // Update simple fields - only if they have actual values
         if (firstName && firstName.trim()) doctor.firstName = firstName.trim();
         if (lastName && lastName.trim()) doctor.lastName = lastName.trim();
@@ -65,7 +41,6 @@ const updateProfile = async (req, res) => {
         // Only update phone if explicitly provided and valid
         if (phone !== undefined && phone !== '' && phone !== null) {
             if (!PHONE_REGEX.test(phone.trim())) {
->>>>>>> Stashed changes
                 return res.status(400).json({
                     message: 'Phone number must be in the format 07XXXXXXXX or +94XXXXXXXXX',
                 });
@@ -73,19 +48,6 @@ const updateProfile = async (req, res) => {
             doctor.phone = phone.trim();
         }
 
-<<<<<<< Updated upstream
-        if (profileDetails) {
-            doctor.profileDetails.bio = profileDetails.bio !== undefined ? profileDetails.bio : doctor.profileDetails.bio;
-            doctor.profileDetails.qualifications = profileDetails.qualifications || doctor.profileDetails.qualifications;
-            doctor.profileDetails.experienceYears = profileDetails.experienceYears !== undefined ? profileDetails.experienceYears : doctor.profileDetails.experienceYears;
-            doctor.profileDetails.contactNumber = profileDetails.contactNumber || doctor.profileDetails.contactNumber;
-        }
-
-        const updatedDoctor = await doctor.save();
-        res.json(updatedDoctor);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-=======
         // Update nested profileDetails object
         if (profileDetails && Object.keys(profileDetails).length > 0) {
             if (profileDetails.bio !== undefined) {
@@ -112,7 +74,6 @@ const updateProfile = async (req, res) => {
         console.error('Profile update error:', error.message);
         console.error('Full error stack:', error.stack);
         res.status(400).json({ message: error.message || 'Failed to update profile' });
->>>>>>> Stashed changes
     }
 };
 
@@ -122,11 +83,7 @@ const updateProfile = async (req, res) => {
 const updateAvailability = async (req, res) => {
     try {
         const { availability } = req.body; // array of availability objects
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
 
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
@@ -146,21 +103,13 @@ const updateAvailability = async (req, res) => {
 // @access  Private/Doctor
 const getAppointments = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
         const appointments = await Appointment.find({ doctorId: doctor._id })
             .populate('patientId', 'email')
             .sort({ appointmentDate: 1 });
         res.json(appointments);
     } catch (error) {
-<<<<<<< Updated upstream
-        res.status(500).json({ message: 'Server Error' });
-=======
         sendServerError(res);
->>>>>>> Stashed changes
     }
 };
 
@@ -170,11 +119,7 @@ const getAppointments = async (req, res) => {
 const updateAppointmentStatus = async (req, res) => {
     try {
         const { status } = req.body; // 'ACCEPTED' or 'REJECTED'
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
 
         const appointment = await Appointment.findById(req.params.id);
         if (!appointment) {
@@ -190,11 +135,7 @@ const updateAppointmentStatus = async (req, res) => {
 
         res.json(updatedAppointment);
     } catch (error) {
-<<<<<<< Updated upstream
-        res.status(500).json({ message: 'Server Error' });
-=======
         sendServerError(res);
->>>>>>> Stashed changes
     }
 };
 
@@ -203,11 +144,7 @@ const updateAppointmentStatus = async (req, res) => {
 // @access  Private/Doctor
 const getAnalytics = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
         const sixMonthsAgo = new Date();
@@ -308,11 +245,7 @@ const getAnalytics = async (req, res) => {
 // @access  Private/Doctor
 const getPatients = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
         // Aggregate patients from appointments
@@ -361,11 +294,7 @@ const getPatients = async (req, res) => {
 // @access  Private/Doctor
 const getPatientAppointments = async (req, res) => {
     try {
-<<<<<<< Updated upstream
-        const doctor = await Doctor.findOne({ userId: req.user._id });
-=======
         const doctor = await getDoctorByUserId(req.user._id);
->>>>>>> Stashed changes
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
         const appointments = await Appointment.find({

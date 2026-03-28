@@ -6,11 +6,7 @@ import {
     Users, Stethoscope, Calendar, CreditCard, TrendingUp, TrendingDown,
     CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, ShieldCheck,
     ArrowRight, Activity, ExternalLink, BarChart3, Wallet, Star,
-<<<<<<< Updated upstream
-    UserPlus, BadgeCheck, ChevronRight, CircleDot,
-=======
     BadgeCheck, ChevronRight, CircleDot,
->>>>>>> Stashed changes
 } from 'lucide-react';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

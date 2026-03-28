@@ -113,10 +113,6 @@ export function generateStandardPDF({ reportName, dateFrom, dateTo, data }) {
     const a = data?.appointments || {};
     const p = data?.payments || {};
     const dr = data?.doctorRevenue || [];
-<<<<<<< Updated upstream
-    const W = doc.internal.pageSize.getWidth();
-=======
->>>>>>> Stashed changes
 
     // ── 1. Appointment Summary ─────────────────────────────────────────────────
     y = sectionHeading(doc, y, 'APPOINTMENT SUMMARY');
@@ -216,10 +212,6 @@ export function generateStandardPDF({ reportName, dateFrom, dateTo, data }) {
 export function generateAdvancedPDF({ reportName, dateFrom, dateTo, advSections, data }) {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     let y = addPageHeader(doc, reportName || 'Advanced Report', 'Advanced Analytics Report', dateFrom, dateTo);
-<<<<<<< Updated upstream
-    const W = doc.internal.pageSize.getWidth();
-=======
->>>>>>> Stashed changes
 
     // ── Appointment Summary ────────────────────────────────────────────────────
     if (advSections?.appointmentSummary && data?.appointments) {

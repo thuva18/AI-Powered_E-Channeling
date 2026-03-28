@@ -1,22 +1,6 @@
 const Doctor = require('../models/Doctor');
 const User = require('../models/User');
 const Appointment = require('../models/Appointment');
-<<<<<<< Updated upstream
-const Transaction = require('../models/Transaction');
-const SavedReport = require('../models/SavedReport');
-
-// @desc    Get all pending doctor registrations
-// @route   GET /api/v1/admin/doctors/pending
-// @access  Private/Admin
-const getPendingDoctors = async (req, res) => {
-    try {
-        const doctors = await Doctor.find({ approvalStatus: 'PENDING' }).populate('userId', 'email');
-        res.json(doctors);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
 const Transaction = require('../models/Transaction');
 const SavedReport = require('../models/SavedReport');
 
@@ -45,7 +29,6 @@ const getPendingDoctors = async (req, res) => {
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc    Get ALL doctors (any approval status)
 // @route   GET /api/v1/admin/doctors
@@ -56,19 +39,11 @@ const getAllDoctors = async (req, res) => {
             .populate('userId', 'email')
             .sort({ createdAt: -1 });
         res.json(doctors);
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('getAllDoctors error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('getAllDoctors error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc    Approve or reject doctor registration
 // @route   PATCH /api/v1/admin/doctors/:id/approve
@@ -77,15 +52,9 @@ const updateDoctorApprovalStatus = async (req, res) => {
     try {
         const { status } = req.body;
 
-<<<<<<< Updated upstream
-        if (!['APPROVED', 'REJECTED'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status' });
-        }
-=======
         if (!DOCTOR_APPROVAL_STATUS_OPTIONS.includes(status)) {
             return res.status(400).json({ message: 'Invalid status' });
         }
->>>>>>> Stashed changes
 
         const doctor = await Doctor.findById(req.params.id);
         if (!doctor) {
@@ -97,19 +66,11 @@ const updateDoctorApprovalStatus = async (req, res) => {
         const updatedDoctor = await doctor.save({ validateModifiedOnly: true });
 
         res.json({ message: `Doctor status updated to ${status}`, doctor: updatedDoctor });
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('Admin approval error:', error);
-        res.status(500).json({ message: error.message || 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('Admin approval error:', error);
         sendServerError(res, error, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc    Delete/Remove doctor account entirely
 // @route   DELETE /api/v1/admin/doctors/:id
@@ -125,17 +86,10 @@ const deleteDoctor = async (req, res) => {
         await Doctor.findByIdAndDelete(doctor._id);
 
         res.json({ message: 'Doctor account permanently deleted' });
-<<<<<<< Updated upstream
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc    Get platform analytics + recent activity
 // @route   GET /api/v1/admin/analytics
@@ -192,11 +146,7 @@ const getAnalytics = async (req, res) => {
 
         // ── Payment / Revenue stats ─────────────────────────────────────────────
         const revResult = await Transaction.aggregate([
-<<<<<<< Updated upstream
-            { $match: { status: { $in: ['SUCCESS', 'APPROVED'] } } },
-=======
             { $match: { status: { $in: SUCCESS_TRANSACTION_STATUSES } } },
->>>>>>> Stashed changes
             { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
         ]);
         const revenue = revResult[0] || { total: 0, count: 0 };
@@ -204,21 +154,13 @@ const getAnalytics = async (req, res) => {
         const pendingPayments = await Transaction.countDocuments({ status: 'PENDING_APPROVAL' });
 
         const revenueThisMonth = await Transaction.aggregate([
-<<<<<<< Updated upstream
-            { $match: { status: { $in: ['SUCCESS', 'APPROVED'] }, createdAt: { $gte: thirtyDaysAgo } } },
-=======
             { $match: { status: { $in: SUCCESS_TRANSACTION_STATUSES }, createdAt: { $gte: thirtyDaysAgo } } },
->>>>>>> Stashed changes
             { $group: { _id: null, total: { $sum: '$amount' } } },
         ]);
 
         // Revenue by method
         const revenueByMethod = await Transaction.aggregate([
-<<<<<<< Updated upstream
-            { $match: { status: { $in: ['SUCCESS', 'APPROVED'] } } },
-=======
             { $match: { status: { $in: SUCCESS_TRANSACTION_STATUSES } } },
->>>>>>> Stashed changes
             { $group: { _id: '$method', total: { $sum: '$amount' }, count: { $sum: 1 } } },
         ]);
 
@@ -252,19 +194,11 @@ const getAnalytics = async (req, res) => {
             recentTransactions,
             recentDoctors,
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('Analytics error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('Analytics error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Flexible report data for a custom date range
 // @route GET /api/v1/admin/report-data?dateFrom=&dateTo=
@@ -274,18 +208,10 @@ const getReportData = async (req, res) => {
         const { dateFrom, dateTo } = req.query;
         if (!dateFrom || !dateTo) return res.status(400).json({ message: 'dateFrom and dateTo are required' });
 
-<<<<<<< Updated upstream
-        const from = new Date(dateFrom);
-        const to = new Date(dateTo); to.setHours(23, 59, 59, 999);
-
-        const apptFilter = { createdAt: { $gte: from, $lte: to } };
-        const txnFilter = { createdAt: { $gte: from, $lte: to }, status: { $in: ['SUCCESS', 'APPROVED'] } };
-=======
         const { from, to } = getDateRange(dateFrom, dateTo);
 
         const apptFilter = { createdAt: { $gte: from, $lte: to } };
         const txnFilter = { createdAt: { $gte: from, $lte: to }, status: { $in: SUCCESS_TRANSACTION_STATUSES } };
->>>>>>> Stashed changes
 
         // ── Appointment counts ─────────────────────────────────────────────────
         const [total, completed, accepted, pending, cancelled] = await Promise.all([
@@ -302,12 +228,7 @@ const getReportData = async (req, res) => {
             { $group: { _id: { $dayOfWeek: '$createdAt' }, count: { $sum: 1 } } },
             { $sort: { '_id': 1 } },
         ]);
-<<<<<<< Updated upstream
-        const dayNames = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const byDay = byDayRaw.map(d => ({ day: dayNames[d._id], count: d.count }));
-=======
         const byDay = byDayRaw.map(d => ({ day: WEEKDAY_NAMES[d._id], count: d.count }));
->>>>>>> Stashed changes
 
         // ── Top specializations ────────────────────────────────────────────────
         const topSpecializations = await Appointment.aggregate([
@@ -353,19 +274,11 @@ const getReportData = async (req, res) => {
             doctorRevenue,
             payments: { totalRevenue: revResult[0]?.total || 0, paidCount: revResult[0]?.count || 0, successRate, refunds: refundCount, byMethod },
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('Report data error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('Report data error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Advanced report data — doctor performance, peak hours, cancellation, financial
 // @route GET /api/v1/admin/advanced-report-data?dateFrom=&dateTo=&doctorIds=
@@ -374,16 +287,9 @@ const getAdvancedReportData = async (req, res) => {
         const { dateFrom, dateTo, doctorIds } = req.query;
         if (!dateFrom || !dateTo) return res.status(400).json({ message: 'dateFrom and dateTo are required' });
 
-<<<<<<< Updated upstream
-        const from = new Date(dateFrom);
-        const to = new Date(dateTo); to.setHours(23, 59, 59, 999);
-        const apptFilter = { createdAt: { $gte: from, $lte: to } };
-        const txnFilter = { createdAt: { $gte: from, $lte: to }, status: { $in: ['SUCCESS', 'APPROVED'] } };
-=======
         const { from, to } = getDateRange(dateFrom, dateTo);
         const apptFilter = { createdAt: { $gte: from, $lte: to } };
         const txnFilter = { createdAt: { $gte: from, $lte: to }, status: { $in: SUCCESS_TRANSACTION_STATUSES } };
->>>>>>> Stashed changes
         const selectedDoctorIds = doctorIds ? doctorIds.split(',').filter(Boolean) : [];
 
         // ── Doctor list (for selector) ─────────────────────────────────────────
@@ -431,12 +337,7 @@ const getAdvancedReportData = async (req, res) => {
             { $group: { _id: { $dayOfWeek: '$createdAt' }, count: { $sum: 1 } } },
             { $sort: { '_id': 1 } },
         ]);
-<<<<<<< Updated upstream
-        const dayNames = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const cancelByDay = cancelByDayRaw.map(d => ({ day: dayNames[d._id], count: d.count }));
-=======
         const cancelByDay = cancelByDayRaw.map(d => ({ day: WEEKDAY_NAMES[d._id], count: d.count }));
->>>>>>> Stashed changes
 
         // Top 5 doctors by cancellation count
         const cancelByDoctor = await Appointment.aggregate([
@@ -528,37 +429,22 @@ const getAdvancedReportData = async (req, res) => {
             financial: { total: financialSummary[0]?.total || 0, count: financialSummary[0]?.count || 0, avg: financialSummary[0]?.avg || 0, successRate, refunds: refundCount, failed: failedCount, byMethod, dailyRevenue },
             appointments: { total, completed, accepted, pending, cancelled, topSpecializations },
         });
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('Advanced report error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('Advanced report error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // ── User Management ─────────────────────────────────────────────────────────
 
 // @desc  Get all patients (with profile)
 // @route GET /api/v1/admin/patients
-<<<<<<< Updated upstream
-const getAllPatients = async (req, res) => {
-    try {
-        const { search = '', page = 1, limit = 20 } = req.query;
-        const filter = { role: 'PATIENT' };
-=======
 const getAllPatients = async (req, res) => {
     try {
         const { search = '', page = 1, limit = 20 } = req.query;
         const parsedPage = Number(page);
         const parsedLimit = Number(limit);
         const filter = { role: 'PATIENT' };
->>>>>>> Stashed changes
         if (search) {
             filter.$or = [
                 { email: { $regex: search, $options: 'i' } },
@@ -568,18 +454,6 @@ const getAllPatients = async (req, res) => {
             ];
         }
         const total = await User.countDocuments(filter);
-<<<<<<< Updated upstream
-        const patients = await User.find(filter)
-            .select('-passwordHash')
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(Number(limit));
-        res.json({ patients, total, page: Number(page), pages: Math.ceil(total / limit) });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
         const patients = await User.find(filter)
             .select('-passwordHash')
             .sort({ createdAt: -1 })
@@ -590,7 +464,6 @@ const getAllPatients = async (req, res) => {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Get all admins
 // @route GET /api/v1/admin/admins
@@ -598,17 +471,10 @@ const getAllAdmins = async (req, res) => {
     try {
         const admins = await User.find({ role: 'ADMIN' }).select('-passwordHash').sort({ createdAt: -1 });
         res.json(admins);
-<<<<<<< Updated upstream
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
     } catch (err) {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Create a new admin account
 // @route POST /api/v1/admin/admins
@@ -626,17 +492,10 @@ const createAdmin = async (req, res) => {
         });
         const { passwordHash: _, ...safe } = admin.toObject();
         res.status(201).json(safe);
-<<<<<<< Updated upstream
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
     } catch (err) {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Update admin email / password / name
 // @route PATCH /api/v1/admin/admins/:id
@@ -656,17 +515,10 @@ const updateAdmin = async (req, res) => {
         await admin.save();
         const { passwordHash: _, ...safe } = admin.toObject();
         res.json(safe);
-<<<<<<< Updated upstream
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
     } catch (err) {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Delete a user account (any role, guards against self-delete)
 // @route DELETE /api/v1/admin/users/:id
@@ -680,17 +532,10 @@ const deleteUser = async (req, res) => {
         }
         await user.deleteOne();
         res.json({ message: 'User deleted successfully' });
-<<<<<<< Updated upstream
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
     } catch (err) {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Toggle user isActive / doctor isActive
 // @route PATCH /api/v1/admin/users/:id/toggle-active
@@ -707,17 +552,10 @@ const toggleUserActive = async (req, res) => {
         user.isActive = !(user.isActive !== false); // toggle (default true if undefined)
         await user.save({ validateModifiedOnly: true });
         res.json({ message: `User ${user.isActive ? 'activated' : 'deactivated'}`, isActive: user.isActive });
-<<<<<<< Updated upstream
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-=======
     } catch (err) {
         sendServerError(res, err, true);
     }
 };
->>>>>>> Stashed changes
 
 
 // ── Saved Reports (DB) ────────────────────────────────────────────────────────
@@ -731,19 +569,11 @@ const listSavedReports = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
         res.json(reports);
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('listSavedReports error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('listSavedReports error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Save a new report
 // @route POST /api/v1/admin/saved-reports
@@ -761,19 +591,11 @@ const createSavedReport = async (req, res) => {
             createdBy: req.user._id,
         });
         res.status(201).json(report);
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('createSavedReport error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('createSavedReport error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Update an existing saved report
 // @route PUT /api/v1/admin/saved-reports/:id
@@ -790,19 +612,11 @@ const updateSavedReport = async (req, res) => {
         if (data) report.data = data;
         await report.save();
         res.json(report);
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('updateSavedReport error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('updateSavedReport error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 // @desc  Delete a saved report
 // @route DELETE /api/v1/admin/saved-reports/:id
@@ -812,19 +626,11 @@ const deleteSavedReport = async (req, res) => {
         if (!report) return res.status(404).json({ message: 'Report not found' });
         await report.deleteOne();
         res.json({ message: 'Report deleted' });
-<<<<<<< Updated upstream
-    } catch (error) {
-        console.error('deleteSavedReport error:', error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-=======
     } catch (error) {
         console.error('deleteSavedReport error:', error);
         sendServerError(res);
     }
 };
->>>>>>> Stashed changes
 
 module.exports = {
     getPendingDoctors,
