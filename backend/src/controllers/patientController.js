@@ -2,7 +2,10 @@ const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 
-// Keyword → specialization map for AI-style recommendation
+const sendServerError = (res, error) =>
+    res.status(500).json({ message: error?.message || 'Server Error' });
+
+// Keyword to specialization map for symptom-based sorting
 const KEYWORD_SPEC_MAP = {
     heart: 'Cardiologist',
     chest: 'Cardiologist',
@@ -71,9 +74,9 @@ const getApprovedDoctors = async (req, res) => {
             }
         }
 
-        res.json(doctors);
+        return res.json(doctors);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        return sendServerError(res);
     }
 };
 
@@ -88,9 +91,9 @@ const getMyAppointments = async (req, res) => {
                 select: 'firstName lastName specialization consultationFee profileDetails',
             })
             .sort({ appointmentDate: -1 });
-        res.json(appointments);
+        return res.json(appointments);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        return sendServerError(res);
     }
 };
 
@@ -137,9 +140,9 @@ const bookAppointment = async (req, res) => {
             select: 'firstName lastName specialization consultationFee',
         });
 
-        res.status(201).json(populated);
+        return res.status(201).json(populated);
     } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
+        return sendServerError(res, error);
     }
 };
 
@@ -153,14 +156,14 @@ const cancelAppointment = async (req, res) => {
             patientId: req.user._id,
         });
         if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
-        if (!['PENDING'].includes(appointment.status)) {
+        if (appointment.status !== 'PENDING') {
             return res.status(400).json({ message: 'Only pending appointments can be cancelled' });
         }
         appointment.status = 'CANCELLED';
         await appointment.save();
-        res.json({ message: 'Appointment cancelled', appointment });
+        return res.json({ message: 'Appointment cancelled', appointment });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        return sendServerError(res);
     }
 };
 
@@ -171,12 +174,12 @@ const getMyProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('-passwordHash');
         if (!user) return res.status(404).json({ message: 'User not found' });
-        res.json({
+        return res.json({
             email: user.email,
             ...user.patientProfile.toObject(),
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        return sendServerError(res);
     }
 };
 
@@ -196,9 +199,9 @@ const updateMyProfile = async (req, res) => {
         if (dateOfBirth !== undefined) user.patientProfile.dateOfBirth = dateOfBirth;
 
         await user.save({ validateModifiedOnly: true });
-        res.json({ message: 'Profile updated', patientProfile: user.patientProfile });
+        return res.json({ message: 'Profile updated', patientProfile: user.patientProfile });
     } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
+        return sendServerError(res, error);
     }
 };
 
@@ -217,10 +220,75 @@ const deleteMyProfile = async (req, res) => {
         // Delete the user record
         await User.findByIdAndDelete(userId);
 
-        res.json({ message: 'Account deleted successfully' });
+        return res.json({ message: 'Account deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: error.message || 'Server Error' });
+        return sendServerError(res, error);
     }
 };
 
-module.exports = { getApprovedDoctors, getMyAppointments, bookAppointment, cancelAppointment, getMyProfile, updateMyProfile, deleteMyProfile };
+// @desc    Get patient analytics (total apps, upcoming, completed, spent)
+// @route   GET /api/v1/patients/analytics
+// @access  Private/Patient
+const getPatientAnalytics = async (req, res) => {
+    try {
+        const appointments = await Appointment.find({ patientId: req.user._id });
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        let upcoming = 0;
+        let completed = 0;
+        let totalSpent = 0;
+
+        appointments.forEach(apt => {
+            if (apt.status === 'COMPLETED') {
+                completed++;
+                if (apt.consultationFeeCharged) {
+                    totalSpent += apt.consultationFeeCharged;
+                }
+            } else if ((apt.status === 'ACCEPTED' || apt.status === 'PENDING') && new Date(apt.appointmentDate) >= now) {
+                upcoming++;
+            }
+        });
+
+        res.json({
+            totalAppointments: appointments.length,
+            upcomingAppointments: upcoming,
+            completedAppointments: completed,
+            totalSpent
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get patient's medical history (journals)
+// @route   GET /api/v1/patients/journals
+// @access  Private/Patient
+const getJournals = async (req, res) => {
+    try {
+        const journals = await Journal.find({ patientId: req.user._id })
+            .populate({
+                path: 'doctorId',
+                select: 'firstName lastName specialization',
+            })
+            .sort({ visitDate: -1 });
+
+        res.json(journals);
+    } catch (error) {
+        console.error('getJournals error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+module.exports = {
+    getApprovedDoctors,
+    getMyAppointments,
+    bookAppointment,
+    cancelAppointment,
+    getMyProfile,
+    updateMyProfile,
+    deleteMyProfile,
+    getPatientAnalytics,
+    getJournals,
+};

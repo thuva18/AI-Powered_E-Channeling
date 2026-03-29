@@ -15,7 +15,6 @@ const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuthStore();
 
-    const [tab, setTab] = useState('doctor'); // 'doctor' | 'patient'
     const [form, setForm] = useState({ email: '', password: '' });
     const [touched, setTouched] = useState({ email: false, password: false });
     const [showPw, setShowPw] = useState(false);
@@ -37,12 +36,13 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setTouched({ email: true, password: true });
-        if (!form.email.trim() || !form.password) return;
+        const email = form.email.trim().toLowerCase();
+        if (!email || !form.password) return;
 
         setServerError('');
         setLoading(true);
         try {
-            const { data } = await api.post('/auth/login', { email: form.email, password: form.password });
+            const { data } = await api.post('/auth/login', { email, password: form.password });
             login(data);
             if (data.role === 'ADMIN') navigate('/admin');
             else if (data.role === 'PATIENT') navigate('/patient');
@@ -54,15 +54,6 @@ const Login = () => {
         }
     };
 
-    const isPatient = tab === 'patient';
-    const accentFrom = isPatient ? 'from-blue-600' : 'from-blue-600';
-    const accentTo = isPatient ? 'to-indigo-500' : 'to-indigo-600';
-    const accentShadow = isPatient ? 'shadow-blue-500/25' : 'shadow-blue-500/25';
-    const accentHoverFrom = isPatient ? 'hover:from-blue-700' : 'hover:from-blue-700';
-    const accentHoverTo = isPatient ? 'hover:to-indigo-600' : 'hover:to-indigo-700';
-    const registerLink = isPatient ? '/patient/register' : '/register';
-    const registerText = isPatient ? 'New patient? Register here' : 'New doctor? Apply for an account';
-
     return (
         <div className="space-y-0">
             {/* ── Gradient header strip ── */}
@@ -70,14 +61,20 @@ const Login = () => {
                 <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
                 <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-white/10" />
                 <div className="relative z-10">
+<<<<<<< Updated upstream
                     <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm mb-3 shadow-lg">
                         {isPatient ? <Heart size={22} className="text-white" /> : <Activity size={22} className="text-white" />}
+=======
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-sm mb-3 shadow-lg">
+                        <Activity size={22} className="text-white drop-shadow-md" />
+>>>>>>> Stashed changes
                     </div>
                     <h1 className="text-xl font-bold mb-0.5">Welcome back</h1>
                     <p className="text-blue-100 text-xs font-medium">Sign in to your MediPortal account</p>
                 </div>
             </div>
 
+<<<<<<< Updated upstream
             {/* ── Tab switcher ── */}
             <div className="flex bg-slate-100 rounded-xl p-1 mb-6">
                 {[
@@ -99,6 +96,9 @@ const Login = () => {
             </div>
 
             <p className="text-sm font-medium text-slate-500 mb-6">Access your {isPatient ? 'healthcare' : 'practice'} dashboard</p>
+=======
+            <p className="text-sm font-medium text-slate-500 mb-6 text-center">Access your account securely</p>
+>>>>>>> Stashed changes
 
             {serverError && (
                 <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-fade-in">
@@ -117,7 +117,7 @@ const Login = () => {
                         </div>
                         <input
                             id="email" type="email" autoComplete="email"
-                            placeholder={isPatient ? 'patient@email.com' : 'doctor@hospital.com'}
+                            placeholder="user@example.com"
                             value={form.email} onChange={set('email')} onBlur={blur('email')}
                             className={`input-field pr-9 ${errors.email ? 'border-red-400' : touched.email && form.email && !errors.email ? 'border-emerald-400' : ''}`}
                             style={{ paddingLeft: '38px' }}
@@ -166,6 +166,7 @@ const Login = () => {
             </form>
 
             {/* Demo credentials */}
+<<<<<<< Updated upstream
             {!isPatient && (
                 <div className="mt-5 border border-dashed border-slate-200 rounded-xl p-4 bg-slate-50/80">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
@@ -181,10 +182,27 @@ const Login = () => {
                             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Password</p>
                             <p className="text-xs text-slate-700 font-mono">admin123</p>
                         </div>
+=======
+            <div className="mt-8 border border-slate-200/60 rounded-xl p-5 bg-white/50 backdrop-blur-md relative overflow-hidden group shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-200">i</span>
+                    Demo Admin Credentials
+                </p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 relative z-10">
+                    <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Email</p>
+                        <p className="text-xs text-slate-700 font-mono mt-0.5">admin@mediportal.com</p>
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Password</p>
+                        <p className="text-xs text-slate-700 font-mono mt-0.5">admin123</p>
+>>>>>>> Stashed changes
                     </div>
                 </div>
-            )}
+            </div>
 
+<<<<<<< Updated upstream
             {/* Link to appropriate registration page */}
             <p className="text-center text-sm font-medium text-slate-500 mt-6">
                 Don't have an account?{' '}
@@ -193,6 +211,22 @@ const Login = () => {
                     Create {isPatient ? 'Patient' : 'Doctor'} Account
                 </Link>
             </p>
+=======
+            {/* Registration Options */}
+            <div className="mt-8 pt-6 border-t border-slate-200/60">
+                <p className="text-center text-sm font-medium text-slate-500 mb-4">
+                    Don't have an account?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                    <Link to="/patient/register" className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-sm font-bold hover:bg-blue-100 hover:border-blue-300 transition-all">
+                        <Heart size={16} /> Register as Patient
+                    </Link>
+                    <Link to="/register" className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-indigo-100 hover:border-indigo-300 transition-all">
+                        <Stethoscope size={16} /> Apply as Doctor
+                    </Link>
+                </div>
+            </div>
+>>>>>>> Stashed changes
         </div>
     );
 };

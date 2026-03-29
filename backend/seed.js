@@ -166,8 +166,8 @@ const seed = async () => {
     // ── 3. Create doctors + their user accounts ────────────────────────────────
     const doctorDocs = [];
     for (const ds of DOCTOR_SEEDS) {
-        const userHash = await bcrypt.hash('doctor123', 10);
-        const userDoc = await User.create({ email: ds.email, passwordHash: userHash, role: 'DOCTOR' });
+        // Pass plain password here; User pre-save hook hashes it once.
+        const userDoc = await User.create({ email: ds.email, passwordHash: 'doctor123', role: 'DOCTOR' });
         const doctorDoc = await Doctor.create({
             userId: userDoc._id,
             firstName: ds.firstName,

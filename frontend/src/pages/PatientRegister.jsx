@@ -136,7 +136,9 @@ const PatientRegister = () => {
 
     const handleNext = () => {
         if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic', 'dateOfBirth'])) {
-            if (emailAvailable === false) return;
+            // Fix #7: block if email taken OR availability check still pending (null)
+            const emailFormatOk = EMAIL_REGEX.test(form.email.trim());
+            if (emailFormatOk && emailAvailable !== true) return;
             setStep(2);
         }
     };

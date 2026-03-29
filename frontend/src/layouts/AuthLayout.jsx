@@ -11,11 +11,22 @@ const AuthLayout = () => {
     }
 
     return (
+<<<<<<< Updated upstream
         <div className="auth-bg flex items-center justify-center p-4 relative">
             {/* Decorative blobs */}
             <div className="auth-blob w-96 h-96 bg-blue-400 top-[-80px] left-[-80px]" />
             <div className="auth-blob w-80 h-80 bg-indigo-400 bottom-[-60px] right-[-60px]" />
             <div className="auth-blob w-64 h-64 bg-slate-300 top-[40%] right-[10%]" />
+=======
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-50">
+            {/* Universal Light Blue Background */}
+            <div
+                className="absolute inset-0 z-0 bg-cover bg-center"
+                style={{ backgroundImage: "url('/images/unified_light_blue_bg.png')" }}
+            />
+            {/* Soft gradient overlay for readability */}
+            <div className="absolute inset-0 z-0 bg-white/30 backdrop-blur-[2px]" />
+>>>>>>> Stashed changes
 
             {/* Brand strip at top */}
             <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 py-5">

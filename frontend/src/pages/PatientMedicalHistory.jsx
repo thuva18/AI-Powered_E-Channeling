@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
-import { FileText, Calendar, Star, Stethoscope, RefreshCw } from 'lucide-react';
+import { FileText, Calendar, Stethoscope, RefreshCw } from 'lucide-react';
 
 const PatientMedicalHistory = () => {
     const [records, setRecords] = useState([]);

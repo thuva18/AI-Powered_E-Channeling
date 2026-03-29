@@ -4,7 +4,6 @@ const connectDB = require('./src/config/db');
 const User = require('./src/models/User');
 const Doctor = require('./src/models/Doctor');
 const Appointment = require('./src/models/Appointment');
-const bcrypt = require('bcryptjs');
 
 const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -112,11 +111,10 @@ const seedForDoctor = async () => {
     console.log(`✓ Cleared ${deleted.deletedCount} old appointments`);
 
     // 4. Create/Find 15 patients
-    const passwordHash = await bcrypt.hash('patient123', 10);
     const patientIds = [];
     for (const p of PATIENT_NAMES) {
         let patient = await User.findOne({ email: p.email });
-        if (!patient) patient = await User.create({ email: p.email, passwordHash, role: 'PATIENT' });
+        if (!patient) patient = await User.create({ email: p.email, passwordHash: 'patient123', role: 'PATIENT' });
         patientIds.push(patient._id);
     }
     console.log(`✓ Ready with ${patientIds.length} patients`);

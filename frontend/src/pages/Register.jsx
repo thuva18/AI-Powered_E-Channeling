@@ -62,14 +62,19 @@ const Register = () => {
     const [success, setSuccess] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
-    // NIC duplicate check state
+    // NIC duplicate-check state
     const [nicChecking, setNicChecking] = useState(false);
     const [nicAvailable, setNicAvailable] = useState(null); // null | true | false
+
+    // Email duplicate-check state (Fix #5)
+    const [emailChecking, setEmailChecking] = useState(false);
+    const [emailAvailable, setEmailAvailable] = useState(null); // null | true | false
 
     const set = (field) => (e) => {
         const value = e.target.value;
         setFormData((p) => ({ ...p, [field]: value }));
-        if (field === 'nic') setNicAvailable(null); // reset availability when typing
+        if (field === 'nic') setNicAvailable(null);    // reset on typing
+        if (field === 'email') setEmailAvailable(null); // reset on typing (Fix #5)
         if (touched[field]) {
             const err = field === 'confirmPassword'
                 ? validators.confirmPassword(value, formData.password)
@@ -106,6 +111,26 @@ const Register = () => {
         }
     }, [formData.nic]);
 
+    // Fix #5: Real-time email duplicate check (fires on blur if format is valid)
+    const handleEmailBlur = useCallback(async () => {
+        blur('email')();
+        const val = formData.email.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return;
+        setEmailChecking(true);
+        setEmailAvailable(null);
+        try {
+            const { data } = await api.get(`/auth/check-email?email=${encodeURIComponent(val)}`);
+            setEmailAvailable(data.available);
+            if (!data.available) {
+                setErrors((p) => ({ ...p, email: 'This email is already registered' }));
+            }
+        } catch {
+            // silently ignore — server-side will catch on submit
+        } finally {
+            setEmailChecking(false);
+        }
+    }, [formData.email]);
+
     const validateFields = (fields) => {
         const newErrors = {};
         fields.forEach((field) => {
@@ -121,8 +146,11 @@ const Register = () => {
 
     const handleNext = () => {
         if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic'])) {
-            // Also block proceed if NIC is not available
-            if (nicAvailable === false) return;
+            // Fix #7: block if email/NIC taken OR availability check still pending
+            const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+            const nicFormatOkNow = NIC_REGEX.test(formData.nic.trim());
+            if (emailFormatOk && emailAvailable !== true) return; // pending or taken
+            if (nicFormatOkNow && nicAvailable !== true) return;  // pending or taken
             setStep(2);
         }
     };
@@ -227,18 +255,53 @@ const Register = () => {
                         />
                     </div>
 
-                    <Input
-                        label="Email Address *"
-                        id="email"
-                        type="email"
-                        icon={Mail}
-                        placeholder="doctor@hospital.com"
-                        value={formData.email}
-                        onChange={set('email')}
-                        onBlur={blur('email')}
-                        error={touched.email ? errors.email : ''}
-                        autoComplete="email"
-                    />
+                    {/* Fix #5 — email availability check */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+                            Email Address *
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                <Mail size={16} className="text-slate-400" />
+                            </div>
+                            <input
+                                id="email"
+                                type="email"
+                                autoComplete="email"
+                                placeholder="doctor@hospital.com"
+                                value={formData.email}
+                                onChange={set('email')}
+                                onBlur={handleEmailBlur}
+                                className={`input-field pr-9 ${
+                                    touched.email && (errors.email || emailAvailable === false)
+                                        ? 'border-red-400 focus:border-red-500'
+                                        : emailAvailable === true
+                                            ? 'border-emerald-400 focus:border-emerald-500'
+                                            : ''
+                                }`}
+                                style={{ paddingLeft: '38px' }}
+                            />
+                            <div className="absolute inset-y-0 right-3 flex items-center">
+                                {emailChecking ? (
+                                    <svg className="animate-spin h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                ) : touched.email ? (
+                                    emailAvailable === true
+                                        ? <CheckCircle size={15} className="text-emerald-500" />
+                                        : (errors.email || emailAvailable === false)
+                                            ? <AlertCircle size={15} className="text-red-400" />
+                                            : null
+                                ) : null}
+                            </div>
+                        </div>
+                        {touched.email && errors.email ? (
+                            <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {errors.email}</p>
+                        ) : emailAvailable === true ? (
+                            <p className="text-xs font-medium text-emerald-600 flex items-center gap-1"><CheckCircle size={11} /> Email available</p>
+                        ) : null}
+                    </div>
 
                     {/* Phone */}
                     <div className="space-y-1.5">

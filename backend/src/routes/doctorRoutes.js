@@ -7,6 +7,11 @@ const {
     getAppointments,
     updateAppointmentStatus,
     getAnalytics,
+<<<<<<< Updated upstream
+=======
+    getPatients,
+    getPatientAppointments,
+>>>>>>> Stashed changes
 } = require('../controllers/doctorController');
 const { getJournals, createJournal, updateJournal, deleteJournal } = require('../controllers/journalController');
 const { protect, doctorOnly } = require('../middlewares/authMiddleware');
@@ -25,6 +30,11 @@ router.get('/appointments', getAppointments);
 router.patch('/appointments/:id/status', updateAppointmentStatus);
 
 router.get('/analytics', getAnalytics);
+<<<<<<< Updated upstream
+=======
+router.get('/patients', getPatients);
+router.get('/patients/:patientId/appointments', getPatientAppointments);
+>>>>>>> Stashed changes
 
 // Journal — CRUD
 router.route('/journal').get(getJournals).post(createJournal);

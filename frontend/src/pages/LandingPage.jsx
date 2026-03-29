@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShieldCheck, HeartPulse, Brain, CalendarCheck, Search, ChevronRight, Stethoscope } from 'lucide-react';
+import { ShieldCheck, HeartPulse, CalendarCheck, Search, ChevronRight, Stethoscope } from 'lucide-react';
 
 const LandingPage = () => {
     return (
@@ -27,11 +27,20 @@ const LandingPage = () => {
             </nav>
 
             {/* ── Hero Section ── */}
+<<<<<<< Updated upstream
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
                 {/* Background effects */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[500px] bg-gradient-to-b from-blue-100/50 to-transparent blur-3xl -z-10 rounded-full opacity-70" />
                 <div className="absolute right-0 top-20 w-72 h-72 bg-indigo-200/40 blur-[100px] -z-10 rounded-full" />
                 <div className="absolute left-0 bottom-0 w-96 h-96 bg-blue-100/50 blur-[120px] -z-10 rounded-full" />
+=======
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden flex items-center min-h-screen">
+                {/* Light Background Image */}
+                <div
+                    className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: "url('/images/unified_light_blue_bg.png')" }}
+                />
+>>>>>>> Stashed changes
 
                 <div className="max-w-7xl mx-auto px-6 text-center animate-fade-up">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest mb-8 shadow-sm">
@@ -42,17 +51,31 @@ const LandingPage = () => {
                         AI-Powered Healthcare
                     </div>
 
+<<<<<<< Updated upstream
                     <h1 className="text-5xl lg:text-7xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
                         Smart Channeling for <br className="hidden sm:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-500">
                             Better Health.
                         </span>
                     </h1>
+=======
+                <div className="max-w-7xl mx-auto px-6 text-center animate-fade-up relative z-10 w-full">
+                    {/* Glassmorphism Wrapper for text (Light Theme) */}
+                    <div className="inline-block p-10 md:p-14 rounded-[3rem] bg-white/60 backdrop-blur-3xl border border-white/80 shadow-2xl shadow-blue-500/20">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100/50 border border-blue-200/50 text-blue-700 text-xs font-bold uppercase tracking-widest mb-8 shadow-sm backdrop-blur-md">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                            Digital Healthcare
+                        </div>
+>>>>>>> Stashed changes
 
                     <p className="text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
                         Describe your symptoms and our AI instantly connects you with the right specialist. Book appointments in seconds, entirely online.
                     </p>
 
+<<<<<<< Updated upstream
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link to="/patient/register" className="w-full sm:w-auto px-8 py-4 rounded-full text-base font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-xl shadow-blue-500/25 hover:shadow-2xl hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
                             <Search size={18} /> Find a Doctor
@@ -62,6 +85,11 @@ const LandingPage = () => {
                         </Link>
                     </div>
                 </div>
+=======
+                        <p className="text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+                            Describe your symptoms and we connect you with the right specialist. Book appointments in seconds, entirely online.
+                        </p>
+>>>>>>> Stashed changes
 
                 {/* Dashboard mockup preview */}
                 <div className="max-w-5xl mx-auto mt-20 px-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
@@ -96,18 +124,32 @@ const LandingPage = () => {
             {/* ── Features ── */}
             <section className="py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
+<<<<<<< Updated upstream
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold text-slate-900 mb-4">Why Choose Medicare?</h2>
                         <p className="text-slate-500 max-w-2xl mx-auto">Experience a frictionless healthcare journey powered by modern technology.</p>
+=======
+                    <div className="text-center mb-20 animate-fade-up">
+                        <h2 className="text-4xl lg:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Why Choose Medicare?</h2>
+                        <p className="text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto font-medium">Experience a frictionless healthcare journey with verified specialists and fast online booking.</p>
+>>>>>>> Stashed changes
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8">
                         <FeatureCard
+<<<<<<< Updated upstream
                             icon={Brain}
                             title="AI Symptom Matching"
                             desc="Not sure who to see? Describe what you're feeling, and our AI will recommend the exact specialist you need."
                             color="text-purple-500"
                             bg="bg-purple-50"
+=======
+                            icon={Search}
+                            title="Symptom Matching"
+                            desc="Not sure who to see? Describe what you are feeling, and we will guide you to the right specialist."
+                            color="text-blue-600"
+                            bg="bg-blue-100/50"
+>>>>>>> Stashed changes
                         />
                         <FeatureCard
                             icon={CalendarCheck}

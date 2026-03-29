@@ -3,8 +3,15 @@ import api from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Badge, EmptyState, SectionHeader, InfoBanner, Toast } from '../components/ui/Common';
 import {
+<<<<<<< Updated upstream
     ShieldCheck, XCircle, CheckCircle, RefreshCw, ExternalLink,
     Clock, Users, Phone, AlertTriangle, IdCard,
+=======
+    Users, Stethoscope, Calendar, CreditCard, TrendingUp, TrendingDown,
+    CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, ShieldCheck,
+    ArrowRight, Activity, ExternalLink, BarChart3, Wallet, Star,
+    BadgeCheck, ChevronRight, CircleDot,
+>>>>>>> Stashed changes
 } from 'lucide-react';
 
 // ── ConfirmModal ───────────────────────────────────────────────────────────────

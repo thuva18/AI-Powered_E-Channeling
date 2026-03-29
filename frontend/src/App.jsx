@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import AuthLayout from './layouts/AuthLayout';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -16,9 +16,16 @@ import PatientMyAppointments from './pages/PatientMyAppointments';
 import PatientMedicalHistory from './pages/PatientMedicalHistory';
 import PatientPaymentHistory from './pages/PatientPaymentHistory';
 import PatientProfile from './pages/PatientProfile';
+<<<<<<< Updated upstream
 import { EmptyState } from './components/ui/Common';
 import { Users } from 'lucide-react';
 
+=======
+import AdminPayments from './pages/AdminPayments';
+import AdminUserManagement from './pages/AdminUserManagement';
+import AdminReports from './pages/AdminReports';
+import PaymentReceipt from './pages/PaymentReceipt';
+>>>>>>> Stashed changes
 const App = () => {
   return (
     <BrowserRouter>

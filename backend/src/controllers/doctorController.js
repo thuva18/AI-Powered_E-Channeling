@@ -1,18 +1,22 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 
+const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
+const sendServerError = (res) => res.status(500).json({ message: 'Server Error' });
+const getDoctorByUserId = (userId) => Doctor.findOne({ userId });
+
 // @desc    Get logged in doctor profile
 // @route   GET /api/v1/doctors/profile
 // @access  Private/Doctor
 const getProfile = async (req, res) => {
     try {
-        const doctor = await Doctor.findOne({ userId: req.user._id }).populate('userId', 'email role');
+        const doctor = await getDoctorByUserId(req.user._id).populate('userId', 'email role');
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
         }
         res.json(doctor);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        sendServerError(res);
     }
 };
 
@@ -21,7 +25,7 @@ const getProfile = async (req, res) => {
 // @access  Private/Doctor
 const updateProfile = async (req, res) => {
     try {
-        const doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await getDoctorByUserId(req.user._id);
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
         }
@@ -34,7 +38,7 @@ const updateProfile = async (req, res) => {
         doctor.consultationFee = consultationFee !== undefined ? consultationFee : doctor.consultationFee;
 
         if (phone !== undefined) {
-            if (!/^(07\d{8}|\+94\d{9})$/.test(phone.trim())) {
+            if (!PHONE_REGEX.test(phone.trim())) {
                 return res.status(400).json({
                     message: 'Phone number must be in the format 07XXXXXXXX or +94XXXXXXXXX',
                 });
@@ -43,16 +47,17 @@ const updateProfile = async (req, res) => {
         }
 
         if (profileDetails) {
-            doctor.profileDetails.bio = profileDetails.bio !== undefined ? profileDetails.bio : doctor.profileDetails.bio;
-            doctor.profileDetails.qualifications = profileDetails.qualifications || doctor.profileDetails.qualifications;
-            doctor.profileDetails.experienceYears = profileDetails.experienceYears !== undefined ? profileDetails.experienceYears : doctor.profileDetails.experienceYears;
-            doctor.profileDetails.contactNumber = profileDetails.contactNumber || doctor.profileDetails.contactNumber;
+            const details = doctor.profileDetails;
+            details.bio = profileDetails.bio !== undefined ? profileDetails.bio : details.bio;
+            details.qualifications = profileDetails.qualifications || details.qualifications;
+            details.experienceYears = profileDetails.experienceYears !== undefined ? profileDetails.experienceYears : details.experienceYears;
+            details.contactNumber = profileDetails.contactNumber || details.contactNumber;
         }
 
         const updatedDoctor = await doctor.save();
         res.json(updatedDoctor);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        sendServerError(res);
     }
 };
 
@@ -62,7 +67,7 @@ const updateProfile = async (req, res) => {
 const updateAvailability = async (req, res) => {
     try {
         const { availability } = req.body; // array of availability objects
-        const doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await getDoctorByUserId(req.user._id);
 
         if (!doctor) {
             return res.status(404).json({ message: 'Doctor profile not found' });
@@ -82,13 +87,13 @@ const updateAvailability = async (req, res) => {
 // @access  Private/Doctor
 const getAppointments = async (req, res) => {
     try {
-        const doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await getDoctorByUserId(req.user._id);
         const appointments = await Appointment.find({ doctorId: doctor._id })
             .populate('patientId', 'email')
             .sort({ appointmentDate: 1 });
         res.json(appointments);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        sendServerError(res);
     }
 };
 
@@ -98,7 +103,7 @@ const getAppointments = async (req, res) => {
 const updateAppointmentStatus = async (req, res) => {
     try {
         const { status } = req.body; // 'ACCEPTED' or 'REJECTED'
-        const doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await getDoctorByUserId(req.user._id);
 
         const appointment = await Appointment.findById(req.params.id);
         if (!appointment) {
@@ -114,7 +119,7 @@ const updateAppointmentStatus = async (req, res) => {
 
         res.json(updatedAppointment);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        sendServerError(res);
     }
 };
 
@@ -123,7 +128,7 @@ const updateAppointmentStatus = async (req, res) => {
 // @access  Private/Doctor
 const getAnalytics = async (req, res) => {
     try {
-        const doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await getDoctorByUserId(req.user._id);
         if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
 
         const sixMonthsAgo = new Date();
@@ -219,11 +224,89 @@ const getAnalytics = async (req, res) => {
     }
 };
 
+<<<<<<< Updated upstream
+=======
+// @desc    Get patients who have booked appointments with the doctor
+// @route   GET /api/v1/doctors/patients
+// @access  Private/Doctor
+const getPatients = async (req, res) => {
+    try {
+        const doctor = await getDoctorByUserId(req.user._id);
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+        // Aggregate patients from appointments
+        const patients = await Appointment.aggregate([
+            { $match: { doctorId: doctor._id } },
+            {
+                $group: {
+                    _id: '$patientId',
+                    lastVisit: { $max: '$appointmentDate' },
+                    totalVisits: { $sum: 1 },
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'patientDetails'
+                }
+            },
+            { $unwind: '$patientDetails' },
+            {
+                $project: {
+                    _id: 1,
+                    lastVisit: 1,
+                    totalVisits: 1,
+                    name: { $concat: ['$patientDetails.patientProfile.firstName', ' ', '$patientDetails.patientProfile.lastName'] },
+                    email: '$patientDetails.email',
+                    phone: '$patientDetails.patientProfile.phone',
+                    gender: '$patientDetails.patientProfile.gender',
+                    dob: '$patientDetails.patientProfile.dateOfBirth',
+                }
+            },
+            { $sort: { lastVisit: -1 } }
+        ]);
+
+        res.json(patients);
+    } catch (error) {
+        console.error('getPatients error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get all appointments this doctor has had with a specific patient
+// @route   GET /api/v1/doctors/patients/:patientId/appointments
+// @access  Private/Doctor
+const getPatientAppointments = async (req, res) => {
+    try {
+        const doctor = await getDoctorByUserId(req.user._id);
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+
+        const appointments = await Appointment.find({
+            doctorId: doctor._id,
+            patientId: req.params.patientId,
+        }).sort({ appointmentDate: -1 });
+
+        res.json(appointments);
+    } catch (error) {
+        console.error('getPatientAppointments error:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+>>>>>>> Stashed changes
 module.exports = {
     getProfile,
     updateProfile,
     updateAvailability,
     getAppointments,
     updateAppointmentStatus,
+<<<<<<< Updated upstream
     getAnalytics
+=======
+    getAnalytics,
+    getPatients,
+    getPatientAppointments,
+>>>>>>> Stashed changes
 };

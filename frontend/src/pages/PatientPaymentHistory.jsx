@@ -1,6 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+<<<<<<< Updated upstream
 import { CreditCard, Calendar, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+=======
+import {
+    CreditCard, Calendar, CheckCircle, Clock, RefreshCw, Receipt,
+    XCircle, AlertCircle, BarChart3, Filter,
+} from 'lucide-react';
+
+const METHOD_META = {
+    PAYHERE: { label: 'PayHere', icon: '🏦', color: 'bg-orange-100 text-orange-700' },
+    BANK_TRANSFER: { label: 'Bank Transfer', icon: '🏛️', color: 'bg-blue-100 text-blue-700' },
+    PAYPAL: { label: 'PayPal', icon: '💳', color: 'bg-sky-100 text-sky-700' },
+};
+
+const STATUS_META = {
+    SUCCESS: { label: 'Paid', color: 'bg-emerald-100 text-emerald-700', Icon: CheckCircle },
+    APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', Icon: CheckCircle },
+    PENDING: { label: 'Pending', color: 'bg-amber-100 text-amber-700', Icon: Clock },
+    PENDING_APPROVAL: { label: 'Pending Approval', color: 'bg-amber-100 text-amber-700', Icon: Clock },
+    FAILED: { label: 'Failed', color: 'bg-red-100 text-red-700', Icon: XCircle },
+    REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', Icon: XCircle },
+};
+
+const TABS = ['ALL', 'SUCCESS', 'APPROVED', 'PENDING_APPROVAL', 'FAILED', 'REJECTED'];
+const TAB_LABELS = {
+    ALL: 'All', SUCCESS: 'Paid', APPROVED: 'Approved',
+    PENDING_APPROVAL: 'Pending', FAILED: 'Failed', REJECTED: 'Rejected',
+};
+>>>>>>> Stashed changes
 
 const PatientPaymentHistory = () => {
     const [payments, setPayments] = useState([]);
