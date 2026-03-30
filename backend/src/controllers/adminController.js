@@ -3,11 +3,13 @@ const User = require('../models/User');
 const Appointment = require('../models/Appointment');
 const Transaction = require('../models/Transaction');
 const SavedReport = require('../models/SavedReport');
+const Preset = require('../models/Preset');
 const { deleteDoctorAccountByUserId } = require('../utils/deleteDoctorAccount');
 
 const SUCCESS_TRANSACTION_STATUSES = ['SUCCESS', 'APPROVED'];
 const DOCTOR_APPROVAL_STATUS_OPTIONS = ['APPROVED', 'REJECTED'];
 const WEEKDAY_NAMES = ['', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MIN_PASSWORD_LENGTH = 6;
 
 const sendServerError = (res, error, exposeMessage = false) =>
     res.status(500).json({ message: exposeMessage ? (error?.message || 'Server Error') : 'Server Error' });
@@ -482,6 +484,10 @@ const createAdmin = async (req, res) => {
     try {
         const { email, password, firstName, lastName } = req.body;
         if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
+        if (String(password).length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+        }
+
         const exists = await User.findOne({ email });
         if (exists) return res.status(400).json({ message: 'Email already in use' });
         const admin = await User.create({
@@ -509,7 +515,12 @@ const updateAdmin = async (req, res) => {
             if (dup) return res.status(400).json({ message: 'Email already in use' });
             admin.email = email;
         }
-        if (password) admin.passwordHash = password; // pre-save hook will re-hash
+        if (password) {
+            if (String(password).length < MIN_PASSWORD_LENGTH) {
+                return res.status(400).json({ message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+            }
+            admin.passwordHash = password; // pre-save hook will re-hash
+        }
         if (firstName !== undefined) admin.patientProfile.firstName = firstName;
         if (lastName !== undefined) admin.patientProfile.lastName = lastName;
         await admin.save();
@@ -633,6 +644,114 @@ const deleteSavedReport = async (req, res) => {
     }
 };
 
+// —— Presets (Advanced report config library) ———————————————————————————————
+
+// @desc  List all presets (newest/most recently used first)
+// @route GET /api/v1/admin/presets
+const listPresets = async (req, res) => {
+    try {
+        const presets = await Preset.find()
+            .sort({ updatedAt: -1, createdAt: -1 })
+            .lean();
+        res.json(presets);
+    } catch (error) {
+        console.error('listPresets error:', error);
+        sendServerError(res);
+    }
+};
+
+// @desc  Create a new preset from advanced report configuration
+// @route POST /api/v1/admin/presets
+const createPreset = async (req, res) => {
+    try {
+        const { name, reportName, dateRange, sections, doctors, filters } = req.body;
+        if (!name || !name.trim()) {
+            return res.status(400).json({ message: 'Preset name is required' });
+        }
+
+        const preset = await Preset.create({
+            name: name.trim(),
+            reportName: (reportName || '').trim(),
+            dateRange: {
+                from: dateRange?.from || '',
+                to: dateRange?.to || '',
+                preset: dateRange?.preset || '',
+            },
+            sections: Array.isArray(sections) ? sections : [],
+            doctors: Array.isArray(doctors) ? doctors : [],
+            filters: (filters && typeof filters === 'object' && !Array.isArray(filters)) ? filters : {},
+            createdBy: req.user?._id || null,
+        });
+
+        res.status(201).json(preset);
+    } catch (error) {
+        console.error('createPreset error:', error);
+        sendServerError(res);
+    }
+};
+
+// @desc  Update a preset (rename/config update or touch as last used)
+// @route PUT /api/v1/admin/presets/:id
+const updatePreset = async (req, res) => {
+    try {
+        const preset = await Preset.findById(req.params.id);
+        if (!preset) return res.status(404).json({ message: 'Preset not found' });
+
+        const { name, reportName, dateRange, sections, doctors, filters, touch } = req.body;
+
+        if (name !== undefined) {
+            if (!String(name).trim()) return res.status(400).json({ message: 'Preset name cannot be empty' });
+            preset.name = String(name).trim();
+        }
+        if (reportName !== undefined) preset.reportName = String(reportName || '').trim();
+        if (dateRange !== undefined && dateRange && typeof dateRange === 'object' && !Array.isArray(dateRange)) {
+            preset.dateRange = {
+                from: dateRange.from || '',
+                to: dateRange.to || '',
+                preset: dateRange.preset || '',
+            };
+        }
+        if (sections !== undefined) {
+            if (!Array.isArray(sections)) return res.status(400).json({ message: 'sections must be an array' });
+            preset.sections = sections;
+        }
+        if (doctors !== undefined) {
+            if (!Array.isArray(doctors)) return res.status(400).json({ message: 'doctors must be an array' });
+            preset.doctors = doctors;
+        }
+        if (filters !== undefined) {
+            if (!filters || typeof filters !== 'object' || Array.isArray(filters)) {
+                return res.status(400).json({ message: 'filters must be an object' });
+            }
+            preset.filters = filters;
+        }
+
+        if (touch === true) {
+            preset.set('updatedAt', new Date());
+        }
+
+        await preset.save();
+        res.json(preset);
+    } catch (error) {
+        console.error('updatePreset error:', error);
+        sendServerError(res);
+    }
+};
+
+// @desc  Delete a preset
+// @route DELETE /api/v1/admin/presets/:id
+const deletePreset = async (req, res) => {
+    try {
+        const preset = await Preset.findById(req.params.id);
+        if (!preset) return res.status(404).json({ message: 'Preset not found' });
+        await preset.deleteOne();
+        res.json({ message: 'Preset deleted' });
+    } catch (error) {
+        console.error('deletePreset error:', error);
+        sendServerError(res);
+    }
+};
+
 module.exports = {
     getPendingDoctors,
     getAllDoctors,
@@ -651,4 +770,8 @@ module.exports = {
     createSavedReport,
     updateSavedReport,
     deleteSavedReport,
+    listPresets,
+    createPreset,
+    updatePreset,
+    deletePreset,
 };
