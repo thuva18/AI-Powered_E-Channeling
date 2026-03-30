@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 import { Badge, EmptyState, SectionHeader } from '../components/ui/Common';
 import { Button } from '../components/ui/Button';
@@ -77,6 +77,42 @@ const PAYMENT_METHOD_META = {
     PAYHERE: { label: 'Paid via PayHere', icon: '🏦', color: 'bg-orange-50 text-orange-700 border-orange-200' },
     BANK_TRANSFER: { label: 'Paid via Bank Transfer (Admin verified)', icon: '🏛️', color: 'bg-blue-50 text-blue-700 border-blue-200' },
     PAYPAL: { label: 'Paid via PayPal (Admin verified)', icon: '💳', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+};
+
+const getAppointmentSortTime = (apt) => {
+    const createdAt = apt?.createdAt ? new Date(apt.createdAt).getTime() : NaN;
+    if (!Number.isNaN(createdAt)) return createdAt;
+
+    const appointmentDate = apt?.appointmentDate ? new Date(apt.appointmentDate).getTime() : NaN;
+    return Number.isNaN(appointmentDate) ? 0 : appointmentDate;
+};
+
+const isSameCalendarDate = (dateValue, selectedDate) => {
+    if (!selectedDate) return true;
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return false;
+
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    if (!year || !month || !day) return false;
+
+    return (
+        date.getFullYear() === year
+        && date.getMonth() === month - 1
+        && date.getDate() === day
+    );
+};
+
+const formatSelectedDate = (selectedDate) => {
+    if (!selectedDate) return '';
+
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    if (!year || !month || !day) return selectedDate;
+
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
 };
 
 const SymptomPanel = ({ apt }) => {
@@ -169,6 +205,8 @@ const DoctorAppointments = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL');
+    const [selectedDateInput, setSelectedDateInput] = useState('');
+    const [selectedDateFilter, setSelectedDateFilter] = useState('');
     const [updating, setUpdating] = useState(null);
     const [toast, setToast] = useState(null);
     const [confirm, setConfirm] = useState(null); // { id, status }
@@ -183,7 +221,8 @@ const DoctorAppointments = () => {
         setLoading(true);
         try {
             const { data } = await api.get('/doctors/appointments');
-            setAppointments(data);
+            const sortedAppointments = [...data].sort((a, b) => getAppointmentSortTime(b) - getAppointmentSortTime(a));
+            setAppointments(sortedAppointments);
         } catch {
             showToast('Failed to load appointments.', 'error');
         } finally {
@@ -219,8 +258,20 @@ const DoctorAppointments = () => {
         setExpandedId(prev => (prev === id ? null : id));
     };
 
+    const applyDateFilter = () => {
+        setSelectedDateFilter(selectedDateInput);
+        setExpandedId(null);
+    };
+
+    const clearDateFilter = () => {
+        setSelectedDateInput('');
+        setSelectedDateFilter('');
+        setExpandedId(null);
+    };
+
     const filters = ['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED'];
-    const filtered = filter === 'ALL' ? appointments : appointments.filter(a => a.status === filter);
+    const filteredByStatus = filter === 'ALL' ? appointments : appointments.filter(a => a.status === filter);
+    const filtered = filteredByStatus.filter((a) => isSameCalendarDate(a.appointmentDate, selectedDateFilter));
 
     return (
         <div className="space-y-6">
@@ -229,7 +280,7 @@ const DoctorAppointments = () => {
 
             <SectionHeader
                 title="Appointment Requests"
-                subtitle={`Showing ${filtered.length} of ${appointments.length} bookings`}
+                subtitle={`Showing ${filtered.length} of ${appointments.length} bookings${selectedDateFilter ? ` on ${formatSelectedDate(selectedDateFilter)}` : ''}`}
                 action={
                     <Button variant="ghost" size="sm" onClick={fetchAppointments} isLoading={loading}>
                         <RefreshCw size={14} /> Refresh
@@ -238,22 +289,52 @@ const DoctorAppointments = () => {
             />
 
             {/* Filter tabs */}
-            <div className="flex gap-2 flex-wrap items-center bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200/50 w-fit">
-                {filters.map((f) => {
-                    const count = f === 'ALL' ? appointments.length : appointments.filter(a => a.status === f).length;
-                    return (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${filter === f
-                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-1 ring-blue-500'
-                                : 'bg-transparent text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-sm'
-                                }`}
-                        >
-                            {f} {count > 0 && <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>{count}</span>}
-                        </button>
-                    );
-                })}
+            <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex gap-2 flex-wrap items-center bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200/50 w-fit">
+                    {filters.map((f) => {
+                        const count = f === 'ALL' ? appointments.length : appointments.filter(a => a.status === f).length;
+                        return (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 ${filter === f
+                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-1 ring-blue-500'
+                                    : 'bg-transparent text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-sm'
+                                    }`}
+                            >
+                                {f} {count > 0 && <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filter === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>{count}</span>}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200/50">
+                    <label htmlFor="appointment-date-filter" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <Calendar size={13} />
+                        Date
+                    </label>
+                    <input
+                        id="appointment-date-filter"
+                        type="date"
+                        value={selectedDateInput}
+                        onChange={(e) => setSelectedDateInput(e.target.value)}
+                        className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400"
+                    />
+                    <button
+                        onClick={applyDateFilter}
+                        disabled={!selectedDateInput}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Filter
+                    </button>
+                    <button
+                        onClick={clearDateFilter}
+                        disabled={!selectedDateInput && !selectedDateFilter}
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Clear
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -276,7 +357,7 @@ const DoctorAppointments = () => {
                     <EmptyState
                         icon={<Calendar size={28} />}
                         title="No appointments found"
-                        description={`No ${filter === 'ALL' ? '' : filter.toLowerCase() + ' '}appointments in the system yet.`}
+                        description={`No ${filter === 'ALL' ? '' : `${filter.toLowerCase()} `}appointments${selectedDateFilter ? ` on ${formatSelectedDate(selectedDateFilter)}` : ''} in the system yet.`}
                     />
                 </div>
             ) : (
@@ -292,9 +373,8 @@ const DoctorAppointments = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100/50">
                                 {filtered.map((apt) => (
-                                    <>
+                                    <Fragment key={apt._id}>
                                         <tr
-                                            key={apt._id}
                                             className={`hover:bg-blue-50/30 transition-all ${updating === apt._id + apt.status ? 'opacity-50 scale-[0.99]' : ''} ${expandedId === apt._id ? 'bg-blue-50/20' : ''}`}
                                         >
                                             <td className="px-8 py-5">
@@ -377,13 +457,13 @@ const DoctorAppointments = () => {
 
                                         {/* Expandable symptom detail row */}
                                         {expandedId === apt._id && (
-                                            <tr key={`${apt._id}-detail`} className="bg-blue-50/20">
+                                            <tr className="bg-blue-50/20">
                                                 <td colSpan={7} className="p-0">
                                                     <SymptomPanel apt={apt} />
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>

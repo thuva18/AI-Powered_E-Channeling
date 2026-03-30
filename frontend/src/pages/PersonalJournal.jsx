@@ -23,6 +23,14 @@ const GENDERS = ['Male', 'Female', 'Other'];
 
 // ── Empty prescription row ────────────────────────────────────────────────────
 const emptyRx = () => ({ medication: '', dosage: '', frequency: '', duration: '' });
+const trimValue = (value) => typeof value === 'string' ? value.trim() : value;
+const normalizeRx = (rx) => ({
+    medication: trimValue(rx?.medication) || '',
+    dosage: trimValue(rx?.dosage) || '',
+    frequency: trimValue(rx?.frequency) || '',
+    duration: trimValue(rx?.duration) || '',
+});
+const isEmptyRx = (rx) => !rx.medication && !rx.dosage && !rx.frequency && !rx.duration;
 
 const JournalModal = ({ entry, patients, onClose, onSave }) => {
     const isEdit = !!entry?._id;
@@ -52,15 +60,46 @@ const JournalModal = ({ entry, patients, onClose, onSave }) => {
     const removeRx = (idx) => setForm(p => ({ ...p, prescription: p.prescription.filter((_, i) => i !== idx) }));
 
     const handleSave = async () => {
-        if (!form.patientName.trim()) { setError('Patient name is required'); return; }
-        if (!form.diagnosis.trim()) { setError('Diagnosis is required'); return; }
+        const patientName = trimValue(form.patientName) || '';
+        const diagnosis = trimValue(form.diagnosis) || '';
+        const prescription = form.prescription
+            .map(normalizeRx)
+            .filter(rx => !isEmptyRx(rx));
+
+        if (!patientName) { setError('Patient name is required'); return; }
+        if (!form.visitDate) { setError('Visit date is required'); return; }
+        if (!diagnosis) { setError('Diagnosis is required'); return; }
+        if (prescription.some(rx => !rx.medication)) {
+            setError('Medication name is required for each prescription row.');
+            return;
+        }
+
+        const payload = {
+            patientId: form.patientId || null,
+            patientName,
+            contactNumber: trimValue(form.contactNumber) || '',
+            visitDate: form.visitDate,
+            diagnosis,
+            prescription,
+            notes: trimValue(form.notes) || '',
+            followUpDate: form.followUpDate || null,
+            status: form.status,
+            patientGender: form.patientGender || null,
+        };
+
+        if (form.patientAge !== '') {
+            payload.patientAge = Number(form.patientAge);
+        }
+
+        setError('');
         setSaving(true);
         try {
-            if (isEdit) await api.put(`/doctors/journal/${entry._id}`, form);
-            else await api.post('/doctors/journal', form);
+            if (isEdit) await api.put(`/doctors/journal/${entry._id}`, payload);
+            else await api.post('/doctors/journal', payload);
             onSave();
-        } catch { // e
-            setError('Failed to save entry. Please try again.');
+        } catch (e) {
+            const msg = e?.response?.data?.message || e?.response?.data?.error || 'Failed to save entry. Please try again.';
+            setError(msg);
         } finally {
             setSaving(false);
         }

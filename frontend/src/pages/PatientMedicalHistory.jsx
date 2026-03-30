@@ -48,6 +48,8 @@ const PatientMedicalHistory = () => {
                 <div className="space-y-4">
                     {records.map(rec => {
                         const doc = rec.doctorId;
+                        const doctorName = doc ? `Dr. ${doc.firstName} ${doc.lastName}` : 'Doctor unavailable';
+                        const doctorSpecialization = doc?.specialization || 'Doctor account unavailable';
                         return (
                             <div key={rec._id} className="card p-5 hover:shadow-md transition-all">
                                 <div className="flex items-start gap-4">
@@ -57,8 +59,8 @@ const PatientMedicalHistory = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex flex-wrap items-start justify-between gap-2">
                                             <div>
-                                                <p className="font-bold text-slate-900">Dr. {doc?.firstName} {doc?.lastName}</p>
-                                                <p className="text-xs text-slate-400">{doc?.specialization}</p>
+                                                <p className="font-bold text-slate-900">{doctorName}</p>
+                                                <p className="text-xs text-slate-400">{doctorSpecialization}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700">

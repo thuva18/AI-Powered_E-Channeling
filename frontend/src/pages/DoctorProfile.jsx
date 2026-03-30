@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input, Textarea } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { SectionHeader } from '../components/ui/Common';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
-import { User, Phone, Award, Briefcase, DollarSign, BookOpen, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Phone, Award, Briefcase, DollarSign, BookOpen, Save, AlertCircle, CheckCircle, Trash2, TriangleAlert } from 'lucide-react';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 
 const DoctorProfile = () => {
-    const { updateUser } = useAuthStore();
+    const { updateUser, logout } = useAuthStore();
+    const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
     const [tab, setTab] = useState('profile');
     const [phoneError, setPhoneError] = useState('');
+    const [phoneTouched, setPhoneTouched] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [deleting, setDeleting] = useState(false);
 
     const [form, setForm] = useState({
         firstName: '', lastName: '', specialization: '', consultationFee: '',
@@ -40,6 +46,8 @@ const DoctorProfile = () => {
                 },
                 availability: data.availability || [],
             });
+            setPhoneTouched(false);
+            setPhoneError('');
         }).catch(console.error).finally(() => setLoading(false));
     }, []);
 
@@ -48,8 +56,18 @@ const DoctorProfile = () => {
 
     const handlePhoneChange = (e) => {
         const val = e.target.value;
+        setPhoneTouched(true);
         setForm(p => ({ ...p, phone: val }));
         if (val && !PHONE_REGEX.test(val.trim())) {
+            setPhoneError('Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX');
+        } else {
+            setPhoneError('');
+        }
+    };
+
+    const handlePhoneBlur = () => {
+        setPhoneTouched(true);
+        if (form.phone && !PHONE_REGEX.test(form.phone.trim())) {
             setPhoneError('Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX');
         } else {
             setPhoneError('');
@@ -64,6 +82,7 @@ const DoctorProfile = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         if (form.phone && !PHONE_REGEX.test(form.phone.trim())) {
+            setPhoneTouched(true);
             setPhoneError('Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX');
             return;
         }
@@ -81,6 +100,8 @@ const DoctorProfile = () => {
             };
             const { data } = await api.put('/doctors/profile', payload);
             updateUser({ firstName: data.firstName, lastName: data.lastName });
+            setPhoneTouched(false);
+            setPhoneError('');
             showToast('Profile updated successfully!');
         } catch {
             showToast('Failed to update profile.', 'error');
@@ -88,6 +109,10 @@ const DoctorProfile = () => {
             setSaving(false);
         }
     };
+
+    const trimmedPhone = form.phone.trim();
+    const isPhoneValid = !!trimmedPhone && PHONE_REGEX.test(trimmedPhone);
+    const showPhoneValidation = phoneTouched || !!phoneError;
 
     const toggleDayAvailability = (day) => {
         setForm((p) => {
@@ -114,6 +139,20 @@ const DoctorProfile = () => {
             showToast('Failed to save availability.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteProfile = async () => {
+        if (deleteConfirmText !== 'DELETE') return;
+        setDeleting(true);
+        try {
+            await api.delete('/doctors/profile');
+            logout();
+            navigate('/login', { replace: true });
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to delete doctor profile.', 'error');
+            setDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -175,13 +214,18 @@ const DoctorProfile = () => {
                                             type="tel"
                                             value={form.phone}
                                             onChange={handlePhoneChange}
+                                            onBlur={handlePhoneBlur}
                                             maxLength={15}
                                             placeholder="07XXXXXXXX or +94XXXXXXXXX"
-                                            className={`input-field pr-9 ${phoneError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : form.phone && PHONE_REGEX.test(form.phone.trim()) ? 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20' : ''}`}
+                                            className={`input-field pr-9 ${phoneError
+                                                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                                                : showPhoneValidation && isPhoneValid
+                                                    ? 'border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                                    : ''}`}
                                             style={{ paddingLeft: '38px' }}
                                         />
                                         <div className="absolute inset-y-0 right-3 flex items-center">
-                                            {form.phone && (PHONE_REGEX.test(form.phone.trim())
+                                            {showPhoneValidation && trimmedPhone && (isPhoneValid
                                                 ? <CheckCircle size={15} className="text-emerald-500" />
                                                 : <AlertCircle size={15} className="text-red-400" />
                                             )}
@@ -189,7 +233,7 @@ const DoctorProfile = () => {
                                     </div>
                                     {phoneError
                                         ? <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {phoneError}</p>
-                                        : form.phone && PHONE_REGEX.test(form.phone.trim())
+                                        : showPhoneValidation && isPhoneValid
                                             ? <p className="text-xs font-medium text-emerald-600 flex items-center gap-1"><CheckCircle size={11} /> Valid phone number</p>
                                             : <p className="text-xs text-slate-400">Formats: 07XXXXXXXX or +94XXXXXXXXX</p>
                                     }
@@ -216,6 +260,26 @@ const DoctorProfile = () => {
                         <Button type="submit" isLoading={saving} className="px-10">
                             <Save size={15} /> Save Profile
                         </Button>
+                    </div>
+
+                    <div className="card border-red-100 mt-5 p-6 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <TriangleAlert size={17} className="text-red-500" />
+                            <h2 className="font-bold text-red-600">Danger Zone</h2>
+                        </div>
+                        <p className="text-sm text-slate-500">
+                            Permanently delete your doctor account and profile. Open appointments will be cancelled,
+                            and your existing patient records may still remain in history for audit purposes.
+                            <span className="font-semibold text-red-600"> This action cannot be undone.</span>
+                        </p>
+                        <button
+                            type="button"
+                            id="delete-doctor-profile-btn"
+                            onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); }}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                        >
+                            <Trash2 size={15} /> Delete My Profile
+                        </button>
                     </div>
                 </form>
             )}
@@ -279,6 +343,63 @@ const DoctorProfile = () => {
                         </Button>
                     </div>
                 </form>
+            )}
+
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
+                        onClick={() => setShowDeleteModal(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 animate-fade-up">
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-5">
+                            <Trash2 size={26} className="text-red-500" />
+                        </div>
+                        <h3 className="font-bold text-slate-900 text-lg text-center mb-2">Delete Your Doctor Profile?</h3>
+                        <p className="text-sm text-slate-500 text-center mb-5 leading-relaxed">
+                            This will permanently delete your doctor account and remove your access to the platform.
+                            Open appointments will be cancelled. <strong>This cannot be undone.</strong>
+                        </p>
+
+                        <div className="space-y-2 mb-5">
+                            <p className="text-xs font-semibold text-slate-600">
+                                Type <span className="font-mono bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-200">DELETE</span> to confirm:
+                            </p>
+                            <input
+                                id="doctor-delete-confirm-input"
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={e => setDeleteConfirmText(e.target.value)}
+                                placeholder="Type DELETE here"
+                                className="input-field font-mono"
+                                autoComplete="off"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                id="confirm-doctor-delete-btn"
+                                onClick={handleDeleteProfile}
+                                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            >
+                                {deleting ? (
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                ) : <Trash2 size={14} />}
+                                {deleting ? 'Deleting…' : 'Delete Profile'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

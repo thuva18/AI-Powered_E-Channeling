@@ -74,8 +74,15 @@ const BANK_DETAILS = {
 
 const PAYPAL_EMAIL = 'payments@mediportal.lk';
 
+const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read selected image.'));
+    reader.readAsDataURL(file);
+});
+
 // ── BookingModal ───────────────────────────────────────────────────────────────
-const BookingModal = ({ doctor, onClose, onBooked }) => {
+const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, onBooked }) => {
     
     // Step 1: slot selection, Step 2: payment
     const [step, setStep] = useState(1);
@@ -127,11 +134,26 @@ const BookingModal = ({ doctor, onClose, onBooked }) => {
         setLoading(true);
         setError('');
         try {
+            const symptomDescription = symptomText.trim();
+            const symptoms = symptomDescription
+                ? symptomDescription
+                    .split(/[,;\n]+/)
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                    .slice(0, 12)
+                : [];
+            const symptomImages = selectedImages.length > 0
+                ? await Promise.all(selectedImages.map(fileToDataUrl))
+                : [];
+
             const { data } = await api.post('/payments/initiate', {
                 doctorId: doctor._id,
                 appointmentDate: date,
                 timeSlot: slot,
                 method: selectedMethod,
+                symptomDescription,
+                symptoms,
+                symptomImages,
             });
 
             setTransactionId(data.transactionId);
@@ -734,6 +756,8 @@ const PatientBookAppointment = () => {
             {bookTarget && (
                 <BookingModal
                     doctor={bookTarget}
+                    symptomText={symptoms}
+                    selectedImages={images}
                     onClose={() => setBookTarget(null)}
                     onBooked={() => setBookTarget(null)}
                 />

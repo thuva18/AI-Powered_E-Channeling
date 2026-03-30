@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Appointment = require('../models/Appointment');
 const Transaction = require('../models/Transaction');
 const SavedReport = require('../models/SavedReport');
+const { deleteDoctorAccountByUserId } = require('../utils/deleteDoctorAccount');
 
 const SUCCESS_TRANSACTION_STATUSES = ['SUCCESS', 'APPROVED'];
 const DOCTOR_APPROVAL_STATUS_OPTIONS = ['APPROVED', 'REJECTED'];
@@ -82,8 +83,7 @@ const deleteDoctor = async (req, res) => {
             return res.status(404).json({ message: 'Doctor not found' });
         }
 
-        await User.findByIdAndDelete(doctor.userId);
-        await Doctor.findByIdAndDelete(doctor._id);
+        await deleteDoctorAccountByUserId(doctor.userId);
 
         res.json({ message: 'Doctor account permanently deleted' });
     } catch (error) {
@@ -528,7 +528,8 @@ const deleteUser = async (req, res) => {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         if (user.role === 'DOCTOR') {
-            await Doctor.findOneAndDelete({ userId: user._id });
+            await deleteDoctorAccountByUserId(user._id);
+            return res.json({ message: 'Doctor account permanently deleted' });
         }
         await user.deleteOne();
         res.json({ message: 'User deleted successfully' });

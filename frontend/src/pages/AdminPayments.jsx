@@ -67,6 +67,7 @@ const TransactionCard = ({ txn, onApprove, onReject, showActions }) => {
     const patient = txn.patientId;
     const apt = txn.appointmentId;
     const doctor = apt?.doctorId;
+    const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Doctor unavailable';
     const statusMeta = STATUS_META[txn.status] || STATUS_META.PENDING;
     const methodMeta = METHOD_META[txn.method] || { label: txn.method, icon: '💰', color: 'bg-slate-100 text-slate-700' };
 
@@ -99,12 +100,10 @@ const TransactionCard = ({ txn, onApprove, onReject, showActions }) => {
 
                     <div className="flex flex-wrap items-center gap-2 mt-2">
                         {/* Doctor */}
-                        {doctor && (
-                            <span className="flex items-center gap-1 text-xs text-slate-500">
-                                <Stethoscope size={11} className="text-indigo-500" />
-                                Dr. {doctor.firstName} {doctor.lastName}
-                            </span>
-                        )}
+                        <span className="flex items-center gap-1 text-xs text-slate-500">
+                            <Stethoscope size={11} className="text-indigo-500" />
+                            {doctorName}
+                        </span>
                         {/* Date */}
                         {apt?.appointmentDate && (
                             <span className="flex items-center gap-1 text-xs text-slate-500">

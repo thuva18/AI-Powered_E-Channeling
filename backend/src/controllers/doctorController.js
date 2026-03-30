@@ -1,5 +1,6 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
+const { deleteDoctorAccountByUserId } = require('../utils/deleteDoctorAccount');
 
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 const sendServerError = (res) => res.status(500).json({ message: 'Server Error' });
@@ -82,15 +83,36 @@ const updateAvailability = async (req, res) => {
     }
 };
 
+// @desc    Delete logged in doctor profile and account
+// @route   DELETE /api/v1/doctors/profile
+// @access  Private/Doctor
+const deleteProfile = async (req, res) => {
+    try {
+        const deletedDoctor = await deleteDoctorAccountByUserId(req.user._id);
+        if (!deletedDoctor) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+
+        res.json({ message: 'Doctor profile deleted successfully' });
+    } catch (error) {
+        console.error('deleteProfile error:', error);
+        sendServerError(res);
+    }
+};
+
 // @desc    Get doctor appointments
 // @route   GET /api/v1/doctors/appointments
 // @access  Private/Doctor
 const getAppointments = async (req, res) => {
     try {
         const doctor = await getDoctorByUserId(req.user._id);
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+
         const appointments = await Appointment.find({ doctorId: doctor._id })
             .populate('patientId', 'email')
-            .sort({ appointmentDate: 1 });
+            .sort({ createdAt: -1, appointmentDate: -1 });
         res.json(appointments);
     } catch (error) {
         sendServerError(res);
@@ -296,6 +318,7 @@ const getPatientAppointments = async (req, res) => {
 module.exports = {
     getProfile,
     updateProfile,
+    deleteProfile,
     updateAvailability,
     getAppointments,
     updateAppointmentStatus,
