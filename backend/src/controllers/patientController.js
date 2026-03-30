@@ -263,8 +263,8 @@ const getPatientAnalytics = async (req, res) => {
     }
 };
 
-// @desc    Get patient's medical history (journals)
-// @route   GET /api/v1/patients/journals
+// @desc    Get patient's medical history (clinical journals written by doctors)
+// @route   GET /api/v1/patients/medical-history
 // @access  Private/Patient
 const getJournals = async (req, res) => {
     try {
@@ -292,4 +292,3 @@ module.exports = {
     getPatientAnalytics,
     getJournals,
 };
-
