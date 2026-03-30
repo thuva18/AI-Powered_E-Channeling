@@ -21,6 +21,7 @@ import AdminPayments from './pages/AdminPayments';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdminReports from './pages/AdminReports';
 import PaymentReceipt from './pages/PaymentReceipt';
+import PatientHealthJournal from './pages/PatientHealthJournal';
 const App = () => {
   return (
     <BrowserRouter>
@@ -61,6 +62,7 @@ const App = () => {
           <Route path="/patient/payments" element={<PatientPaymentHistory />} />
           <Route path="/patient/payments/receipt/:transactionId" element={<PaymentReceipt />} />
           <Route path="/patient/profile" element={<PatientProfile />} />
+          <Route path="/patient/journal" element={<PatientHealthJournal />} />
         </Route>
       </Routes>
     </BrowserRouter>
