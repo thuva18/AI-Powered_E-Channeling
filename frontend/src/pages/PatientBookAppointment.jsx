@@ -5,7 +5,7 @@ import {
     Search, Stethoscope, Star, Calendar, Clock, CheckCircle, AlertCircle,
     ChevronRight, X, Upload, ImageIcon, Sparkles, CreditCard,
     Wallet, ArrowLeft, ShieldCheck, Lock, ExternalLink, Receipt,
-    RefreshCw, XCircle, Activity,
+    RefreshCw, XCircle, Activity, Brain, TrendingUp, Zap,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import CustomCalendar from '../components/CustomCalendar';
@@ -83,6 +83,7 @@ const fileToDataUrl = (file) => new Promise((resolve, reject) => {
 
 // ── BookingModal ───────────────────────────────────────────────────────────────
 const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, onBooked }) => {
+    const navigate = useNavigate();
     
     // Step 1: slot selection, Step 2: payment
     const [step, setStep] = useState(1);
@@ -346,11 +347,12 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
                                 </div>
                             </div>
                             {receiptId && (
-                                <Link to={`/patient/payments/receipt/${receiptId}`}
-                                    onClick={onClose}
-                                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all">
+                                <button
+                                    onClick={() => { onClose(); navigate(`/patient/payments/receipt/${receiptId}`); }}
+                                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-700 hover:to-indigo-700 transition-all"
+                                >
                                     <Receipt size={15} /> View & Download Receipt
-                                </Link>
+                                </button>
                             )}
                             <button onClick={onClose} className="mt-3 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button>
                         </div>
@@ -379,6 +381,14 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
                             <p className="font-bold text-slate-800 text-lg">Awaiting Admin Verification</p>
                             <p className="text-sm text-slate-500 mt-1 mb-4">We've received your payment reference. Our team will verify it within 1-2 hours.</p>
                             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-left mb-5 space-y-1.5">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Doctor</span>
+                                    <span className="font-semibold text-slate-800">Dr. {doctor.firstName} {doctor.lastName}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Date & Time</span>
+                                    <span className="font-semibold text-slate-800">{date && new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} · {slot}</span>
+                                </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-500">Status</span>
                                     <span className="font-semibold text-amber-700 flex items-center gap-1"><Clock size={12} /> Pending Approval</span>
@@ -715,6 +725,9 @@ const PatientBookAppointment = () => {
     const [loading, setLoading] = useState(false);
     const [bookTarget, setBookTarget] = useState(null);
     const [analytics, setAnalytics] = useState(null);
+    const [aiSuggestion, setAiSuggestion] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState('');
     const { user } = useAuthStore();
 
     useEffect(() => {
@@ -737,12 +750,17 @@ const PatientBookAppointment = () => {
         setPreviews(prev => prev.filter((_, i) => i !== idx));
     };
 
-    const handleSearch = useCallback(async () => {
-        if (!symptoms.trim()) return;
+    const handleSearch = useCallback(async (opts) => {
+        const isSpec = typeof opts === 'object' && opts?.specialization;
+        const query = isSpec ? opts.specialization : (opts || symptoms);
+        if (!query.trim()) return;
         setLoading(true);
 
         try {
-            const { data } = await api.get(`/patients/doctors?symptoms=${encodeURIComponent(symptoms)}`);
+            const url = isSpec
+                ? `/patients/doctors?specialization=${encodeURIComponent(query)}`
+                : `/patients/doctors?symptoms=${encodeURIComponent(query)}`;
+            const { data } = await api.get(url);
             setDoctors(data);
             setSearched(true);
         } catch {
@@ -750,6 +768,44 @@ const PatientBookAppointment = () => {
             setSearched(true);
         } finally { setLoading(false); }
     }, [symptoms]);
+
+    // Single flow: AI predict → show card → auto-filter doctors by specialization
+    const handleFindDoctors = async () => {
+        if (!symptoms.trim()) return;
+        setAiLoading(true);
+        setAiError('');
+        setAiSuggestion(null);
+        setSearched(false);
+        setDoctors([]);
+
+        try {
+            // Step 1: AI prediction
+            const { data: aiResult } = await api.post('/ai/predict-specialist', { symptoms });
+            setAiSuggestion(aiResult);
+            setAiLoading(false);
+
+            // Step 2: Auto-search by predicted specialization
+            setLoading(true);
+            try {
+                const { data: docs } = await api.get(
+                    `/patients/doctors?specialization=${encodeURIComponent(aiResult.predictedSpecialist)}`
+                );
+                setDoctors(docs);
+                setSearched(true);
+            } catch {
+                setDoctors([]);
+                setSearched(true);
+            } finally { setLoading(false); }
+        } catch (err) {
+            setAiLoading(false);
+            setAiError(
+                err.response?.data?.message ||
+                'AI service unavailable. Please start the Python service (ai-service/start.bat).'
+            );
+            // Fallback: do regular symptom search without AI
+            await handleSearch();
+        }
+    };
 
     return (
         <>
@@ -759,7 +815,7 @@ const PatientBookAppointment = () => {
                     symptomText={symptoms}
                     selectedImages={images}
                     onClose={() => setBookTarget(null)}
-                    onBooked={() => setBookTarget(null)}
+                    onBooked={() => { /* keep modal open to show receipt */ }}
                 />
             )}
 
@@ -905,16 +961,88 @@ const PatientBookAppointment = () => {
                             )}
                         </div>
 
+                        {/* Find Doctor Specialization Button */}
                         <button
-                            onClick={handleSearch}
-                            disabled={!symptoms.trim() || loading}
-                            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 hover:from-blue-700 hover:to-indigo-700 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
-                            {loading ? (
-                                <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Finding doctors…</>
+                            onClick={handleFindDoctors}
+                            disabled={!symptoms.trim() || aiLoading || loading}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-lg shadow-blue-500/25 hover:from-blue-700 hover:via-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {aiLoading ? (
+                                <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> AI is analyzing your symptoms...</>
+                            ) : loading ? (
+                                <><svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg> Finding matching doctors...</>
                             ) : (
-                                <><Sparkles size={15} /> Find Doctors</>
+                                <><Brain size={16} /> Find Doctor Specialization</>  
                             )}
                         </button>
+
+                        {/* AI Error */}
+                        {aiError && (
+                            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                                <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                                <p className="text-sm text-red-700">{aiError}</p>
+                            </div>
+                        )}
+
+                        {/* AI Result Card */}
+                        {aiSuggestion && (
+                            <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200 p-5 space-y-4 animate-fade-up">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-md shadow-violet-500/30 shrink-0">
+                                        <Brain size={18} className="text-white" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">
+                                            AI Recommendation{aiSuggestion.ensembleUsed ? ' · Ensemble' : ''}
+                                        </p>
+                                        <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate">
+                                            {aiSuggestion.predictedSpecialist}
+                                        </h3>
+                                    </div>
+                                    {aiSuggestion.belowThreshold && (
+                                        <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 shrink-0">LOW CONF</span>
+                                    )}
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-slate-500 flex items-center gap-1"><TrendingUp size={11} /> Confidence</span>
+                                        <span className="text-xs font-black text-violet-700">{aiSuggestion.confidence}%</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-2 rounded-full transition-all duration-700 ${
+                                                aiSuggestion.confidence >= 80 ? 'bg-emerald-500' :
+                                                aiSuggestion.confidence >= 60 ? 'bg-violet-500' : 'bg-amber-500'
+                                            }`}
+                                            style={{ width: `${Math.min(aiSuggestion.confidence, 100)}%` }}
+                                        />
+                                    </div>
+                                    {aiSuggestion.ensembleUsed && (
+                                        <p className="text-[10px] text-slate-400">
+                                            LightGBM: {aiSuggestion.lgbConfidence}% · Neural Net: {aiSuggestion.nnConfidence}%
+                                        </p>
+                                    )}
+                                </div>
+
+                                {aiSuggestion.alternatives?.length > 1 && (
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Top Matches</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {aiSuggestion.alternatives.map((alt, i) => (
+                                                <span key={i} className={`text-[10px] font-semibold px-2 py-1 rounded-full border ${
+                                                    i === 0 ? 'bg-violet-100 text-violet-700 border-violet-200' : 'bg-slate-100 text-slate-600 border-slate-200'
+                                                }`}>
+                                                    {alt.specialist} ({alt.confidence}%)
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                            </div>
+                        )}
+
                     </div>
                 </div>
 

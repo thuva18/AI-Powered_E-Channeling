@@ -10,6 +10,7 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const patientRoutes = require('./src/routes/patientRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const patientJournalRoutes = require('./src/routes/patientJournalRoutes');
+const aiRoutes = require('./src/routes/aiRoutes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/patients/journals', patientJournalRoutes); // ← must be BEFORE /patients
 app.use('/api/v1/patients', patientRoutes);
 app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {

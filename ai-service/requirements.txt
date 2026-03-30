@@ -1,0 +1,8 @@
+flask==3.0.3
+flask-cors==4.0.1
+scikit-learn==1.4.2
+lightgbm==4.3.0
+numpy==1.26.4
+joblib==1.4.2
+# TensorFlow is optional — the service works without it (LightGBM only)
+tensorflow==2.16.1
