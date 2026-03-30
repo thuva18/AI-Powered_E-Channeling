@@ -112,6 +112,7 @@ const DashboardLayout = ({ allowedRoles }) => {
         { label: 'Book Appointment', path: '/patient', icon: Search },
         { label: 'My Appointments', path: '/patient/appointments', icon: Calendar },
         { label: 'Medical History', path: '/patient/history', icon: FileText },
+        { label: 'Health Journal', path: '/patient/journal', icon: BookOpen },
         { label: 'Payment History', path: '/patient/payments', icon: CreditCard },
         { label: 'My Profile', path: '/patient/profile', icon: User },
     ];
