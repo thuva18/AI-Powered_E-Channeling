@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import useAuthStore from '../store/authStore';
 import {
     User, Mail, Phone, Calendar, Save, CheckCircle,
-    AlertCircle, IdCard, Shield, Edit3,
+    AlertCircle, IdCard, Shield, Edit3, Trash2, TriangleAlert,
 } from 'lucide-react';
 
 const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 
 const PatientProfile = () => {
-    const { user, updateUser } = useAuthStore();
+    const { user, updateUser, logout } = useAuthStore();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState(null);
@@ -18,6 +20,9 @@ const PatientProfile = () => {
         firstName: '', lastName: '', phone: '', nic: '', dateOfBirth: '',
     });
     const [errors, setErrors] = useState({});
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+    const [deleting, setDeleting] = useState(false);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -74,6 +79,20 @@ const PatientProfile = () => {
             showToast(err.response?.data?.message || 'Failed to update profile.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmText !== 'DELETE') return;
+        setDeleting(true);
+        try {
+            await api.delete('/patients/profile');
+            logout();
+            navigate('/login', { replace: true });
+        } catch (err) {
+            showToast(err.response?.data?.message || 'Failed to delete account.', 'error');
+            setDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -189,6 +208,81 @@ const PatientProfile = () => {
                     </button>
                 </div>
             </form>
+
+            {/* Danger Zone */}
+            <div className="card border-red-100 p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                    <TriangleAlert size={17} className="text-red-500" />
+                    <h2 className="font-bold text-red-600">Danger Zone</h2>
+                </div>
+                <p className="text-sm text-slate-500">
+                    Permanently delete your account and all associated data including appointments
+                    and health records. <span className="font-semibold text-red-600">This action cannot be undone.</span>
+                </p>
+                <button
+                    id="delete-account-btn"
+                    onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+                >
+                    <Trash2 size={15} /> Delete My Account
+                </button>
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-fade-in"
+                        onClick={() => setShowDeleteModal(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-7 animate-fade-up">
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-5">
+                            <Trash2 size={26} className="text-red-500" />
+                        </div>
+                        <h3 className="font-bold text-slate-900 text-lg text-center mb-2">Delete Your Account?</h3>
+                        <p className="text-sm text-slate-500 text-center mb-5 leading-relaxed">
+                            This will permanently delete your account, all appointments, and health records.
+                            This <strong>cannot be undone</strong>.
+                        </p>
+
+                        <div className="space-y-2 mb-5">
+                            <p className="text-xs font-semibold text-slate-600">
+                                Type <span className="font-mono bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-200">DELETE</span> to confirm:
+                            </p>
+                            <input
+                                id="delete-confirm-input"
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={e => setDeleteConfirmText(e.target.value)}
+                                placeholder="Type DELETE here"
+                                className="input-field font-mono"
+                                autoComplete="off"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                id="confirm-delete-btn"
+                                onClick={handleDeleteAccount}
+                                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            >
+                                {deleting ? (
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                ) : <Trash2 size={14} />}
+                                {deleting ? 'Deleting…' : 'Delete Account'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
