@@ -19,7 +19,7 @@ router.use(patientOnly);
 router.route('/profile').get(getMyProfile).put(updateMyProfile).delete(deleteMyProfile);
 router.get('/analytics', getPatientAnalytics);
 router.get('/doctors', getApprovedDoctors);
-router.get('/journals', getJournals);
+router.get('/medical-history', getJournals);
 router.get('/appointments', getMyAppointments);
 router.post('/appointments', bookAppointment);
 router.patch('/appointments/:id/cancel', cancelAppointment);
