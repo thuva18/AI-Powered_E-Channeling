@@ -9,7 +9,7 @@ const PatientMedicalHistory = () => {
     const fetch = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/patients/journals');
+            const { data } = await api.get('/patients/medical-history');
             setRecords(data);
         } catch { /* silent */ }
         finally { setLoading(false); }
