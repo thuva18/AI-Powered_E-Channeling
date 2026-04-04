@@ -5,7 +5,7 @@ import { Toast } from '../layouts/DashboardLayout';
 import {
     Users, Stethoscope, Calendar, CreditCard, TrendingUp, TrendingDown,
     CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, ShieldCheck,
-    ArrowRight, Activity, ExternalLink, BarChart3, Wallet, Star,
+    ArrowRight, Activity, ExternalLink, BarChart3, Wallet, Star, Trash2,
     BadgeCheck, ChevronRight, CircleDot,
 } from 'lucide-react';
 
@@ -137,21 +137,33 @@ const ProgressRow = ({ label, value, max, color, icon }) => {
 // ── Confirm modal ──────────────────────────────────────────────────────────────
 const ConfirmModal = ({ action, onConfirm, onCancel }) => {
     if (!action) return null;
+    const isDelete = action.type === 'delete';
     const isApprove = action.status === 'APPROVED';
+    const title = isDelete ? 'Delete Doctor?' : `${isApprove ? 'Approve' : 'Reject'} Doctor?`;
+    const description = isDelete
+        ? 'This will permanently remove the doctor account. This action cannot be undone.'
+        : isApprove
+            ? 'This doctor will receive full dashboard access after approval.'
+            : 'This doctor will remain blocked from accessing the platform.';
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(6px)' }}
             onClick={onCancel}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fade-up" onClick={e => e.stopPropagation()}>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isApprove ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                    {isApprove ? <CheckCircle size={28} className="text-emerald-500" /> : <XCircle size={28} className="text-red-500" />}
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDelete ? 'bg-red-50' : isApprove ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    {isDelete
+                        ? <Trash2 size={28} className="text-red-500" />
+                        : isApprove
+                            ? <CheckCircle size={28} className="text-emerald-500" />
+                            : <XCircle size={28} className="text-red-500" />}
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 text-center mb-1">{isApprove ? 'Approve' : 'Reject'} Doctor?</h3>
+                <h3 className="text-lg font-bold text-slate-900 text-center mb-1">{title}</h3>
                 <p className="text-sm text-slate-500 text-center mb-5">Dr. <strong>{action.name}</strong></p>
+                <p className="text-xs text-slate-400 text-center -mt-3 mb-5">{description}</p>
                 <div className="flex gap-3">
                     <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
-                    <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${isApprove ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'}`}>
-                        {isApprove ? 'Approve' : 'Reject'}
+                    <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${isDelete ? 'bg-red-500 hover:bg-red-600' : isApprove ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'}`}>
+                        {isDelete ? 'Delete' : isApprove ? 'Approve' : 'Reject'}
                     </button>
                 </div>
             </div>
@@ -193,14 +205,20 @@ const AdminDashboard = () => {
     useEffect(() => { fetchAll(); }, [fetchAll]);
 
     const handleConfirm = async () => {
-        const { id, name, status } = confirm;
+        const { id, name, status, type } = confirm;
         setConfirm(null);
         setUpdating(id);
         try {
-            await api.patch(`/admin/doctors/${id}/approve`, { status });
-            setPending(prev => prev.filter(d => d._id !== id));
-            showToast(`Dr. ${name} ${status === 'APPROVED' ? 'approved' : 'rejected'} successfully.`,
-                status === 'APPROVED' ? 'success' : 'error');
+            if (type === 'delete') {
+                await api.delete(`/admin/doctors/${id}`);
+                setPending(prev => prev.filter(d => d._id !== id));
+                showToast(`Dr. ${name} deleted successfully.`, 'success');
+            } else {
+                await api.patch(`/admin/doctors/${id}/approve`, { status });
+                setPending(prev => prev.filter(d => d._id !== id));
+                showToast(`Dr. ${name} ${status === 'APPROVED' ? 'approved' : 'rejected'} successfully.`,
+                    status === 'APPROVED' ? 'success' : 'error');
+            }
             fetchAll();
         } catch {
             showToast('Action failed. Please try again.', 'error');
@@ -383,6 +401,9 @@ const AdminDashboard = () => {
                                             const patName = txn.patientId?.patientProfile
                                                 ? `${txn.patientId.patientProfile.firstName || ''} ${txn.patientId.patientProfile.lastName || ''}`.trim()
                                                 : txn.patientId?.email?.split('@')[0] || 'Patient';
+                                            const doctorName = txn.appointmentId?.doctorId
+                                                ? `Dr. ${txn.appointmentId.doctorId.firstName} ${txn.appointmentId.doctorId.lastName}`
+                                                : 'Doctor unavailable';
                                             const isOk = txn.status === 'SUCCESS' || txn.status === 'APPROVED';
                                             const isPend = txn.status === 'PENDING_APPROVAL';
                                             return (
@@ -394,7 +415,7 @@ const AdminDashboard = () => {
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-xs font-semibold text-slate-800 truncate">{patName}</p>
                                                         <p className="text-[11px] text-slate-400">
-                                                            {meta.icon} {meta.label} · Dr. {txn.appointmentId?.doctorId?.firstName} {txn.appointmentId?.doctorId?.lastName}
+                                                            {meta.icon} {meta.label} · {doctorName}
                                                         </p>
                                                     </div>
                                                     <div className="text-right shrink-0">
@@ -511,6 +532,10 @@ const AdminDashboard = () => {
                                                             <button onClick={() => setConfirm({ id: doc._id, name: `${doc.firstName} ${doc.lastName}`, status: 'REJECTED' })}
                                                                 className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-colors">
                                                                 <XCircle size={12} /> Reject
+                                                            </button>
+                                                            <button onClick={() => setConfirm({ type: 'delete', id: doc._id, name: `${doc.firstName} ${doc.lastName}` })}
+                                                                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 transition-colors">
+                                                                <Trash2 size={12} /> Delete
                                                             </button>
                                                         </div>
                                                     </td>

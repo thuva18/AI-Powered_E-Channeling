@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     getProfile,
     updateProfile,
+    deleteProfile,
     updateAvailability,
     getAppointments,
     updateAppointmentStatus,
@@ -19,7 +20,8 @@ router.use(doctorOnly);
 
 router.route('/profile')
     .get(getProfile)
-    .put(updateProfile);
+    .put(updateProfile)
+    .delete(deleteProfile);
 
 router.put('/availability', updateAvailability);
 

@@ -1,5 +1,6 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
+const { deleteDoctorAccountByUserId } = require('../utils/deleteDoctorAccount');
 
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 const sendServerError = (res) => res.status(500).json({ message: 'Server Error' });
@@ -32,14 +33,12 @@ const updateProfile = async (req, res) => {
 
         const { firstName, lastName, specialization, consultationFee, profileDetails, phone } = req.body;
 
-        // Update simple fields - only if they have actual values
-        if (firstName && firstName.trim()) doctor.firstName = firstName.trim();
-        if (lastName && lastName.trim()) doctor.lastName = lastName.trim();
-        if (specialization && specialization.trim()) doctor.specialization = specialization.trim();
-        if (consultationFee !== undefined && consultationFee !== null) doctor.consultationFee = Number(consultationFee);
-        
-        // Only update phone if explicitly provided and valid
-        if (phone !== undefined && phone !== '' && phone !== null) {
+        doctor.firstName = firstName || doctor.firstName;
+        doctor.lastName = lastName || doctor.lastName;
+        doctor.specialization = specialization || doctor.specialization;
+        doctor.consultationFee = consultationFee !== undefined ? consultationFee : doctor.consultationFee;
+
+        if (phone !== undefined) {
             if (!PHONE_REGEX.test(phone.trim())) {
                 return res.status(400).json({
                     message: 'Phone number must be in the format 07XXXXXXXX or +94XXXXXXXXX',
@@ -48,32 +47,18 @@ const updateProfile = async (req, res) => {
             doctor.phone = phone.trim();
         }
 
-        // Update nested profileDetails object
-        if (profileDetails && Object.keys(profileDetails).length > 0) {
-            if (profileDetails.bio !== undefined) {
-                doctor.profileDetails.bio = profileDetails.bio || '';
-            }
-            if (profileDetails.qualifications && Array.isArray(profileDetails.qualifications)) {
-                doctor.profileDetails.qualifications = profileDetails.qualifications.filter(q => q && q.trim());
-            }
-            if (profileDetails.experienceYears !== undefined && profileDetails.experienceYears !== null) {
-                doctor.profileDetails.experienceYears = Number(profileDetails.experienceYears);
-            }
-            if (profileDetails.contactNumber !== undefined) {
-                doctor.profileDetails.contactNumber = profileDetails.contactNumber || '';
-            }
+        if (profileDetails) {
+            const details = doctor.profileDetails;
+            details.bio = profileDetails.bio !== undefined ? profileDetails.bio : details.bio;
+            details.qualifications = profileDetails.qualifications || details.qualifications;
+            details.experienceYears = profileDetails.experienceYears !== undefined ? profileDetails.experienceYears : details.experienceYears;
+            details.contactNumber = profileDetails.contactNumber || details.contactNumber;
         }
 
-        // Mark profileDetails as modified so it gets saved
-        doctor.markModified('profileDetails');
-        
-        // Save without running validators since we do our own validation above
-        const updatedDoctor = await doctor.save({ validateModifiedOnly: false });
+        const updatedDoctor = await doctor.save();
         res.json(updatedDoctor);
     } catch (error) {
-        console.error('Profile update error:', error.message);
-        console.error('Full error stack:', error.stack);
-        res.status(400).json({ message: error.message || 'Failed to update profile' });
+        sendServerError(res);
     }
 };
 
@@ -98,15 +83,36 @@ const updateAvailability = async (req, res) => {
     }
 };
 
+// @desc    Delete logged in doctor profile and account
+// @route   DELETE /api/v1/doctors/profile
+// @access  Private/Doctor
+const deleteProfile = async (req, res) => {
+    try {
+        const deletedDoctor = await deleteDoctorAccountByUserId(req.user._id);
+        if (!deletedDoctor) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+
+        res.json({ message: 'Doctor profile deleted successfully' });
+    } catch (error) {
+        console.error('deleteProfile error:', error);
+        sendServerError(res);
+    }
+};
+
 // @desc    Get doctor appointments
 // @route   GET /api/v1/doctors/appointments
 // @access  Private/Doctor
 const getAppointments = async (req, res) => {
     try {
         const doctor = await getDoctorByUserId(req.user._id);
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+
         const appointments = await Appointment.find({ doctorId: doctor._id })
             .populate('patientId', 'email')
-            .sort({ appointmentDate: 1 });
+            .sort({ createdAt: -1, appointmentDate: -1 });
         res.json(appointments);
     } catch (error) {
         sendServerError(res);
@@ -312,6 +318,7 @@ const getPatientAppointments = async (req, res) => {
 module.exports = {
     getProfile,
     updateProfile,
+    deleteProfile,
     updateAvailability,
     getAppointments,
     updateAppointmentStatus,

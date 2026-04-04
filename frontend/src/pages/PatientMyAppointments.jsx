@@ -51,6 +51,8 @@ const PatientMyAppointments = () => {
         const cfg = STATUS_CONFIG[apt.status] || STATUS_CONFIG.PENDING;
         const Icon = cfg.icon;
         const doc = apt.doctorId;
+        const doctorName = doc ? `Dr. ${doc.firstName} ${doc.lastName}` : 'Doctor unavailable';
+        const doctorSpecialization = doc?.specialization || 'Doctor account unavailable';
         return (
             <div className="card p-5 flex flex-col sm:flex-row gap-4 hover:shadow-md transition-all">
                 <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-sm">
@@ -59,8 +61,8 @@ const PatientMyAppointments = () => {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div>
-                            <p className="font-bold text-slate-900">Dr. {doc?.firstName} {doc?.lastName}</p>
-                            <p className="text-xs text-slate-400">{doc?.specialization}</p>
+                            <p className="font-bold text-slate-900">{doctorName}</p>
+                            <p className="text-xs text-slate-400">{doctorSpecialization}</p>
                         </div>
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 ${cfg.color}`}>
                             <Icon size={10} /> {cfg.label}

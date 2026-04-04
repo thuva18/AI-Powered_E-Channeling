@@ -167,6 +167,8 @@ const PatientPaymentHistory = () => {
                     {filtered.map(txn => {
                         const apt = txn.appointmentId;
                         const doctor = apt?.doctorId;
+                        const doctorName = doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Doctor unavailable';
+                        const doctorSpecialization = doctor?.specialization || 'Doctor account unavailable';
                         const statusMeta = STATUS_META[txn.status] || STATUS_META.PENDING;
                         const methodMeta = METHOD_META[txn.method] || { label: txn.method, icon: '💰', color: 'bg-slate-100 text-slate-700' };
                         const { Icon: StatusIcon } = statusMeta;
@@ -184,9 +186,9 @@ const PatientPaymentHistory = () => {
                                         <div className="flex items-start justify-between gap-2">
                                             <div>
                                                 <p className="font-bold text-slate-800 text-sm">
-                                                    Dr. {doctor?.firstName} {doctor?.lastName}
+                                                    {doctorName}
                                                 </p>
-                                                <p className="text-xs text-slate-400">{doctor?.specialization}</p>
+                                                <p className="text-xs text-slate-400">{doctorSpecialization}</p>
                                             </div>
                                             <p className="font-bold text-slate-800 shrink-0">LKR {txn.amount?.toLocaleString()}</p>
                                         </div>

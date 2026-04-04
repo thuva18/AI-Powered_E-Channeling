@@ -10,6 +10,22 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmtLKR = n => `LKR ${(n || 0).toLocaleString()}`;
+const fmtDateTime = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+const ADVANCED_SECTION_KEYS = ['appointmentSummary', 'doctorPerformance', 'cancellationAnalysis', 'financialSummary', 'peakHours'];
+const DEFAULT_ADVANCED_SECTIONS = {
+    appointmentSummary: true,
+    doctorPerformance: true,
+    cancellationAnalysis: true,
+    financialSummary: true,
+    peakHours: true,
+};
+const DATE_PRESET_LABELS = {
+    last7: 'Last 7 days',
+    last30: 'Last 30 days',
+    thisMonth: 'This Month',
+    lastMonth: 'Last Month',
+};
 const fmtDate = d => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 // ─── Mini UI atoms ────────────────────────────────────────────────────────────
@@ -383,14 +399,52 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
     const [dateTo, setDateTo] = useState(editConfig?.dateTo || '');
     const [reportName, setReportName] = useState(editConfig?.name || '');
     const [selectedDoctors, setSelectedDoctors] = useState([]);
+    const [selectedDatePreset, setSelectedDatePreset] = useState('');
     const [doctorDropOpen, setDoctorDropOpen] = useState(false);
     const [advSections, setAdvSections] = useState(
-        editConfig?.advSections || { appointmentSummary: true, doctorPerformance: true, cancellationAnalysis: true, financialSummary: true, peakHours: true }
+        editConfig?.advSections || DEFAULT_ADVANCED_SECTIONS
     );
     const [data, setData] = useState(editConfig?.data || null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [allDoctors, setAllDoctors] = useState(editConfig?.data?.allDoctors || []);
+    const [presets, setPresets] = useState([]);
+    const [presetLoading, setPresetLoading] = useState(false);
+    const [presetSaving, setPresetSaving] = useState(false);
+    const [presetActionId, setPresetActionId] = useState('');
+
+    const sortPresetsByRecent = useCallback((items) => {
+        return [...items].sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
+    }, []);
+
+    const loadPresetLibrary = async (notifyError = true) => {
+        setPresetLoading(true);
+        try {
+            const { data: list } = await api.get('/admin/presets');
+            setPresets(sortPresetsByRecent(list));
+        } catch {
+            if (notifyError) showToast('Failed to load presets', 'error');
+        } finally {
+            setPresetLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        let mounted = true;
+        const loadInitialPresets = async () => {
+            setPresetLoading(true);
+            try {
+                const { data: list } = await api.get('/admin/presets');
+                if (mounted) setPresets(sortPresetsByRecent(list));
+            } catch {
+                // Keep initial load silent to avoid noisy toasts on mount.
+            } finally {
+                if (mounted) setPresetLoading(false);
+            }
+        };
+        loadInitialPresets();
+        return () => { mounted = false; };
+    }, [sortPresetsByRecent]);
 
     const applyPreset = (preset) => {
         const now = new Date(); let from = new Date(), to = new Date();
@@ -398,23 +452,30 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
         else if (preset === 'last30') from.setDate(now.getDate() - 30);
         else if (preset === 'thisMonth') from = new Date(now.getFullYear(), now.getMonth(), 1);
         else if (preset === 'lastMonth') { from = new Date(now.getFullYear(), now.getMonth() - 1, 1); to = new Date(now.getFullYear(), now.getMonth(), 0); }
+        setSelectedDatePreset(preset);
         setDateFrom(from.toISOString().split('T')[0]);
         setDateTo(to.toISOString().split('T')[0]);
         setData(null);
     };
 
-    const fetchData = useCallback(async () => {
-        if (!dateFrom || !dateTo) { setError('Select a date range first'); return; }
+    const fetchDataWithFilters = useCallback(async (from, to, doctorIds = []) => {
+        if (!from || !to) { setError('Select a date range first'); return null; }
         setLoading(true); setError('');
         try {
-            const params = { dateFrom, dateTo };
-            if (selectedDoctors.length) params.doctorIds = selectedDoctors.join(',');
+            const params = { dateFrom: from, dateTo: to };
+            if (doctorIds.length) params.doctorIds = doctorIds.join(',');
             const { data: d } = await api.get('/admin/advanced-report-data', { params });
             setData(d);
             if (d.allDoctors?.length) setAllDoctors(d.allDoctors);
+            return d;
         } catch (e) { setError(e.response?.data?.message || 'Failed to load'); }
         finally { setLoading(false); }
-    }, [dateFrom, dateTo, selectedDoctors]);
+        return null;
+    }, []);
+
+    const fetchData = useCallback(async () => {
+        await fetchDataWithFilters(dateFrom, dateTo, selectedDoctors);
+    }, [dateFrom, dateTo, selectedDoctors, fetchDataWithFilters]);
 
     useEffect(() => {
         if (!dateFrom || !dateTo) return;
@@ -450,6 +511,119 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
         if (!data) { showToast('Generate data first', 'error'); return; }
         generateAdvancedPDF({ reportName, dateFrom, dateTo, advSections, data });
         showToast('PDF downloaded!');
+    };
+
+    const handleSaveAsPreset = async () => {
+        if (!dateFrom || !dateTo) { showToast('Select a date range before saving preset', 'error'); return; }
+
+        const suggestedName = reportName.trim() ? `${reportName.trim()} Preset` : 'Advanced Report Preset';
+        const enteredName = window.prompt('Preset name', suggestedName);
+        if (enteredName === null) return;
+        if (!enteredName.trim()) { showToast('Preset name is required', 'error'); return; }
+
+        const payload = {
+            name: enteredName.trim(),
+            reportName: reportName.trim(),
+            dateRange: {
+                from: dateFrom,
+                to: dateTo,
+                preset: selectedDatePreset || '',
+            },
+            sections: ADVANCED_SECTION_KEYS.filter((key) => Boolean(advSections[key])),
+            doctors: selectedDoctors,
+            filters: {
+                doctorIds: selectedDoctors,
+            },
+        };
+
+        setPresetSaving(true);
+        try {
+            const { data: created } = await api.post('/admin/presets', payload);
+            setPresets((prev) => sortPresetsByRecent([created, ...prev]));
+            showToast('Preset saved!');
+        } catch (e) {
+            showToast(e.response?.data?.message || 'Failed to save preset', 'error');
+        } finally {
+            setPresetSaving(false);
+        }
+    };
+
+    const handleApplySavedPreset = async (preset) => {
+        const presetFrom = preset?.dateRange?.from || '';
+        const presetTo = preset?.dateRange?.to || '';
+        if (!presetFrom || !presetTo) { showToast('This preset has an invalid date range', 'error'); return; }
+
+        const doctorIds = Array.isArray(preset.doctors) ? preset.doctors : [];
+        const selectedSectionSet = new Set(Array.isArray(preset.sections) ? preset.sections : []);
+        const nextSectionState = ADVANCED_SECTION_KEYS.reduce((acc, key) => {
+            acc[key] = selectedSectionSet.has(key);
+            return acc;
+        }, {});
+
+        setPresetActionId(`${preset._id}-apply`);
+        setReportName(preset.reportName || '');
+        setDateFrom(presetFrom);
+        setDateTo(presetTo);
+        setSelectedDatePreset(preset?.dateRange?.preset || '');
+        setSelectedDoctors(doctorIds);
+        setAdvSections(nextSectionState);
+        setDoctorDropOpen(false);
+        setData(null);
+
+        await fetchDataWithFilters(presetFrom, presetTo, doctorIds);
+
+        try {
+            const { data: updated } = await api.put(`/admin/presets/${preset._id}`, { touch: true });
+            setPresets((prev) => sortPresetsByRecent(prev.map(p => p._id === updated._id ? updated : p)));
+        } catch {
+            // Applying config should still work even if touch update fails.
+        } finally {
+            setPresetActionId('');
+        }
+
+        showToast('Preset applied');
+    };
+
+    const handleDeletePreset = async (presetId) => {
+        if (!window.confirm('Delete this preset?')) return;
+
+        setPresetActionId(`${presetId}-delete`);
+        try {
+            await api.delete(`/admin/presets/${presetId}`);
+            setPresets((prev) => prev.filter((p) => p._id !== presetId));
+            showToast('Preset deleted');
+        } catch (e) {
+            showToast(e.response?.data?.message || 'Failed to delete preset', 'error');
+        } finally {
+            setPresetActionId('');
+        }
+    };
+
+    const handleRenamePreset = async (preset) => {
+        const enteredName = window.prompt('Rename preset', preset.name);
+        if (enteredName === null) return;
+        if (!enteredName.trim()) { showToast('Preset name is required', 'error'); return; }
+        if (enteredName.trim() === preset.name) return;
+
+        setPresetActionId(`${preset._id}-rename`);
+        try {
+            const { data: updated } = await api.put(`/admin/presets/${preset._id}`, { name: enteredName.trim() });
+            setPresets((prev) => sortPresetsByRecent(prev.map(p => p._id === updated._id ? updated : p)));
+            showToast('Preset renamed');
+        } catch (e) {
+            showToast(e.response?.data?.message || 'Failed to rename preset', 'error');
+        } finally {
+            setPresetActionId('');
+        }
+    };
+
+    const getPresetSummary = (preset) => {
+        const dateLabel = DATE_PRESET_LABELS[preset?.dateRange?.preset]
+            || (preset?.dateRange?.from && preset?.dateRange?.to
+                ? `${preset.dateRange.from} → ${preset.dateRange.to}`
+                : 'Custom range');
+        const sectionCount = Array.isArray(preset?.sections) ? preset.sections.length : 0;
+        return `${dateLabel}, ${sectionCount} section${sectionCount === 1 ? '' : 's'}`;
     };
 
     const toggleDoc = id => setSelectedDoctors(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -490,8 +664,8 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
                             {[['last7', 'Last 7d'], ['last30', 'Last 30d'], ['thisMonth', 'This Month'], ['lastMonth', 'Last Month']].map(([k, l]) => <Preset key={k} label={l} onClick={() => applyPreset(k)} />)}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div><label className="block text-xs font-semibold text-slate-600 mb-1.5">From</label><input type="date" className="input-field w-full text-sm" value={dateFrom} onChange={e => setDateFrom(e.target.value)} /></div>
-                            <div><label className="block text-xs font-semibold text-slate-600 mb-1.5">To</label><input type="date" className="input-field w-full text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} /></div>
+                            <div><label className="block text-xs font-semibold text-slate-600 mb-1.5">From</label><input type="date" className="input-field w-full text-sm" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setSelectedDatePreset(''); }} /></div>
+                            <div><label className="block text-xs font-semibold text-slate-600 mb-1.5">To</label><input type="date" className="input-field w-full text-sm" value={dateTo} onChange={e => { setDateTo(e.target.value); setSelectedDatePreset(''); }} /></div>
                         </div>
                     </div>
                 </div>
@@ -540,9 +714,46 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
                 <div className="card p-5">
                     <div className="flex flex-wrap gap-3">
                         <button onClick={fetchData} disabled={loading || !dateFrom || !dateTo} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Generate Data</button>
+                        <button onClick={handleSaveAsPreset} disabled={presetSaving || !dateFrom || !dateTo} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-violet-200 bg-violet-50 text-violet-700 text-sm font-semibold hover:bg-violet-100 disabled:opacity-50 transition-colors"><Star size={14} /> Save as Preset</button>
                         <button onClick={handleSave} disabled={!data || !reportName.trim()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 shadow-sm transition-all"><Save size={14} /> {editConfig ? 'Update Report' : 'Save Report'}</button>
                         <button onClick={handlePDF} disabled={!data} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm font-semibold hover:from-red-600 hover:to-orange-600 disabled:opacity-50 transition-all shadow-sm"><Download size={14} /> Export PDF</button>
                     </div>
+                </div>
+
+                {/* Preset Library */}
+                <div className="card p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2"><Star size={15} className="text-violet-500" /> Active Presets Library</h3>
+                        <button onClick={() => loadPresetLibrary(true)} disabled={presetLoading} className="text-xs font-semibold text-slate-500 hover:text-blue-600 disabled:opacity-50">Refresh</button>
+                    </div>
+
+                    {presetLoading ? (
+                        <div className="space-y-2">
+                            {[...Array(2)].map((_, i) => <div key={i} className="skeleton h-14 rounded-xl" />)}
+                        </div>
+                    ) : presets.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center">
+                            <p className="text-sm font-semibold text-slate-600">No presets yet</p>
+                            <p className="text-xs text-slate-400 mt-1">Click "Save as Preset" to store your current Advanced report configuration.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2.5">
+                            {presets.map((preset) => (
+                                <div key={preset._id} className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 flex flex-wrap items-center gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold text-slate-800 truncate">{preset.name}</p>
+                                        <p className="text-xs text-slate-500">{getPresetSummary(preset)}</p>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">Last used: {fmtDateTime(preset.updatedAt || preset.createdAt)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <button onClick={() => handleApplySavedPreset(preset)} disabled={presetActionId === `${preset._id}-apply`} className="px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-semibold disabled:opacity-50">Apply</button>
+                                        <button onClick={() => handleRenamePreset(preset)} disabled={presetActionId === `${preset._id}-rename`} className="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-xs font-semibold disabled:opacity-50">Rename</button>
+                                        <button onClick={() => handleDeletePreset(preset._id)} disabled={presetActionId === `${preset._id}-delete`} className="px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold disabled:opacity-50">Delete</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 

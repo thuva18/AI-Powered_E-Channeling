@@ -3,6 +3,8 @@ import { Outlet, Navigate, NavLink, useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import api from '../services/api';
 import CustomCalendar from '../components/CustomCalendar';
+import DoctorCalendar from '../components/DoctorCalendar';
+import DoctorFullCalendar from '../components/DoctorFullCalendar';
 import {
     LayoutDashboard, Calendar, Users, Settings,
     LogOut, Activity, ShieldCheck, Bell, ChevronRight, BookOpen,
@@ -63,6 +65,8 @@ const DashboardLayout = ({ allowedRoles }) => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [pendingCount, setPendingCount] = useState(0);
+    const [calendarAppointments, setCalendarAppointments] = useState([]);
+    const [fullCalOpen, setFullCalOpen] = useState(false);
 
     const notifRef = useRef(null);
     const avatarRef = useRef(null);
@@ -77,12 +81,13 @@ const DashboardLayout = ({ allowedRoles }) => {
         return () => document.removeEventListener('mousedown', handle);
     }, []);
 
-    // Fetch recent appointments for notifications (doctors only)
+    // Fetch appointments for notifications + calendar (doctors only)
     useEffect(() => {
         if (user?.role !== 'DOCTOR' || user?.approvalStatus !== 'APPROVED') return;
         api.get('/doctors/appointments').then(({ data }) => {
             setNotifications(data.slice(0, 5));
             setPendingCount(data.filter(a => a.status === 'PENDING').length);
+            setCalendarAppointments(data);
         }).catch(() => { });
     }, [user]);
 
@@ -112,6 +117,7 @@ const DashboardLayout = ({ allowedRoles }) => {
         { label: 'Book Appointment', path: '/patient', icon: Search },
         { label: 'My Appointments', path: '/patient/appointments', icon: Calendar },
         { label: 'Medical History', path: '/patient/history', icon: FileText },
+        { label: 'Health Journal', path: '/patient/journal', icon: BookOpen },
         { label: 'Payment History', path: '/patient/payments', icon: CreditCard },
         { label: 'My Profile', path: '/patient/profile', icon: User },
     ];
@@ -188,6 +194,14 @@ const DashboardLayout = ({ allowedRoles }) => {
                 </div>
             )}
 
+            {/* Schedule Calendar (Doctor Only) */}
+            {isDoctor && user?.approvalStatus === 'APPROVED' && (
+                <DoctorCalendar
+                    appointments={calendarAppointments}
+                    onViewFull={() => { setFullCalOpen(true); setMobileOpen(false); }}
+                />
+            )}
+
             {/* User card */}
             <div className="p-3 border-t border-slate-100 shrink-0">
                 <div
@@ -217,6 +231,7 @@ const DashboardLayout = ({ allowedRoles }) => {
     );
 
     return (
+        <>
         <div className="flex h-screen overflow-hidden bg-[--bg]">
             {/* ── Desktop Sidebar ── */}
             <aside className="hidden md:flex flex-col w-64 shrink-0 bg-white border-r border-slate-100 shadow-sm">
@@ -364,6 +379,15 @@ const DashboardLayout = ({ allowedRoles }) => {
                 </main>
             </div>
         </div>
+
+        {/* ── Doctor Full Calendar Popup ── */}
+        {fullCalOpen && (
+            <DoctorFullCalendar
+                appointments={calendarAppointments}
+                onClose={() => setFullCalOpen(false)}
+            />
+        )}
+        </>
     );
 };
 

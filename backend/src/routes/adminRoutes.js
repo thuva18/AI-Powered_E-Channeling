@@ -18,6 +18,10 @@ const {
     createSavedReport,
     updateSavedReport,
     deleteSavedReport,
+    listPresets,
+    createPreset,
+    updatePreset,
+    deletePreset,
 } = require('../controllers/adminController');
 const { protect, adminOnly } = require('../middlewares/authMiddleware');
 
@@ -56,5 +60,14 @@ router.route('/saved-reports')
 router.route('/saved-reports/:id')
     .put(updateSavedReport)
     .delete(deleteSavedReport);
+
+// —— Presets ———————————————————————————————————————————————————————————————
+router.route('/presets')
+    .get(listPresets)
+    .post(createPreset);
+
+router.route('/presets/:id')
+    .put(updatePreset)
+    .delete(deletePreset);
 
 module.exports = router;

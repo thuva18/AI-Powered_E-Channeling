@@ -55,11 +55,27 @@ const KEYWORD_SPEC_MAP = {
 // @access  Private/Patient
 const getApprovedDoctors = async (req, res) => {
     try {
-        const { symptoms } = req.query;
+        const { symptoms, specialization } = req.query;
         let doctors = await Doctor.find({ approvalStatus: 'APPROVED', isActive: true })
             .populate('userId', 'email')
             .sort({ 'profileDetails.experienceYears': -1 });
 
+        // ── AI-driven specialization filter (strict) ──────────────────────
+        if (specialization && specialization.trim()) {
+            const specName = specialization.trim();
+            let filtered = doctors.filter(
+                d => d.specialization.toLowerCase() === specName.toLowerCase()
+            );
+            // Fallback: if no doctors for that specialization, show General Physicians
+            if (filtered.length === 0) {
+                filtered = doctors.filter(
+                    d => d.specialization.toLowerCase() === 'general physician'
+                );
+            }
+            return res.json(filtered);
+        }
+
+        // ── Keyword-based symptom matching (original behavior) ────────────
         if (symptoms && symptoms.trim()) {
             const lower = symptoms.toLowerCase();
             const matchedSpecs = new Set();
@@ -263,8 +279,8 @@ const getPatientAnalytics = async (req, res) => {
     }
 };
 
-// @desc    Get patient's medical history (journals)
-// @route   GET /api/v1/patients/journals
+// @desc    Get patient's medical history (clinical journals written by doctors)
+// @route   GET /api/v1/patients/medical-history
 // @access  Private/Patient
 const getJournals = async (req, res) => {
     try {
@@ -292,4 +308,3 @@ module.exports = {
     getPatientAnalytics,
     getJournals,
 };
-

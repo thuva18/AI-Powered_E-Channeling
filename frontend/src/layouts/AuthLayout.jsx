@@ -1,4 +1,4 @@
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
 const AuthLayout = () => {
@@ -22,14 +22,14 @@ const AuthLayout = () => {
 
             {/* Brand strip at top (Dark text for light theme) */}
             <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-10 py-6 z-10 w-full max-w-7xl mx-auto">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Link to="/" className="flex items-center gap-3 cursor-pointer group">
+                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow duration-200">
                         <svg viewBox="0 0 24 24" fill="white" className="h-5 w-5">
                             <path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zm0 12c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z" />
                         </svg>
                     </div>
-                    <span className="font-extrabold text-slate-900 text-xl tracking-tight drop-shadow-sm">Medicare</span>
-                </div>
+                    <span className="font-extrabold text-slate-900 text-xl tracking-tight drop-shadow-sm group-hover:text-blue-600 transition-colors duration-200">Medicare</span>
+                </Link>
                 <span className="text-sm font-semibold text-blue-800/70 hidden sm:block tracking-wide">Secure E-Channeling Portal</span>
             </div>
 

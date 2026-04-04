@@ -30,7 +30,7 @@ const DeleteModal = ({ target, onConfirm, onClose }) => {
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 text-center">Delete Account?</h3>
                 <p className="text-sm text-slate-500 text-center mt-1 mb-5">
-                    This will permanently delete <strong>{target.email}</strong>. This action cannot be undone.
+                    This will permanently delete <strong>{target.label || target.email}</strong>. This action cannot be undone.
                 </p>
                 <div className="flex gap-3">
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -275,11 +275,17 @@ const AdminUserManagement = () => {
     }, [search]);
 
     const handleDelete = async () => {
-        const id = deleteTarget._id;
+        const target = deleteTarget;
+        if (!target) return;
         setDeleteTarget(null);
         try {
-            await api.delete(`/admin/users/${id}`);
-            showToast('User deleted successfully');
+            if (target.kind === 'doctor') {
+                await api.delete(`/admin/doctors/${target.doctorId}`);
+                showToast('Doctor deleted successfully');
+            } else {
+                await api.delete(`/admin/users/${target._id}`);
+                showToast('User deleted successfully');
+            }
             if (tab === 'patients') fetchPatients();
             else if (tab === 'doctors') fetchDoctors();
             else fetchAdmins();
@@ -525,7 +531,12 @@ const AdminUserManagement = () => {
                                                         <span className="text-xs text-slate-400">{fmt(doc.createdAt)}</span>
                                                     </td>
                                                     <td className="px-5 py-3.5">
-                                                        <button onClick={() => setDeleteTarget({ _id: doc.userId?._id, email: doc.userId?.email || `Dr. ${doc.firstName}` })}
+                                                        <button onClick={() => setDeleteTarget({
+                                                            kind: 'doctor',
+                                                            doctorId: doc._id,
+                                                            label: `Dr. ${doc.firstName} ${doc.lastName}`,
+                                                            email: doc.userId?.email || `Dr. ${doc.firstName}`,
+                                                        })}
                                                             className="h-7 w-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 transition-colors" title="Delete account">
                                                             <Trash2 size={13} />
                                                         </button>
