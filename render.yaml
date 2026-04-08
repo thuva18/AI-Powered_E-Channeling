@@ -2,6 +2,7 @@ services:
   # 1. Node.js Backend Web Service
   - type: web
     name: echanneling-backend
+    plan: free
     env: node
     rootDir: backend
     buildCommand: npm install
@@ -32,6 +33,7 @@ services:
   # 2. Python AI Service Web Service
   - type: web
     name: echanneling-ai-service
+    plan: free
     env: python
     rootDir: ai-service
     buildCommand: pip install -r requirements.txt
