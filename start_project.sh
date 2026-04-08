@@ -101,7 +101,12 @@ FRONTEND_PID=$!
 
 (
   cd "$AI_DIR"
-  python3 app.py
+  # Use the dedicated venv if available (has all ML packages), else fall back to system python3
+  if [ -f "$AI_DIR/venv/bin/python3" ]; then
+    "$AI_DIR/venv/bin/python3" app.py
+  else
+    python3 app.py
+  fi
 ) &
 AI_PID=$!
 

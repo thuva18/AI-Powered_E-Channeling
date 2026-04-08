@@ -4,5 +4,6 @@ scikit-learn==1.6.1
 lightgbm==4.3.0
 numpy==1.26.4
 joblib==1.4.2
-# TensorFlow is optional — the service works without it (LightGBM only)
+pandas>=2.0.0
+# TensorFlow is optional — the service runs in ensemble-only mode without it
 tensorflow==2.16.1
