@@ -1,0 +1,41 @@
+services:
+  # 1. Node.js Backend Web Service
+  - type: web
+    name: echanneling-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false # Requires manual entry in the dashboard
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: PAYHERE_MERCHANT_ID
+        sync: false
+      - key: PAYHERE_MERCHANT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: echanneling-ai-service
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # 2. Python AI Service Web Service
+  - type: web
+    name: echanneling-ai-service
+    env: python
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: AI_PORT=$PORT python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0

@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -14,14 +17,33 @@
     "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"],
-      "@components/*": ["components/*"],
-      "@store/*": ["store/*"],
-      "@services/*": ["services/*"],
-      "@constants/*": ["constants/*"],
-      "@hooks/*": ["hooks/*"]
+      "@shared/*": [
+        "../shared/*"
+      ],
+      "@components/*": [
+        "components/*"
+      ],
+      "@store/*": [
+        "store/*"
+      ],
+      "@services/*": [
+        "services/*"
+      ],
+      "@constants/*": [
+        "constants/*"
+      ],
+      "@hooks/*": [
+        "hooks/*"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }

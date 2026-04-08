@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
-FRONTEND_DIR="$ROOT_DIR/frontend"
+FRONTEND_DIR="$ROOT_DIR/web"
 AI_DIR="$ROOT_DIR/ai-service"
 
 if ! command -v npm >/dev/null 2>&1; then
