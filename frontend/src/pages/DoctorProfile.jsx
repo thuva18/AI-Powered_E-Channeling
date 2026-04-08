@@ -9,6 +9,16 @@ import { User, Phone, Award, Briefcase, DollarSign, BookOpen, Save, AlertCircle,
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
+const MAX_SLOT_HOURS = 8;
+const MAX_SLOTS_PER_DAY = 8;
+
+// Returns the duration in hours between two "HH:MM" strings
+const slotDurationHours = (start, end) => {
+    if (!start || !end) return 0;
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return (eh * 60 + em - (sh * 60 + sm)) / 60;
+};
 
 const DoctorProfile = () => {
     const { updateUser, logout } = useAuthStore();
@@ -22,6 +32,9 @@ const DoctorProfile = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
     const [deleting, setDeleting] = useState(false);
+    const [slotErrors, setSlotErrors] = useState({});
+    // Raw string inputs for maxSlots — avoids Number("") → 0 when backspacing
+    const [slotInputs, setSlotInputs] = useState({});
 
     const [form, setForm] = useState({
         firstName: '', lastName: '', specialization: '', consultationFee: '',
@@ -46,6 +59,10 @@ const DoctorProfile = () => {
                 },
                 availability: data.availability || [],
             });
+            // Seed raw string inputs for maxSlots
+            const inputs = {};
+            (data.availability || []).forEach(a => { inputs[a.day] = String(a.maxSlots ?? MAX_SLOTS_PER_DAY); });
+            setSlotInputs(inputs);
             setPhoneTouched(false);
             setPhoneError('');
         }).catch(console.error).finally(() => setLoading(false));
@@ -117,20 +134,90 @@ const DoctorProfile = () => {
     const toggleDayAvailability = (day) => {
         setForm((p) => {
             const exists = p.availability.find(a => a.day === day);
-            if (exists) return { ...p, availability: p.availability.filter(a => a.day !== day) };
-            return { ...p, availability: [...p.availability, { day, startTime: '09:00', endTime: '17:00', maxSlots: 10 }] };
+            if (exists) {
+                setSlotErrors(prev => { const n = { ...prev }; delete n[day]; return n; });
+                setSlotInputs(prev => { const n = { ...prev }; delete n[day]; return n; });
+                return { ...p, availability: p.availability.filter(a => a.day !== day) };
+            }
+            setSlotInputs(prev => ({ ...prev, [day]: String(MAX_SLOTS_PER_DAY) }));
+            return { ...p, availability: [...p.availability, { day, startTime: '09:00', endTime: '17:00', maxSlots: MAX_SLOTS_PER_DAY }] };
         });
     };
 
-    const updateSlot = (day, field, value) => {
-        setForm((p) => ({
+    const handleMaxSlotsChange = (day, rawValue) => {
+        // Allow empty string while typing (avoids jump to 0 on backspace)
+        setSlotInputs(prev => ({ ...prev, [day]: rawValue }));
+        if (rawValue === '' || rawValue === '-') return; // transient — user is mid-type
+        const num = parseInt(rawValue, 10);
+        if (!isNaN(num)) {
+            // Persist clamped numeric form value
+            const clamped = Math.max(1, Math.min(MAX_SLOTS_PER_DAY, num));
+            setForm(p => ({
+                ...p,
+                availability: p.availability.map(a => a.day === day ? { ...a, maxSlots: clamped } : a),
+            }));
+        }
+    };
+
+    const handleMaxSlotsBlur = (day) => {
+        const raw = slotInputs[day];
+        const num = parseInt(raw, 10);
+        const safe = isNaN(num) || num < 1 ? 1 : num > MAX_SLOTS_PER_DAY ? MAX_SLOTS_PER_DAY : num;
+        setSlotInputs(prev => ({ ...prev, [day]: String(safe) }));
+        setForm(p => ({
             ...p,
-            availability: p.availability.map(a => a.day === day ? { ...a, [field]: value } : a),
+            availability: p.availability.map(a => a.day === day ? { ...a, maxSlots: safe } : a),
         }));
+    };
+
+    const stepSlots = (day, delta) => {
+        const current = slotInputs[day] !== undefined ? parseInt(slotInputs[day], 10) : MAX_SLOTS_PER_DAY;
+        const next = Math.max(1, Math.min(MAX_SLOTS_PER_DAY, (isNaN(current) ? 1 : current) + delta));
+        setSlotInputs(prev => ({ ...prev, [day]: String(next) }));
+        setForm(p => ({
+            ...p,
+            availability: p.availability.map(a => a.day === day ? { ...a, maxSlots: next } : a),
+        }));
+    };
+
+    const validateSlot = (day, start, end) => {
+        const duration = slotDurationHours(start, end);
+        if (duration <= 0) {
+            setSlotErrors(prev => ({ ...prev, [day]: 'End time must be after start time.' }));
+        } else if (duration > MAX_SLOT_HOURS) {
+            setSlotErrors(prev => ({ ...prev, [day]: `Maximum ${MAX_SLOT_HOURS} hours per day allowed.` }));
+        } else {
+            setSlotErrors(prev => { const n = { ...prev }; delete n[day]; return n; });
+        }
+    };
+
+    const updateSlot = (day, field, value) => {
+        setForm((p) => {
+            const updated = p.availability.map(a => a.day === day ? { ...a, [field]: value } : a);
+            const slot = updated.find(a => a.day === day);
+            if (slot && (field === 'startTime' || field === 'endTime')) {
+                validateSlot(day, slot.startTime, slot.endTime);
+            }
+            return { ...p, availability: updated };
+        });
     };
 
     const handleSaveAvailability = async (e) => {
         e.preventDefault();
+        // Re-validate all active slots
+        const newErrors = {};
+        form.availability.forEach(slot => {
+            const duration = slotDurationHours(slot.startTime, slot.endTime);
+            if (duration <= 0) newErrors[slot.day] = 'End time must be after start time.';
+            else if (duration > MAX_SLOT_HOURS) newErrors[slot.day] = `Maximum ${MAX_SLOT_HOURS} hours per day allowed.`;
+            if (!slot.maxSlots || slot.maxSlots < 1 || slot.maxSlots > MAX_SLOTS_PER_DAY)
+                newErrors[slot.day] = (newErrors[slot.day] ? newErrors[slot.day] + ' ' : '') + `Max slots must be 1–${MAX_SLOTS_PER_DAY}.`;
+        });
+        setSlotErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            showToast('Please fix the highlighted time slot errors before saving.', 'error');
+            return;
+        }
         setSaving(true);
         try {
             await api.put('/doctors/availability', { availability: form.availability });
@@ -200,7 +287,28 @@ const DoctorProfile = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ml-9">
                                 <Input label="First Name" id="fn" icon={User} value={form.firstName} onChange={set('firstName')} />
                                 <Input label="Last Name" id="ln" value={form.lastName} onChange={set('lastName')} />
-                                <Input label="Specialization" id="spec" icon={Briefcase} value={form.specialization} onChange={set('specialization')} />
+                                {/* Specialization: read-only — only admins can change this */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-semibold text-slate-700">Specialization</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                            <Briefcase size={16} className="text-slate-400" />
+                                        </div>
+                                        <input
+                                            id="spec"
+                                            type="text"
+                                            value={form.specialization}
+                                            readOnly
+                                            className="input-field bg-slate-50 text-slate-500 cursor-not-allowed select-none"
+                                            style={{ paddingLeft: '38px' }}
+                                            title="Specialization cannot be changed. Contact an administrator."
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-400 flex items-center gap-1">
+                                        <AlertCircle size={11} className="text-amber-400" />
+                                        Specialization is managed by the administrator and cannot be changed here.
+                                    </p>
+                                </div>
                                 <Input label="Consultation Fee (Rs.)" id="fee" type="number" icon={DollarSign} value={form.consultationFee} onChange={set('consultationFee')} />
 
                                 {/* Phone with live validation */}
@@ -317,18 +425,65 @@ const DoctorProfile = () => {
                                         </div>
 
                                         {active && (
-                                            <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-blue-100/50">
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Start Time</label>
-                                                    <input type="time" value={slot.startTime} onChange={(e) => updateSlot(day, 'startTime', e.target.value)} className="input-field text-sm font-medium bg-white" />
+                                            <div className="mt-4 pt-4 border-t border-blue-100/50 space-y-3">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Start Time</label>
+                                                        <input type="time" value={slot.startTime} onChange={(e) => updateSlot(day, 'startTime', e.target.value)} className={`input-field text-sm font-medium bg-white ${slotErrors[day] ? 'border-red-400 focus:border-red-500' : ''}`} />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">End Time</label>
+                                                        <input type="time" value={slot.endTime} onChange={(e) => updateSlot(day, 'endTime', e.target.value)} className={`input-field text-sm font-medium bg-white ${slotErrors[day] ? 'border-red-400 focus:border-red-500' : ''}`} />
+                                                    </div>
                                                 </div>
+                                                {slotErrors[day] && (
+                                                    <p className="text-xs font-medium text-red-500 flex items-center gap-1">
+                                                        <AlertCircle size={11} /> {slotErrors[day]}
+                                                    </p>
+                                                )}
+                                                {!slotErrors[day] && slot.startTime && slot.endTime && (
+                                                    <p className="text-xs text-slate-400 flex items-center gap-1">
+                                                        <CheckCircle size={11} className="text-emerald-500" />
+                                                        Duration: {slotDurationHours(slot.startTime, slot.endTime).toFixed(1)}h (max {MAX_SLOT_HOURS}h)
+                                                    </p>
+                                                )}
                                                 <div className="space-y-1.5">
-                                                    <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">End Time</label>
-                                                    <input type="time" value={slot.endTime} onChange={(e) => updateSlot(day, 'endTime', e.target.value)} className="input-field text-sm font-medium bg-white" />
-                                                </div>
-                                                <div className="space-y-1.5 col-span-2">
-                                                    <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Max Slots Available</label>
-                                                    <input type="number" min="1" max="50" value={slot.maxSlots} onChange={(e) => updateSlot(day, 'maxSlots', Number(e.target.value))} className="input-field text-sm font-medium bg-white w-full" />
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Max Slots / Day</label>
+                                                        <span className="text-[10px] font-semibold text-slate-400">Limit: {MAX_SLOTS_PER_DAY}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => stepSlots(day, -1)}
+                                                            disabled={slot.maxSlots <= 1}
+                                                            className="h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 font-bold text-lg flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                                                        >−</button>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max={MAX_SLOTS_PER_DAY}
+                                                            value={slotInputs[day] ?? String(slot.maxSlots)}
+                                                            onChange={(e) => handleMaxSlotsChange(day, e.target.value)}
+                                                            onBlur={() => handleMaxSlotsBlur(day)}
+                                                            className={`input-field text-sm font-bold text-center bg-white flex-1 ${
+                                                                (parseInt(slotInputs[day], 10) > MAX_SLOTS_PER_DAY || parseInt(slotInputs[day], 10) < 1 || slotInputs[day] === '')
+                                                                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20'
+                                                                    : ''
+                                                            }`}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => stepSlots(day, 1)}
+                                                            disabled={slot.maxSlots >= MAX_SLOTS_PER_DAY}
+                                                            className="h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 font-bold text-lg flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                                                        >+</button>
+                                                    </div>
+                                                    {(parseInt(slotInputs[day], 10) > MAX_SLOTS_PER_DAY || slotInputs[day] === '' || parseInt(slotInputs[day], 10) < 1) && (
+                                                        <p className="text-xs font-medium text-red-500 flex items-center gap-1">
+                                                            <AlertCircle size={11} /> Must be between 1 and {MAX_SLOTS_PER_DAY}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}

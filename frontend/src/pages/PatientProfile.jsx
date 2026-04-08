@@ -55,8 +55,6 @@ const PatientProfile = () => {
         if (!form.lastName.trim()) e.lastName = 'Last name is required';
         if (form.phone && !PHONE_REGEX.test(form.phone.trim()))
             e.phone = 'Format: 07XXXXXXXX or +94XXXXXXXXX';
-        if (form.nic && !NIC_REGEX.test(form.nic.trim().toUpperCase()))
-            e.nic = 'NIC: 9 digits + V (e.g. 912345678V) or 12 digits';
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -70,7 +68,6 @@ const PatientProfile = () => {
                 firstName: form.firstName.trim(),
                 lastName: form.lastName.trim(),
                 phone: form.phone.trim(),
-                nic: form.nic.trim().toUpperCase(),
                 dateOfBirth: form.dateOfBirth || null,
             });
             updateUser({ firstName: form.firstName.trim(), lastName: form.lastName.trim() });
@@ -168,20 +165,27 @@ const PatientProfile = () => {
                         autoComplete="tel" type="tel"
                     />
 
-                    {/* NIC */}
+                    {/* NIC — read-only, set at registration */}
                     <div className="space-y-1.5">
-                        <Field
-                            id="nic" label="NIC Number" icon={IdCard}
-                            value={form.nic} onChange={set('nic')}
-                            error={errors.nic} placeholder="912345678V or 200012345678"
-                            autoComplete="off"
-                            extra={{ maxLength: 12, className: 'input-field pr-9 uppercase' }}
-                        />
-                        <div className="flex gap-2 text-xs text-slate-400">
-                            <span className="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">912345678V</span>
-                            <span>or</span>
-                            <span className="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">200012345678</span>
+                        <label htmlFor="nic" className="block text-sm font-semibold text-slate-700">NIC Number</label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                                <IdCard size={16} className="text-slate-400" />
+                            </div>
+                            <input
+                                id="nic"
+                                type="text"
+                                value={form.nic}
+                                readOnly
+                                className="input-field bg-slate-50 text-slate-500 cursor-not-allowed select-none uppercase"
+                                style={{ paddingLeft: '38px' }}
+                                title="NIC cannot be changed after registration."
+                            />
                         </div>
+                        <p className="text-xs text-slate-400 flex items-center gap-1">
+                            <AlertCircle size={11} className="text-amber-400" />
+                            NIC is set at registration and cannot be modified.
+                        </p>
                     </div>
 
                     {/* DOB */}
