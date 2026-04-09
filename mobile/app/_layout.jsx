@@ -22,7 +22,7 @@ const appTheme = {
   },
 };
 
-function AuthGuard({ children }: { children: React.ReactNode }) {
+function AuthGuard({ children }) {
   const { user, isLoading, isAuthenticated } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();

@@ -18,7 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import useAuthStore, { AuthUser } from '../../store/authStore';
+import useAuthStore from '../../store/authStore';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export default function LoginScreen() {
@@ -29,11 +29,11 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState({});
 
   // ─── Form Validation ────────────────────────────────────────────────────────
   const validate = () => {
-    const newErrors: typeof errors = {};
+    const newErrors = {};
     if (!email.trim()) newErrors.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = 'Invalid email format';
     if (!password) newErrors.password = 'Password is required';
@@ -50,7 +50,7 @@ export default function LoginScreen() {
       const res = await api.post('/auth/login', { email: email.trim(), password });
       const data = res.data;
 
-      const user: AuthUser = {
+      const user = {
         _id: data._id || data.user?._id,
         name: data.name || data.user?.name,
         email: data.email || data.user?.email,
@@ -65,7 +65,7 @@ export default function LoginScreen() {
       if (user.role === 'patient') router.replace('/(patient)/home');
       else if (user.role === 'doctor') router.replace('/(doctor)/home');
       else if (user.role === 'admin') router.replace('/(admin)/home');
-    } catch (error: any) {
+    } catch (error) {
       const msg = error.response?.data?.message ?? 'Login failed. Please try again.';
       Alert.alert('Login Failed', msg);
     } finally {

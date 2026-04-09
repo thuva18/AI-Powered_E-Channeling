@@ -10,24 +10,14 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Patient {
-  _id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  gender?: string;
-  nic?: string;
-  isActive?: boolean;
-  createdAt?: string;
-}
-
+// Types removed
 export default function AdminPatientsScreen() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [filtered, setFiltered] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState(null);
 
   const fetchPatients = useCallback(async () => {
     try {
@@ -50,7 +40,7 @@ export default function AdminPatientsScreen() {
     );
   }, [search, patients]);
 
-  const toggleActive = async (id: string, currentState: boolean) => {
+  const toggleActive = async (id, currentState) => {
     setTogglingId(id);
     try {
       await api.patch(`/admin/users/${id}/toggle-active`);

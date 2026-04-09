@@ -15,8 +15,8 @@ import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/th
 export default function DoctorHomeScreen() {
   const { user, clearUser } = useAuthStore();
   const router = useRouter();
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [todayAppointments, setTodayAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -29,7 +29,7 @@ export default function DoctorHomeScreen() {
       setAnalytics(analyticsRes.data);
       const today = new Date().toDateString();
       setTodayAppointments(
-        (aptsRes.data || []).filter((a: any) =>
+        (aptsRes.data || []).filter((a) =>
           new Date(a.appointmentDate).toDateString() === today,
         ).slice(0, 5),
       );
@@ -53,7 +53,7 @@ export default function DoctorHomeScreen() {
         <View>
           <Text style={styles.greeting}>Welcome back, 👨‍⚕️</Text>
           <Text style={styles.name}>Dr. {user?.name ?? 'Doctor'}</Text>
-          <Text style={styles.spec}>{(user as any)?.specialization ?? 'Physician'}</Text>
+          <Text style={styles.spec}>{user?.specialization ?? 'Physician'}</Text>
         </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={async () => { await clearUser(); router.replace('/(auth)/login'); }}>
           <Ionicons name="log-out-outline" size={22} color={COLORS.error} />
@@ -71,7 +71,7 @@ export default function DoctorHomeScreen() {
             {statCards.map((s) => (
               <View key={s.label} style={styles.statCard}>
                 <View style={[styles.statIconBox, { backgroundColor: s.color + '22' }]}>
-                  <Ionicons name={s.icon as any} size={22} color={s.color} />
+                  <Ionicons name={s.icon} size={22} color={s.color} />
                 </View>
                 <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
                 <Text style={styles.statLabel}>{s.label}</Text>
@@ -113,8 +113,8 @@ export default function DoctorHomeScreen() {
             { label: 'Journal', icon: 'book', route: '/(doctor)/journal' },
             { label: 'My Profile', icon: 'person', route: '/(doctor)/profile' },
           ].map((a) => (
-            <TouchableOpacity key={a.label} style={styles.actionCard} onPress={() => router.push(a.route as any)} activeOpacity={0.8}>
-              <Ionicons name={a.icon as any} size={22} color={COLORS.doctorPrimary} />
+            <TouchableOpacity key={a.label} style={styles.actionCard} onPress={() => router.push(a.route)} activeOpacity={0.8}>
+              <Ionicons name={a.icon} size={22} color={COLORS.doctorPrimary} />
               <Text style={styles.actionLabel}>{a.label}</Text>
             </TouchableOpacity>
           ))}
@@ -124,7 +124,7 @@ export default function DoctorHomeScreen() {
   );
 }
 
-function statusColor(status: string) {
+function statusColor(status) {
   switch (status?.toLowerCase()) {
     case 'confirmed': return COLORS.success;
     case 'pending': return COLORS.warning;

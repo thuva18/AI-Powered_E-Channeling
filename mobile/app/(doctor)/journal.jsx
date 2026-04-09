@@ -11,20 +11,12 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface JournalEntry {
-  _id: string;
-  title: string;
-  content: string;
-  mood?: string;
-  tags?: string[];
-  createdAt: string;
-  updatedAt?: string;
-}
+// Types removed
 
 const MOODS = ['😊', '😐', '😔', '😤', '🤔', '😴', '💪', '😰'];
 
 export default function DoctorJournalScreen() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -80,12 +72,12 @@ export default function DoctorJournalScreen() {
         setEntries((prev) => [res.data, ...prev]);
       }
       setModalVisible(false);
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Failed to save entry');
     } finally { setSaving(false); }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id) => {
     Alert.alert('Delete Entry', 'This will permanently delete this journal entry.', [
       { text: 'Cancel', style: 'cancel' },
       {

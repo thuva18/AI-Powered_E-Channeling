@@ -1,5 +1,5 @@
-// app/(patient)/_layout.tsx
-// Patient tab navigation layout
+// app/(patient)/_layout.jsx
+// Premium Patient tab navigation layout
 
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,16 +11,18 @@ export default function PatientLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.bgCard,
-          borderTopColor: COLORS.border,
+          backgroundColor: 'rgba(19, 25, 41, 0.95)',
+          borderTopColor: 'rgba(255,255,255,0.05)',
           borderTopWidth: 1,
-          height: 65,
-          paddingBottom: 10,
-          paddingTop: 8,
+          height: 70,
+          paddingBottom: 16,
+          paddingTop: 10,
+          position: 'absolute',
+          elevation: 0,
         },
         tabBarActiveTintColor: COLORS.patientPrimary,
         tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 4 },
       }}
     >
       <Tabs.Screen
@@ -37,16 +39,16 @@ export default function PatientLayout() {
         options={{
           title: 'Book',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <Ionicons name="calendar" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
-          title: 'Appointments',
+          title: 'Visits',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" size={size} color={color} />
+            <Ionicons name="list" size={size} color={color} />
           ),
         }}
       />
@@ -55,7 +57,7 @@ export default function PatientLayout() {
         options={{
           title: 'Payments',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="card-outline" size={size} color={color} />
+            <Ionicons name="card" size={size} color={color} />
           ),
         }}
       />
@@ -64,9 +66,14 @@ export default function PatientLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
+      />
+      {/* Hidden Screens */}
+      <Tabs.Screen 
+        name="medical-history" 
+        options={{ href: null, title: 'Medical History' }} 
       />
     </Tabs>
   );

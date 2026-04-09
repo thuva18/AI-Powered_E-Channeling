@@ -10,16 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Appointment {
-  _id: string;
-  doctor?: { name: string; specialization: string };
-  appointmentDate?: string;
-  timeSlot?: string;
-  status: string;
-  notes?: string;
-}
-
-const STATUS_COLORS: Record<string, string> = {
+// Types removed
+const STATUS_COLORS = {
   confirmed: COLORS.success,
   pending: COLORS.warning,
   cancelled: COLORS.error,
@@ -27,11 +19,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PatientAppointmentsScreen() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all');
+  const [cancellingId, setCancellingId] = useState(null);
+  const [filter, setFilter] = useState('all');
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -48,7 +40,7 @@ export default function PatientAppointmentsScreen() {
   useEffect(() => { fetchAppointments(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchAppointments(); };
 
-  const handleCancel = async (id: string) => {
+  const handleCancel = async (id) => {
     Alert.alert('Cancel Appointment', 'Are you sure you want to cancel this appointment?', [
       { text: 'No', style: 'cancel' },
       {
@@ -60,7 +52,7 @@ export default function PatientAppointmentsScreen() {
             setAppointments((prev) =>
               prev.map((a) => a._id === id ? { ...a, status: 'cancelled' } : a),
             );
-          } catch (e: any) {
+          } catch (e) {
             Alert.alert('Error', e.response?.data?.message ?? 'Failed to cancel');
           } finally {
             setCancellingId(null);
@@ -70,10 +62,10 @@ export default function PatientAppointmentsScreen() {
     ]);
   };
 
-  const filters = ['all', 'pending', 'confirmed', 'completed', 'cancelled'] as const;
+  const filters = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
   const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter);
 
-  const renderItem = ({ item }: { item: Appointment }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <View style={styles.avatar}>

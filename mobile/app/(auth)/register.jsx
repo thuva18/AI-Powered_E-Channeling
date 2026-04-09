@@ -20,38 +20,27 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface FormData {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  nic: string;
-  phone: string;
-  gender: 'male' | 'female' | 'other' | '';
-  dob: string;
-}
-
-type FormErrors = Partial<Record<keyof FormData, string>>;
+// Types removed
 
 export default function RegisterScreen() {
   const router = useRouter();
 
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState({
     name: '', email: '', password: '', confirmPassword: '',
     nic: '', phone: '', gender: '', dob: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState({});
 
-  const setField = (field: keyof FormData, value: string) => {
+  const setField = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
   // ─── Validation ─────────────────────────────────────────────────────────────
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {};
+  const validate = () => {
+    const newErrors = {};
     if (!form.name.trim()) newErrors.name = 'Full name is required';
     if (!form.email.trim()) newErrors.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Invalid email';
@@ -81,14 +70,14 @@ export default function RegisterScreen() {
       Alert.alert('Registration Successful', 'Your account has been created. Please log in.', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert('Registration Failed', error.response?.data?.message ?? 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
-  const genderOptions: Array<{ label: string; value: 'male' | 'female' | 'other' }> = [
+  const genderOptions = [
     { label: '♂ Male', value: 'male' },
     { label: '♀ Female', value: 'female' },
     { label: '⚧ Other', value: 'other' },
@@ -178,14 +167,7 @@ export default function RegisterScreen() {
   );
 }
 
-function renderInput(
-  icon: string,
-  label: string,
-  value: string,
-  onChange: (v: string) => void,
-  error?: string,
-  extra?: any,
-) {
+function renderInput(icon, label, value, onChange, error, extra) {
   return (
     <>
       <Text style={styles.label}>{label}</Text>

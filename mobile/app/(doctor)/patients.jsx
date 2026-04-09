@@ -1,28 +1,20 @@
 // app/(doctor)/patients.tsx
-// Doctor's patient list screen
+// Doctor's patients list
 
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  ActivityIndicator, RefreshControl, TouchableOpacity,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Patient {
-  _id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  gender?: string;
-  lastAppointment?: string;
-  totalAppointments?: number;
-}
+// Types removed
 
 export default function DoctorPatientsScreen() {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [filtered, setFiltered] = useState<Patient[]>([]);
+  const [patients, setPatients] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -41,32 +33,8 @@ export default function DoctorPatientsScreen() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(
-      q ? patients.filter((p) =>
-        p.name.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q) || p.phone?.includes(q),
-      ) : patients,
-    );
+    setFiltered(q ? patients.filter((p) => p.name.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)) : patients);
   }, [search, patients]);
-
-  const renderItem = ({ item }: { item: Patient }) => (
-    <View style={styles.card}>
-      <View style={styles.avatar}>
-        <Text style={{ fontSize: 20 }}>🧑‍⚕️</Text>
-      </View>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        {item.email && <Text style={styles.email}>✉️ {item.email}</Text>}
-        {item.phone && <Text style={styles.contact}>📞 {item.phone}</Text>}
-        {item.gender && <Text style={styles.detail}>⚧ {item.gender}</Text>}
-      </View>
-      {item.totalAppointments != null && (
-        <View style={styles.aptCountBox}>
-          <Text style={styles.aptCountVal}>{item.totalAppointments}</Text>
-          <Text style={styles.aptCountLabel}>visits</Text>
-        </View>
-      )}
-    </View>
-  );
 
   return (
     <View style={styles.root}>
@@ -74,26 +42,38 @@ export default function DoctorPatientsScreen() {
         <Text style={styles.title}>My Patients</Text>
         <Text style={styles.subtitle}>{patients.length} total</Text>
       </View>
-
-      {/* Search */}
       <View style={styles.searchBox}>
         <Ionicons name="search" size={18} color={COLORS.textSecondary} style={{ marginRight: SPACING.sm }} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by name, email or phone..."
+          placeholder="Search patients..."
           placeholderTextColor={COLORS.textMuted}
           value={search}
           onChangeText={setSearch}
         />
       </View>
-
       {loading ? <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} /> : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item._id}
-          renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.doctorPrimary} />}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.avatar}><Text style={{ fontSize: 20 }}>🧑</Text></View>
+              <View style={styles.info}>
+                <Text style={styles.name}>{item.name}</Text>
+                {item.email && <Text style={styles.detail}>✉️ {item.email}</Text>}
+                {item.phone && <Text style={styles.detail}>📞 {item.phone}</Text>}
+              </View>
+              {item.totalAppointments != null && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeVal}>{item.totalAppointments}</Text>
+                  <Text style={styles.badgeLbl}>visits</Text>
+                </View>
+              )}
+            </View>
+          )}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="people-outline" size={40} color={COLORS.textMuted} />
@@ -115,10 +95,9 @@ const styles = StyleSheet.create({
   title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
   subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
   searchBox: {
-    flexDirection: 'row', alignItems: 'center',
-    margin: SPACING.lg, backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, height: 48,
+    flexDirection: 'row', alignItems: 'center', margin: SPACING.lg,
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: COLORS.border, paddingHorizontal: SPACING.md, height: 48,
   },
   searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
   list: { paddingHorizontal: SPACING.lg, paddingBottom: 80 },
@@ -133,12 +112,10 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1 },
   name: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  email: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  contact: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  detail: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 2 },
-  aptCountBox: { alignItems: 'center' },
-  aptCountVal: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.doctorPrimary },
-  aptCountLabel: { fontSize: 10, color: COLORS.textMuted },
+  detail: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  badge: { alignItems: 'center' },
+  badgeVal: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.doctorPrimary },
+  badgeLbl: { fontSize: 10, color: COLORS.textMuted },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { color: COLORS.textMuted, marginTop: SPACING.md },
 });

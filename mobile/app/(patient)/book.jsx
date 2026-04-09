@@ -11,29 +11,20 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Doctor {
-  _id: string;
-  name: string;
-  specialization: string;
-  hospital?: string;
-  fee?: number;
-  rating?: number;
-  availability?: any[];
-}
-
+// Types removed
 export default function BookAppointmentScreen() {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [filtered, setFiltered] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   // AI prediction state
   const [symptoms, setSymptoms] = useState('');
-  const [aiResult, setAiResult] = useState<{ specialist?: string; confidence?: number } | null>(null);
+  const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
   // Booking state
-  const [selected, setSelected] = useState<Doctor | null>(null);
+  const [selected, setSelected] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -79,7 +70,7 @@ export default function BookAppointmentScreen() {
         setFiltered(doctors.filter((d) => d.specialization?.toLowerCase().includes(spec)));
         setSearch(res.data.specialist);
       }
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('AI Error', e.response?.data?.message ?? 'AI prediction failed');
     } finally {
       setAiLoading(false);
@@ -100,7 +91,7 @@ export default function BookAppointmentScreen() {
       Alert.alert('✅ Booked!', `Appointment with Dr. ${selected.name} has been requested.`, [
         { text: 'OK', onPress: () => { setSelected(null); setSelectedDate(''); setSelectedSlot(''); } },
       ]);
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Booking Failed', e.response?.data?.message ?? 'Try again later');
     } finally {
       setBookingLoading(false);

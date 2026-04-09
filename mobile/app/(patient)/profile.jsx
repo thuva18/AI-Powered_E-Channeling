@@ -1,32 +1,23 @@
-// app/(patient)/profile.tsx
-// Patient profile view & edit
+// app/(patient)/profile.jsx
+// Premium Patient profile view & edit
 
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Profile {
-  name: string;
-  email: string;
-  phone: string;
-  nic: string;
-  gender: string;
-  dob: string;
-  bloodGroup?: string;
-  address?: string;
-}
-
 export default function PatientProfileScreen() {
   const { user, updateUser, clearUser } = useAuthStore();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const router = useRouter();
+  const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<Partial<Profile>>({});
+  const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -59,21 +50,21 @@ export default function PatientProfileScreen() {
       updateUser({ name: res.data.name });
       setEditing(false);
       Alert.alert('✅ Saved', 'Profile updated successfully');
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Failed to update profile');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <ActivityIndicator color={COLORS.primary} style={{ flex: 1, backgroundColor: COLORS.bg }} />;
+  if (loading) return <ActivityIndicator color={COLORS.patientPrimary} style={{ flex: 1, backgroundColor: COLORS.bg }} />;
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>My Profile</Text>
         <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(!editing)}>
-          <Ionicons name={editing ? 'close' : 'pencil'} size={18} color={COLORS.primary} />
+          <Ionicons name={editing ? 'close' : 'pencil'} size={18} color={COLORS.patientPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -87,6 +78,18 @@ export default function PatientProfileScreen() {
           <Text style={styles.email}>{profile?.email}</Text>
           <View style={styles.roleBadge}><Text style={styles.roleText}>Patient</Text></View>
         </View>
+
+        {/* Links */}
+        <TouchableOpacity style={styles.historyBtn} activeOpacity={0.8} onPress={() => router.push('/(patient)/medical-history')}>
+            <View style={styles.hIcon}><Ionicons name="medical" size={24} color={COLORS.patientPrimary} /></View>
+            <View style={{flex: 1}}>
+                <Text style={styles.historyBtnTitle}>Medical History</Text>
+                <Text style={styles.historyBtnSub}>View past diagnoses & AI triage results</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+        </TouchableOpacity>
+
+        <Text style={styles.sectionTitle}>Personal Details</Text>
 
         {/* Profile Fields */}
         <View style={styles.card}>
@@ -105,7 +108,7 @@ export default function PatientProfileScreen() {
             onPress={handleSave}
             disabled={saving}
           >
-            {saving ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
           </TouchableOpacity>
         )}
 
@@ -114,7 +117,7 @@ export default function PatientProfileScreen() {
           onPress={() => {
             Alert.alert('Log Out', 'Are you sure?', [
               { text: 'Cancel' },
-              { text: 'Log Out', style: 'destructive', onPress: async () => { await clearUser(); } },
+              { text: 'Log Out', style: 'destructive', onPress: async () => { await clearUser(); router.replace('/(auth)/login'); } },
             ]);
           }}
         >
@@ -127,13 +130,13 @@ export default function PatientProfileScreen() {
 }
 
 function renderField(
-  _icon: string,
-  label: string,
-  value: string | undefined,
-  onChange: (v: string) => void,
-  editable: boolean = false,
-  readonly: boolean = false,
-  keyboardType: any = 'default',
+  _icon,
+  label,
+  value,
+  onChange,
+  editable = false,
+  readonly = false,
+  keyboardType = 'default',
 ) {
   return (
     <View key={label} style={styles.fieldRow}>
@@ -160,50 +163,55 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md,
+    backgroundColor: 'rgba(19, 25, 41, 0.95)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
   editBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: `${COLORS.primary}22`, justifyContent: 'center', alignItems: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center',
   },
-  content: { padding: SPACING.lg, paddingBottom: 80 },
+  content: { padding: SPACING.lg, paddingBottom: 100 },
   avatarSection: { alignItems: 'center', marginBottom: SPACING.lg },
   avatar: {
-    width: 90, height: 90, borderRadius: 45, backgroundColor: COLORS.bgCard,
+    width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(28, 36, 56, 0.6)',
     justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
-    borderWidth: 3, borderColor: COLORS.patientPrimary, ...SHADOWS.lg,
+    borderWidth: 2, borderColor: COLORS.patientPrimary, ...SHADOWS.lg,
   },
-  name: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
+  name: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
   email: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 4 },
   roleBadge: {
-    marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: 4,
-    backgroundColor: `${COLORS.patientPrimary}22`, borderRadius: RADIUS.full,
+    marginTop: SPACING.sm, paddingHorizontal: 16, paddingVertical: 6,
+    backgroundColor: 'rgba(78, 154, 241, 0.2)', borderRadius: RADIUS.full,
   },
-  roleText: { color: COLORS.patientPrimary, fontWeight: '700', fontSize: FONT_SIZES.xs },
+  roleText: { color: COLORS.patientPrimary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
+  historyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', ...SHADOWS.sm },
+  hIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md },
+  historyBtnTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
+  historyBtnSub: { fontSize: 12, color: COLORS.textSecondary },
+  sectionTitle: { fontSize: FONT_SIZES.sm, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.textSecondary, fontWeight: '800', marginBottom: SPACING.md, marginLeft: 4 },
   card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden', ...SHADOWS.sm,
+    backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', overflow: 'hidden', ...SHADOWS.sm,
   },
-  fieldRow: { padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  fieldLabel: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  fieldValue: { fontSize: FONT_SIZES.base, color: COLORS.textPrimary },
-  fieldValueLocked: { color: COLORS.textSecondary },
+  fieldRow: { padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  fieldLabel: { fontSize: 11, color: COLORS.textSecondary, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
+  fieldValue: { fontSize: FONT_SIZES.base, fontWeight: '600', color: COLORS.textPrimary },
+  fieldValueLocked: { color: COLORS.textMuted },
   fieldInput: {
-    fontSize: FONT_SIZES.base, color: COLORS.textPrimary,
-    borderBottomWidth: 1, borderBottomColor: COLORS.primary, paddingVertical: 2,
+    fontSize: FONT_SIZES.base, color: COLORS.textPrimary, fontWeight: '600',
+    borderBottomWidth: 1, borderBottomColor: COLORS.patientPrimary, paddingVertical: 4,
   },
   saveBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 52,
-    justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg, ...SHADOWS.lg,
+    backgroundColor: COLORS.patientPrimary, borderRadius: RADIUS.lg, height: 56,
+    justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.lg,
   },
   btnDisabled: { opacity: 0.7 },
-  saveBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '700' },
+  saveBtnText: { color: "#131929", fontSize: FONT_SIZES.md, fontWeight: '800' },
   logoutBtn: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    marginTop: SPACING.lg, backgroundColor: `${COLORS.error}11`,
-    borderRadius: RADIUS.md, height: 50, borderWidth: 1, borderColor: `${COLORS.error}33`,
+    marginTop: SPACING.md, backgroundColor: 'rgba(232, 69, 69, 0.1)',
+    borderRadius: RADIUS.lg, height: 56, borderWidth: 1, borderColor: 'rgba(232, 69, 69, 0.2)',
   },
-  logoutText: { color: COLORS.error, fontWeight: '700', fontSize: FONT_SIZES.base },
+  logoutText: { color: COLORS.error, fontWeight: '800', fontSize: FONT_SIZES.base },
 });

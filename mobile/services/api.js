@@ -1,4 +1,4 @@
-// services/api.ts
+// services/api.js
 // Axios instance with JWT interceptor – mirrors the web app's api.js
 
 import axios from 'axios';
@@ -6,10 +6,9 @@ import useAuthStore from '../store/authStore';
 
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Update BASE_URL after deploying backend to Render/Railway.
-// For local dev: 'http://localhost:8000/api/v1'  (use your machine's local IP if
-// testing on a physical device, e.g. 'http://192.168.1.10:8000/api/v1')
+// Now securely pointing to the live Render backend!
 export const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://echanneling-backend.onrender.com/api/v1';
 
 const api = axios.create({
   baseURL: BASE_URL,

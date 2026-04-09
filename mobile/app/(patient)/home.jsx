@@ -12,18 +12,12 @@ import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Analytics {
-  totalAppointments: number;
-  upcomingAppointments: number;
-  completedAppointments: number;
-  cancelledAppointments: number;
-}
-
+// Types removed
 export default function PatientHomeScreen() {
   const router = useRouter();
   const { user, clearUser } = useAuthStore();
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [recentAppointments, setRecentAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -154,7 +148,7 @@ export default function PatientHomeScreen() {
   );
 }
 
-function statusColor(status: string) {
+function statusColor(status) {
   switch (status?.toLowerCase()) {
     case 'confirmed': return COLORS.success;
     case 'pending': return COLORS.warning;

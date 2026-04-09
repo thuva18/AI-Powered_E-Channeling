@@ -11,18 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Transaction {
-  _id: string;
-  amount: number;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  createdAt: string;
-  appointment?: { doctor?: { name: string } };
-  paymentMethod?: string;
-  transactionId?: string;
-}
-
+// Types removed
 export default function PatientPaymentsScreen() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -41,7 +32,7 @@ export default function PatientPaymentsScreen() {
   useEffect(() => { fetchTransactions(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchTransactions(); };
 
-  const statusConfig: Record<string, { color: string; icon: string }> = {
+  const statusConfig = {
     completed: { color: COLORS.success, icon: 'checkmark-circle' },
     pending: { color: COLORS.warning, icon: 'time-outline' },
     failed: { color: COLORS.error, icon: 'close-circle' },
@@ -52,7 +43,7 @@ export default function PatientPaymentsScreen() {
     .filter((t) => t.status === 'completed')
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  const renderItem = ({ item }: { item: Transaction }) => {
+  const renderItem = ({ item }) => {
     const cfg = statusConfig[item.status] ?? { color: COLORS.textMuted, icon: 'help-circle' };
     return (
       <View style={styles.card}>

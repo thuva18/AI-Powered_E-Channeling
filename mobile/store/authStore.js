@@ -1,39 +1,17 @@
-// store/authStore.ts
+// store/authStore.js
 // Zustand store for authentication state with SecureStore persistence
 
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 
-export type UserRole = 'patient' | 'doctor' | 'admin';
-
-export interface AuthUser {
-  _id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  token: string;
-  profileImage?: string;
-}
-
-interface AuthState {
-  user: AuthUser | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-
-  setUser: (user: AuthUser) => Promise<void>;
-  clearUser: () => Promise<void>;
-  loadUser: () => Promise<void>;
-  updateUser: (partial: Partial<AuthUser>) => void;
-}
-
 const TOKEN_KEY = 'auth_user';
 
-const useAuthStore = create<AuthState>((set, get) => ({
+const useAuthStore = create((set, get) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
 
-  setUser: async (user: AuthUser) => {
+  setUser: async (user) => {
     await SecureStore.setItemAsync(TOKEN_KEY, JSON.stringify(user));
     set({ user, isAuthenticated: true, isLoading: false });
   },
@@ -48,7 +26,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: true });
       const stored = await SecureStore.getItemAsync(TOKEN_KEY);
       if (stored) {
-        const user = JSON.parse(stored) as AuthUser;
+        const user = JSON.parse(stored);
         set({ user, isAuthenticated: true, isLoading: false });
       } else {
         set({ user: null, isAuthenticated: false, isLoading: false });
@@ -58,7 +36,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  updateUser: (partial: Partial<AuthUser>) => {
+  updateUser: (partial) => {
     const current = get().user;
     if (current) {
       const updated = { ...current, ...partial };

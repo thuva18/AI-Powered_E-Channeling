@@ -11,23 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Doctor {
-  _id: string;
-  name: string;
-  email?: string;
-  specialization?: string;
-  hospital?: string;
-  approvalStatus: 'pending' | 'approved' | 'rejected';
-  isActive?: boolean;
-}
+// Types removed
 
 export default function AdminDoctorsScreen() {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [filtered, setFiltered] = useState<Doctor[]>([]);
+  const [doctors, setDoctors] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [processingId, setProcessingId] = useState(null);
+  const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
   const fetchDoctors = useCallback(async () => {
@@ -50,19 +42,19 @@ export default function AdminDoctorsScreen() {
     setFiltered(data);
   }, [filter, search, doctors]);
 
-  const updateApproval = async (id: string, status: 'approved' | 'rejected') => {
+  const updateApproval = async (id, status) => {
     setProcessingId(id);
     try {
       await api.patch(`/admin/doctors/${id}/approve`, { approvalStatus: status });
       setDoctors((prev) =>
         prev.map((d) => d._id === id ? { ...d, approvalStatus: status } : d),
       );
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Action failed');
     } finally { setProcessingId(null); }
   };
 
-  const deleteDoctor = (id: string, name: string) => {
+  const deleteDoctor = (id, name) => {
     Alert.alert(`Delete Dr. ${name}?`, 'This action cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -79,7 +71,7 @@ export default function AdminDoctorsScreen() {
     ]);
   };
 
-  const statusConfig: Record<string, { color: string; icon: string }> = {
+  const statusConfig = {
     approved: { color: COLORS.success, icon: 'checkmark-circle' },
     pending: { color: COLORS.warning, icon: 'time-outline' },
     rejected: { color: COLORS.error, icon: 'close-circle' },

@@ -11,16 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-interface Appointment {
-  _id: string;
-  patient?: { name: string; email?: string; phone?: string };
-  appointmentDate?: string;
-  timeSlot?: string;
-  status: string;
-  notes?: string;
-}
+// Types removed
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
+const VALID_TRANSITIONS = {
   pending: ['confirmed', 'cancelled'],
   confirmed: ['completed', 'cancelled'],
   completed: [],
@@ -28,11 +21,11 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 };
 
 export default function DoctorAppointmentsScreen() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>('all');
+  const [updatingId, setUpdatingId] = useState(null);
+  const [filter, setFilter] = useState('all');
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -45,21 +38,21 @@ export default function DoctorAppointmentsScreen() {
   useEffect(() => { fetchAppointments(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchAppointments(); };
 
-  const updateStatus = async (id: string, newStatus: string) => {
+  const updateStatus = async (id, newStatus) => {
     setUpdatingId(id);
     try {
       await api.patch(`/doctors/appointments/${id}/status`, { status: newStatus });
       setAppointments((prev) =>
         prev.map((a) => a._id === id ? { ...a, status: newStatus } : a),
       );
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Status update failed');
     } finally { setUpdatingId(null); }
   };
 
   const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter);
 
-  const renderItem = ({ item }: { item: Appointment }) => {
+  const renderItem = ({ item }) => {
     const transitions = VALID_TRANSITIONS[item.status] ?? [];
     return (
       <View style={styles.card}>
@@ -149,15 +142,15 @@ export default function DoctorAppointmentsScreen() {
   );
 }
 
-function statusColor(s: string): string {
+function statusColor(s) {
   return { confirmed: COLORS.success, pending: COLORS.warning, cancelled: COLORS.error, completed: COLORS.info }[s] ?? COLORS.textSecondary;
 }
 
-function actionBgColor(s: string): string {
+function actionBgColor(s) {
   return { confirmed: COLORS.success, cancelled: COLORS.error, completed: COLORS.info }[s] ?? COLORS.primary;
 }
 
-function actionLabel(s: string): string {
+function actionLabel(s) {
   return { confirmed: '✓ Confirm', cancelled: '✕ Cancel', completed: '✔ Complete' }[s] ?? s;
 }
 
