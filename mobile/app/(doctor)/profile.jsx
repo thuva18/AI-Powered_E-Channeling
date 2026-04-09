@@ -38,7 +38,7 @@ export default function DoctorPatientsScreen() {
     );
   }, [search, patients]);
 
-  const renderItem = ({ item }: { item: Patient }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.avatar}>
         <Text style={{ fontSize: 20 }}>🧑‍⚕️</Text>

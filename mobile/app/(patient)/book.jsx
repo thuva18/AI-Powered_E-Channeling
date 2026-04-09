@@ -80,15 +80,23 @@ export default function BookAppointmentScreen() {
   // Book appointment
   const handleBook = async () => {
     if (!selected) return;
-    if (!selectedDate.trim()) { Alert.alert('Select Date', 'Please enter your preferred date.'); return; }
+    if (!selectedDate.trim()) { Alert.alert('Date Required', 'Please enter your preferred appointment date.'); return; }
+    // Validate date format & not in the past
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(selectedDate.trim())) { Alert.alert('Invalid Date', 'Please enter date in YYYY-MM-DD format (e.g. 2026-05-15).'); return; }
+    const chosenDate = new Date(selectedDate.trim());
+    if (isNaN(chosenDate.getTime())) { Alert.alert('Invalid Date', 'The date you entered is not valid.'); return; }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (chosenDate < today) { Alert.alert('Past Date', 'Please select a future date for your appointment.'); return; }
+    if (!selectedSlot) { Alert.alert('Time Slot Required', 'Please select a time slot (Morning, Afternoon, or Evening).'); return; }
     setBookingLoading(true);
     try {
       await api.post('/patients/appointments', {
         doctorId: selected._id,
-        appointmentDate: selectedDate,
-        timeSlot: selectedSlot || 'morning',
+        appointmentDate: selectedDate.trim(),
+        timeSlot: selectedSlot,
       });
-      Alert.alert('✅ Booked!', `Appointment with Dr. ${selected.name} has been requested.`, [
+      Alert.alert('✅ Booked!', `Your appointment with Dr. ${selected.name} has been requested successfully.`, [
         { text: 'OK', onPress: () => { setSelected(null); setSelectedDate(''); setSelectedSlot(''); } },
       ]);
     } catch (e) {

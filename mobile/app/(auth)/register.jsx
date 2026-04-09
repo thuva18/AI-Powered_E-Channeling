@@ -42,13 +42,25 @@ export default function RegisterScreen() {
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) newErrors.name = 'Full name is required';
+    else if (form.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
     if (!form.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Invalid email';
+    else if (!/^\S+@\S+\.\S+$/.test(form.email)) newErrors.email = 'Invalid email format';
     if (!form.password) newErrors.password = 'Password is required';
     else if (form.password.length < 6) newErrors.password = 'Min 6 characters';
+    else if (!/\d/.test(form.password)) newErrors.password = 'Password must contain at least 1 number';
     if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!form.nic.trim()) newErrors.nic = 'NIC is required';
+    else if (!/^(\d{9}[VvXx]|\d{12})$/.test(form.nic.trim())) newErrors.nic = 'Invalid NIC (e.g. 123456789V or 200012345678)';
     if (!form.phone.trim()) newErrors.phone = 'Phone is required';
+    else if (!/^07[0-9]{8}$/.test(form.phone.trim())) newErrors.phone = 'Invalid SL phone (e.g. 0712345678)';
+    if (form.dob) {
+      const dobDate = new Date(form.dob);
+      const today = new Date();
+      const minAge = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+      if (isNaN(dobDate.getTime())) newErrors.dob = 'Invalid date format (YYYY-MM-DD)';
+      else if (dobDate >= today) newErrors.dob = 'Date of birth must be in the past';
+      else if (dobDate >= minAge) newErrors.dob = 'Patient must be at least 5 years old';
+    }
     if (!form.gender) newErrors.gender = 'Gender is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -172,7 +184,7 @@ function renderInput(icon, label, value, onChange, error, extra) {
     <>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, error ? styles.inputError : null]}>
-        <Ionicons name={icon as any} size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+        <Ionicons name={icon} size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
           placeholderTextColor={COLORS.textMuted}

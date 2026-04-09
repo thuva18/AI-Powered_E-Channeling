@@ -49,7 +49,7 @@ export default function PatientPaymentsScreen() {
       <View style={styles.card}>
         <View style={styles.cardRow}>
           <View style={[styles.iconBox, { backgroundColor: cfg.color + '22' }]}>
-            <Ionicons name={cfg.icon as any} size={24} color={cfg.color} />
+            <Ionicons name={cfg.icon} size={24} color={cfg.color} />
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.doctorName}>

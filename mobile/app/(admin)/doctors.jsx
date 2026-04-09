@@ -77,7 +77,7 @@ export default function AdminDoctorsScreen() {
     rejected: { color: COLORS.error, icon: 'close-circle' },
   };
 
-  const renderItem = ({ item }: { item: Doctor }) => {
+  const renderItem = ({ item }) => {
     const cfg = statusConfig[item.approvalStatus] ?? { color: COLORS.textMuted, icon: 'help-circle' };
     const isProcessing = processingId === item._id;
     return (
@@ -91,7 +91,7 @@ export default function AdminDoctorsScreen() {
             {item.email && <Text style={styles.email}>✉️ {item.email}</Text>}
           </View>
           <View style={[styles.statusBadge, { backgroundColor: cfg.color + '22' }]}>
-            <Ionicons name={cfg.icon as any} size={14} color={cfg.color} />
+            <Ionicons name={cfg.icon} size={14} color={cfg.color} />
             <Text style={[styles.statusText, { color: cfg.color }]}> {item.approvalStatus}</Text>
           </View>
         </View>
@@ -164,7 +164,7 @@ export default function AdminDoctorsScreen() {
 
       {/* Filter */}
       <View style={styles.filterRow}>
-        {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
+        {['all', 'pending', 'approved', 'rejected'].map((f) => (
           <TouchableOpacity
             key={f} style={[styles.filterTab, filter === f && styles.filterTabActive]}
             onPress={() => setFilter(f)}

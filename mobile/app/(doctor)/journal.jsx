@@ -20,10 +20,10 @@ export default function DoctorJournalScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [editEntry, setEditEntry] = useState<JournalEntry | null>(null);
+  const [editEntry, setEditEntry] = useState(null);
   const [form, setForm] = useState({ title: '', content: '', mood: '😊', tags: '' });
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchEntries = useCallback(async () => {
     try {
@@ -42,7 +42,7 @@ export default function DoctorJournalScreen() {
     setModalVisible(true);
   };
 
-  const openEdit = (entry: JournalEntry) => {
+  const openEdit = (entry) => {
     setEditEntry(entry);
     setForm({
       title: entry.title,
@@ -55,7 +55,9 @@ export default function DoctorJournalScreen() {
 
   const handleSave = async () => {
     if (!form.title.trim()) { Alert.alert('Title required', 'Please enter a title for your journal entry.'); return; }
-    if (!form.content.trim()) { Alert.alert('Content required', 'Please write something.'); return; }
+    if (form.title.trim().length > 100) { Alert.alert('Title too long', 'Title must be 100 characters or fewer.'); return; }
+    if (!form.content.trim()) { Alert.alert('Content required', 'Please write something in your journal entry.'); return; }
+    if (form.content.trim().length < 10) { Alert.alert('Too short', 'Entry content must be at least 10 characters.'); return; }
     setSaving(true);
     const payload = {
       title: form.title.trim(),
@@ -94,8 +96,8 @@ export default function DoctorJournalScreen() {
     ]);
   };
 
-  const renderItem = ({ item }: { item: JournalEntry }) => (
-    <View style={styles.card}>
+  const renderItem = ({ item }) => (
+    <View style={[styles.card, { borderLeftColor: moodColor(item.mood) }]}>
       <View style={styles.cardHeader}>
         <Text style={styles.moodEmoji}>{item.mood ?? '📓'}</Text>
         <View style={styles.cardMeta}>
@@ -105,17 +107,17 @@ export default function DoctorJournalScreen() {
           </Text>
         </View>
         <View style={styles.cardActions}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => openEdit(item)}>
-            <Ionicons name="pencil-outline" size={18} color={COLORS.primary} />
+          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: `${COLORS.primary}15` }]} onPress={() => openEdit(item)}>
+            <Ionicons name="pencil-outline" size={17} color={COLORS.primary} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: `${COLORS.error}11` }]}
+            style={[styles.iconBtn, { backgroundColor: `${COLORS.error}15` }]}
             onPress={() => handleDelete(item._id)}
             disabled={deletingId === item._id}
           >
             {deletingId === item._id
               ? <ActivityIndicator size="small" color={COLORS.error} />
-              : <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+              : <Ionicons name="trash-outline" size={17} color={COLORS.error} />
             }
           </TouchableOpacity>
         </View>
@@ -124,14 +126,19 @@ export default function DoctorJournalScreen() {
       {item.tags && item.tags.length > 0 && (
         <View style={styles.tagsRow}>
           {item.tags.map((tag) => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>#{tag}</Text>
+            <View key={tag} style={[styles.tag, { backgroundColor: moodColor(item.mood) + '18' }]}>
+              <Text style={[styles.tagText, { color: moodColor(item.mood) }]}>#{tag}</Text>
             </View>
           ))}
         </View>
       )}
     </View>
   );
+
+  const moodColor = (mood) => {
+    const map = { '😊': '#22C9A0', '😐': '#4E9AF1', '😔': '#9B59F5', '😤': '#E84545', '🤔': '#F5A623', '😴': '#8A96B3', '💪': '#22C9A0', '😰': '#E84545' };
+    return map[mood] || COLORS.doctorPrimary;
+  };
 
   return (
     <View style={styles.root}>
@@ -191,17 +198,24 @@ export default function DoctorJournalScreen() {
               </View>
 
               {/* Title */}
-              <Text style={styles.fieldLabel}>Title</Text>
+              <View style={styles.fieldLabelRow}>
+                <Text style={styles.fieldLabel}>Title</Text>
+                <Text style={[styles.charCount, form.title.length > 90 && { color: COLORS.error }]}>{form.title.length}/100</Text>
+              </View>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, form.title.length > 100 && styles.inputError]}
                 placeholder="Entry title..."
                 placeholderTextColor={COLORS.textMuted}
                 value={form.title}
                 onChangeText={(v) => setForm((f) => ({ ...f, title: v }))}
+                maxLength={105}
               />
 
               {/* Content */}
-              <Text style={styles.fieldLabel}>Content</Text>
+              <View style={styles.fieldLabelRow}>
+                <Text style={styles.fieldLabel}>Content</Text>
+                <Text style={[styles.charCount, form.content.length < 10 && form.content.length > 0 && { color: COLORS.warning }]}>{form.content.length} chars</Text>
+              </View>
               <TextInput
                 style={[styles.textInput, styles.textArea]}
                 placeholder="Write your thoughts, reflections, observations..."
@@ -259,7 +273,8 @@ const styles = StyleSheet.create({
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
     backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border,
+    borderLeftWidth: 4, ...SHADOWS.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
   moodEmoji: { fontSize: 28, marginRight: SPACING.md },
@@ -293,8 +308,11 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.textPrimary },
   fieldLabel: {
     fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, textTransform: 'uppercase',
-    letterSpacing: 0.5, marginBottom: SPACING.sm, marginTop: SPACING.md,
+    letterSpacing: 0.5, marginBottom: SPACING.sm, marginTop: SPACING.md, fontWeight: '700',
   },
+  fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md, marginBottom: SPACING.sm },
+  charCount: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted },
+  inputError: { borderColor: COLORS.error },
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
   moodBtn: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.bgInput,
