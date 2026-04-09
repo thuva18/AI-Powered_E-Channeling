@@ -30,18 +30,20 @@ function AuthGuard({ children }) {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuth = segments[0] === '(auth)' || segments[0] === undefined || segments.length === 0;
+    const inAuth = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuth) {
+      // If not authenticated and trying to access protected route (including root '/')
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuth) {
-      // Redirect to the correct dashboard based on role
-      const role = user?.role;
+    } else if (isAuthenticated && (inAuth || segments.length === 0 || segments[0] === undefined)) {
+      // If authenticated and trying to access login page OR root '/'
+      const role = (user?.role || '').toLowerCase();
       if (role === 'patient') router.replace('/(patient)/home');
       else if (role === 'doctor') router.replace('/(doctor)/home');
       else if (role === 'admin') router.replace('/(admin)/home');
+      else router.replace('/(auth)/login');
     }
-  }, [isAuthenticated, isLoading, segments, user?.role]);
+  }, [isAuthenticated, isLoading, segments, user]);
 
   if (isLoading) {
     return (

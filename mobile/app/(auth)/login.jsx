@@ -49,18 +49,26 @@ export default function LoginScreen() {
     try {
       const res = await api.post('/auth/login', { email: email.trim().toLowerCase(), password });
       const data = res.data;
+      const rawRole = (data.role || data.user?.role || '').toLowerCase();
       const user = {
         _id: data._id || data.user?._id,
-        name: data.name || data.user?.name,
+        name: data.name || data.user?.name || data.firstName ? `${data.firstName} ${data.lastName}`.trim() : '',
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email || data.user?.email,
-        role: data.role || data.user?.role,
+        role: rawRole,
         token: data.token,
         profileImage: data.profileImage,
+        doctorId: data.doctorId,
+        approvalStatus: data.approvalStatus,
       };
       await setUser(user);
-      if (user.role === 'patient') router.replace('/(patient)/home');
-      else if (user.role === 'doctor') router.replace('/(doctor)/home');
-      else if (user.role === 'admin') router.replace('/(admin)/home');
+      if (rawRole === 'patient') router.replace('/(patient)/home');
+      else if (rawRole === 'doctor') router.replace('/(doctor)/home');
+      else if (rawRole === 'admin') router.replace('/(admin)/home');
+      else {
+        setErrors({ server: `Unknown role: ${rawRole}. Please contact support.` });
+      }
     } catch (error) {
       const msg = error.response?.data?.message ?? 'Login failed. Please try again.';
       setErrors({ server: msg });

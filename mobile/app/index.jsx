@@ -1,28 +1,14 @@
-// app/index.tsx
+// app/index.jsx
 // Splash / Landing screen – auto-redirects once auth loads
 
-import { useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet } from 'react-native';
 import useAuthStore from '../store/authStore';
 import { COLORS, FONT_SIZES, SPACING } from '../constants/theme';
 
 export default function IndexScreen() {
-  const { isAuthenticated, isLoading, user } = useAuthStore();
-  const router = useRouter();
+  const { isLoading } = useAuthStore();
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated) {
-      router.replace('/(auth)/login');
-    } else {
-      const role = user?.role;
-      if (role === 'patient') router.replace('/(patient)/home');
-      else if (role === 'doctor') router.replace('/(doctor)/home');
-      else if (role === 'admin') router.replace('/(admin)/home');
-    }
-  }, [isAuthenticated, isLoading]);
+  if (isLoading) return null;
 
   return (
     <View style={styles.container}>

@@ -42,19 +42,23 @@ export default function DoctorHomeScreen() {
 
   const fetchData = async () => {
     try {
-      const [analyticsRes, aptsRes] = await Promise.all([
+      const [analyticsRes, aptsRes, patientsRes] = await Promise.all([
         api.get('/doctors/analytics'),
         api.get('/doctors/appointments'),
+        api.get('/doctors/patients'),
       ]);
-      setAnalytics(analyticsRes.data);
-      const today = new Date().toDateString();
+      setAnalytics({
+        ...analyticsRes.data,
+        totalPatients: patientsRes.data?.length ?? 0,
+      });
+      const todayStr = new Date().toDateString();
       setTodayAppointments(
         (aptsRes.data || []).filter((a) =>
-          new Date(a.appointmentDate).toDateString() === today,
+          new Date(a.appointmentDate).toDateString() === todayStr,
         ).slice(0, 5),
       );
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
-    } catch { console.error('Failed to fetch doctor dashboard'); }
+    } catch (e) { console.error('Failed to fetch doctor dashboard', e); }
     finally { setLoading(false); setRefreshing(false); }
   };
 
@@ -62,10 +66,12 @@ export default function DoctorHomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
-    { label: "Today", value: todayAppointments.length, icon: 'today-outline', color: COLORS.doctorPrimary },
+    { label: 'Today', value: todayAppointments.length, icon: 'today-outline', color: COLORS.doctorPrimary },
     { label: 'Total', value: analytics?.totalAppointments ?? 0, icon: 'calendar', color: COLORS.primary },
     { label: 'Pending', value: analytics?.pendingAppointments ?? 0, icon: 'time-outline', color: COLORS.warning },
     { label: 'Patients', value: analytics?.totalPatients ?? 0, icon: 'people', color: '#9B59F5' },
+    { label: 'Completed', value: analytics?.completedAppointments ?? 0, icon: 'checkmark-circle', color: COLORS.success },
+    { label: 'Revenue', value: `Rs.${(analytics?.totalRevenue ?? 0).toLocaleString()}`, icon: 'cash-outline', color: COLORS.info ?? '#38BDF8' },
   ];
 
   const quickActions = [
@@ -87,7 +93,9 @@ export default function DoctorHomeScreen() {
           </View>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.name}>Dr. {user?.name ?? 'Doctor'}</Text>
+            <Text style={styles.name}>
+              Dr. {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name ?? 'Doctor')}
+            </Text>
           </View>
         </View>
         <TouchableOpacity
@@ -158,7 +166,11 @@ export default function DoctorHomeScreen() {
                 <Text style={{ fontSize: 18 }}>🧑</Text>
               </View>
               <View style={styles.aptInfo}>
-                <Text style={styles.aptPatient}>{apt.patient?.name ?? 'Patient'}</Text>
+                <Text style={styles.aptPatient}>
+                  {apt.patientId?.patientProfile
+                    ? `${apt.patientId.patientProfile.firstName} ${apt.patientId.patientProfile.lastName}`.trim()
+                    : apt.patientId?.email ?? 'Patient'}
+                </Text>
                 <Text style={styles.aptTime}>{apt.timeSlot ?? 'Scheduled'}</Text>
               </View>
               <View style={[styles.statusBadge, { backgroundColor: statusColor(apt.status) + '22' }]}>

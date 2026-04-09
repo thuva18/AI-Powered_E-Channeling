@@ -1,258 +1,561 @@
-// app/(doctor)/journal.tsx
-// Member 6 – Doctor Personal Journal (CRUD)
+// app/(doctor)/journal.jsx
+// Doctor's Personal Journal — patient records, diagnosis, prescriptions
+// Matches web PersonalJournal.jsx feature-for-feature
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Modal, KeyboardAvoidingView,
-  Platform, ScrollView, RefreshControl,
+  View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
+  Modal, ScrollView, Alert, ActivityIndicator, RefreshControl,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-// Types removed
+const STATUSES = ['Active', 'Recovered', 'Follow-up', 'Referred', 'Chronic'];
+const GENDERS = ['Male', 'Female', 'Other'];
 
-const MOODS = ['😊', '😐', '😔', '😤', '🤔', '😴', '💪', '😰'];
+const STATUS_COLOR = {
+  Active: COLORS.primary,
+  Recovered: COLORS.success,
+  'Follow-up': COLORS.warning,
+  Referred: '#9B59F5',
+  Chronic: COLORS.error,
+};
 
-export default function DoctorJournalScreen() {
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editEntry, setEditEntry] = useState(null);
-  const [form, setForm] = useState({ title: '', content: '', mood: '😊', tags: '' });
+const emptyRx = () => ({ medication: '', dosage: '', frequency: '', duration: '' });
+
+const BLANK_FORM = {
+  patientId: '', patientName: '', patientAge: '', patientGender: '',
+  contactNumber: '', visitDate: new Date().toISOString().slice(0, 10),
+  diagnosis: '', notes: '', followUpDate: '', status: 'Active',
+  prescription: [emptyRx()],
+};
+
+// ─── Prescription Row ────────────────────────────────────────────────────────
+function RxRow({ rx, index, total, onChange, onRemove }) {
+  return (
+    <View style={styles.rxCard}>
+      <View style={styles.rxHeader}>
+        <Text style={styles.rxLabel}>Medication #{index + 1}</Text>
+        {total > 1 && (
+          <TouchableOpacity onPress={onRemove}>
+            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+          </TouchableOpacity>
+        )}
+      </View>
+      <TextInput style={styles.rxInput} placeholder="Medication name *" placeholderTextColor={COLORS.textMuted}
+        value={rx.medication} onChangeText={(v) => onChange('medication', v)} />
+      <View style={styles.rxRow}>
+        <TextInput style={[styles.rxInput, { flex: 1 }]} placeholder="Dosage (e.g. 500mg)"
+          placeholderTextColor={COLORS.textMuted} value={rx.dosage} onChangeText={(v) => onChange('dosage', v)} />
+        <TextInput style={[styles.rxInput, { flex: 1, marginLeft: SPACING.sm }]} placeholder="Frequency"
+          placeholderTextColor={COLORS.textMuted} value={rx.frequency} onChangeText={(v) => onChange('frequency', v)} />
+      </View>
+      <TextInput style={styles.rxInput} placeholder="Duration (e.g. 7 days)"
+        placeholderTextColor={COLORS.textMuted} value={rx.duration} onChangeText={(v) => onChange('duration', v)} />
+    </View>
+  );
+}
+
+// ─── Journal Entry Card ──────────────────────────────────────────────────────
+function JournalCard({ entry, onEdit, onDelete }) {
+  const [expanded, setExpanded] = useState(false);
+  const sc = STATUS_COLOR[entry.status] || COLORS.textSecondary;
+  const initials = (entry.patientName?.[0] || 'P').toUpperCase();
+  return (
+    <View style={[styles.card, { borderLeftColor: sc }]}>
+      <TouchableOpacity style={styles.cardHead} onPress={() => setExpanded(e => !e)} activeOpacity={0.8}>
+        <View style={[styles.avatar, { backgroundColor: sc + '22' }]}>
+          <Text style={[styles.avatarText, { color: sc }]}>{initials}</Text>
+          {entry.patientId && (
+            <View style={styles.linkedDot}>
+              <Ionicons name="checkmark" size={8} color={COLORS.white} />
+            </View>
+          )}
+        </View>
+        <View style={styles.cardInfo}>
+          <Text style={styles.patientName}>{entry.patientName}</Text>
+          <Text style={styles.metaText}>
+            {entry.patientAge ? `${entry.patientAge} yrs · ` : ''}{entry.patientGender || ''} ·{' '}
+            {new Date(entry.visitDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </Text>
+        </View>
+        <View style={[styles.statusPill, { backgroundColor: sc + '20' }]}>
+          <Text style={[styles.statusPillText, { color: sc }]}>{entry.status}</Text>
+        </View>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.textMuted} style={{ marginLeft: 4 }} />
+      </TouchableOpacity>
+
+      {/* Diagnosis preview always visible */}
+      <View style={styles.diagRow}>
+        <Ionicons name="medkit-outline" size={13} color={COLORS.textMuted} />
+        <Text style={styles.diagText} numberOfLines={expanded ? undefined : 2}>{entry.diagnosis}</Text>
+      </View>
+
+      {/* Expanded details */}
+      {expanded && (
+        <View style={styles.expanded}>
+          {/* Prescriptions */}
+          {entry.prescription?.length > 0 && (
+            <View style={styles.expandSection}>
+              <Text style={styles.expandLabel}>💊 Prescription</Text>
+              {entry.prescription.map((rx, i) => (
+                <View key={i} style={styles.rxViewCard}>
+                  <Text style={styles.rxMed}>{rx.medication || '—'}</Text>
+                  <Text style={styles.rxDetail}>
+                    {[rx.dosage, rx.frequency, rx.duration].filter(Boolean).join(' · ')}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Notes */}
+          {!!entry.notes && (
+            <View style={styles.expandSection}>
+              <Text style={styles.expandLabel}>📋 Notes</Text>
+              <Text style={styles.notesText}>{entry.notes}</Text>
+            </View>
+          )}
+
+          {/* Follow-up / contact */}
+          <View style={styles.metaRow}>
+            {!!entry.contactNumber && (
+              <View style={styles.metaPill}>
+                <Ionicons name="call-outline" size={12} color={COLORS.textMuted} />
+                <Text style={styles.metaPillText}>{entry.contactNumber}</Text>
+              </View>
+            )}
+            {!!entry.followUpDate && (
+              <View style={styles.metaPill}>
+                <Ionicons name="calendar-outline" size={12} color={COLORS.textMuted} />
+                <Text style={styles.metaPillText}>
+                  Follow-up: {new Date(entry.followUpDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Actions */}
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(entry)}>
+              <Ionicons name="pencil-outline" size={15} color={COLORS.primary} />
+              <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(entry._id)}>
+              <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+              <Text style={[styles.actionBtnText, { color: COLORS.error }]}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ─── Journal Modal ───────────────────────────────────────────────────────────
+function JournalModal({ visible, entry, patients, onClose, onSave }) {
+  const isEdit = !!entry?._id;
+  const [form, setForm] = useState(BLANK_FORM);
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
+  const [error, setError] = useState('');
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [showGenderPicker, setShowGenderPicker] = useState(false);
 
-  const fetchEntries = useCallback(async () => {
-    try {
-      const res = await api.get('/doctors/journal');
-      setEntries(res.data || []);
-    } catch { Alert.alert('Error', 'Failed to load journal'); }
-    finally { setLoading(false); setRefreshing(false); }
-  }, []);
+  useEffect(() => {
+    if (visible) {
+      if (entry?._id) {
+        setForm({
+          patientId: entry.patientId ? (typeof entry.patientId === 'object' ? entry.patientId._id : entry.patientId) : '',
+          patientName: entry.patientName || '',
+          patientAge: entry.patientAge ? String(entry.patientAge) : '',
+          patientGender: entry.patientGender || '',
+          contactNumber: entry.contactNumber || '',
+          visitDate: entry.visitDate ? entry.visitDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          diagnosis: entry.diagnosis || '',
+          notes: entry.notes || '',
+          followUpDate: entry.followUpDate ? entry.followUpDate.slice(0, 10) : '',
+          status: entry.status || 'Active',
+          prescription: entry.prescription?.length ? entry.prescription : [emptyRx()],
+        });
+      } else {
+        setForm({ ...BLANK_FORM, visitDate: new Date().toISOString().slice(0, 10), prescription: [emptyRx()] });
+      }
+      setError('');
+    }
+  }, [visible, entry]);
 
-  useEffect(() => { fetchEntries(); }, []);
-  const onRefresh = () => { setRefreshing(true); fetchEntries(); };
+  const setF = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
-  const openCreate = () => {
-    setEditEntry(null);
-    setForm({ title: '', content: '', mood: '😊', tags: '' });
-    setModalVisible(true);
-  };
+  const setRx = (idx, field, val) => setForm(f => {
+    const rx = [...f.prescription];
+    rx[idx] = { ...rx[idx], [field]: val };
+    return { ...f, prescription: rx };
+  });
 
-  const openEdit = (entry) => {
-    setEditEntry(entry);
-    setForm({
-      title: entry.title,
-      content: entry.content,
-      mood: entry.mood ?? '😊',
-      tags: entry.tags?.join(', ') ?? '',
-    });
-    setModalVisible(true);
-  };
+  const addRx = () => setForm(f => ({ ...f, prescription: [...f.prescription, emptyRx()] }));
+  const removeRx = (idx) => setForm(f => ({ ...f, prescription: f.prescription.filter((_, i) => i !== idx) }));
 
   const handleSave = async () => {
-    if (!form.title.trim()) { Alert.alert('Title required', 'Please enter a title for your journal entry.'); return; }
-    if (form.title.trim().length > 100) { Alert.alert('Title too long', 'Title must be 100 characters or fewer.'); return; }
-    if (!form.content.trim()) { Alert.alert('Content required', 'Please write something in your journal entry.'); return; }
-    if (form.content.trim().length < 10) { Alert.alert('Too short', 'Entry content must be at least 10 characters.'); return; }
-    setSaving(true);
+    if (!form.patientName.trim()) { setError('Patient name is required'); return; }
+    if (!form.visitDate) { setError('Visit date is required'); return; }
+    if (!form.diagnosis.trim()) { setError('Diagnosis is required'); return; }
+    const pres = form.prescription.map(r => ({
+      medication: r.medication.trim(), dosage: r.dosage.trim(),
+      frequency: r.frequency.trim(), duration: r.duration.trim(),
+    })).filter(r => r.medication);
+    if (form.prescription.some(r => r.medication && !r.medication.trim())) {
+      setError('Medication name required for each prescription row'); return;
+    }
+    setSaving(true); setError('');
     const payload = {
-      title: form.title.trim(),
-      content: form.content.trim(),
-      mood: form.mood,
-      tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      patientId: form.patientId || null,
+      patientName: form.patientName.trim(),
+      patientAge: form.patientAge !== '' ? Number(form.patientAge) : undefined,
+      patientGender: form.patientGender || null,
+      contactNumber: form.contactNumber.trim(),
+      visitDate: form.visitDate,
+      diagnosis: form.diagnosis.trim(),
+      prescription: pres,
+      notes: form.notes.trim(),
+      followUpDate: form.followUpDate || null,
+      status: form.status,
     };
     try {
-      if (editEntry) {
-        const res = await api.put(`/doctors/journal/${editEntry._id}`, payload);
-        setEntries((prev) => prev.map((e) => e._id === editEntry._id ? res.data : e));
-      } else {
-        const res = await api.post('/doctors/journal', payload);
-        setEntries((prev) => [res.data, ...prev]);
-      }
-      setModalVisible(false);
+      if (isEdit) await api.put(`/doctors/journal/${entry._id}`, payload);
+      else await api.post('/doctors/journal', payload);
+      onSave();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.message ?? 'Failed to save entry');
+      setError(e?.response?.data?.message || 'Failed to save. Please try again.');
     } finally { setSaving(false); }
   };
 
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={styles.modalSheet}>
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.modalTitleRow}>
+              <View style={styles.modalIcon}>
+                <Ionicons name="book-outline" size={18} color={COLORS.white} />
+              </View>
+              <View>
+                <Text style={styles.modalTitle}>{isEdit ? 'Edit Entry' : 'New Journal Entry'}</Text>
+                <Text style={styles.modalSubtitle}>Patient record & prescription</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <View style={styles.modalBody}>
+              {!!error && (
+                <View style={styles.errorBanner}>
+                  <Ionicons name="alert-circle" size={14} color={COLORS.error} />
+                  <Text style={styles.errorBannerText}>{error}</Text>
+                </View>
+              )}
+
+              {/* ── Patient Info ─────────────────────────────── */}
+              <Text style={styles.sectionLabel}>👤 Patient Information</Text>
+
+              {/* Link to registered patient */}
+              <Text style={styles.fieldLabel}>Link to Registered Patient (Optional)</Text>
+              <TouchableOpacity
+                style={styles.picker}
+                onPress={() => setShowPatientPicker(!showPatientPicker)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="people-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
+                <Text style={[styles.pickerText, !form.patientId && { color: COLORS.textMuted }]}>
+                  {form.patientId
+                    ? (patients.find(p => p._id === form.patientId)?.name || 'Linked patient')
+                    : '-- External / unregistered patient --'}
+                </Text>
+                <Ionicons name={showPatientPicker ? 'chevron-up' : 'chevron-down'} size={14} color={COLORS.textMuted} />
+              </TouchableOpacity>
+              {showPatientPicker && (
+                <View style={styles.dropdownList}>
+                  <TouchableOpacity style={styles.dropdownItem} onPress={() => { setF('patientId', ''); setShowPatientPicker(false); }}>
+                    <Text style={styles.dropdownItemText}>-- No link --</Text>
+                  </TouchableOpacity>
+                  {patients.map(p => (
+                    <TouchableOpacity key={p._id} style={[styles.dropdownItem, form.patientId === p._id && styles.dropdownItemActive]}
+                      onPress={() => {
+                        const age = p.dob ? Math.floor((Date.now() - new Date(p.dob)) / 31557600000) : '';
+                        setForm(f => ({
+                          ...f, patientId: p._id, patientName: p.name,
+                          contactNumber: p.phone || f.contactNumber,
+                          patientGender: p.gender || f.patientGender,
+                          patientAge: age ? String(age) : f.patientAge,
+                        }));
+                        setShowPatientPicker(false);
+                      }}>
+                      <Text style={[styles.dropdownItemText, form.patientId === p._id && { color: COLORS.doctorPrimary, fontWeight: '700' }]}>
+                        {p.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              <InputField label="Patient Name *" value={form.patientName} onChange={(v) => setF('patientName', v)} placeholder="Full name" />
+
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1 }}>
+                  <InputField label="Age" value={form.patientAge} onChange={(v) => setF('patientAge', v)} placeholder="e.g. 45" extra={{ keyboardType: 'numeric' }} />
+                </View>
+                <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                  <Text style={styles.fieldLabel}>Gender</Text>
+                  <TouchableOpacity style={styles.picker} onPress={() => setShowGenderPicker(!showGenderPicker)}>
+                    <Text style={[styles.pickerText, !form.patientGender && { color: COLORS.textMuted }]}>
+                      {form.patientGender || 'Select...'}
+                    </Text>
+                    <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                  {showGenderPicker && (
+                    <View style={styles.dropdownList}>
+                      {GENDERS.map(g => (
+                        <TouchableOpacity key={g} style={styles.dropdownItem} onPress={() => { setF('patientGender', g); setShowGenderPicker(false); }}>
+                          <Text style={styles.dropdownItemText}>{g}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              <InputField label="Contact Number" value={form.contactNumber} onChange={(v) => setF('contactNumber', v)} placeholder="07XXXXXXXX" extra={{ keyboardType: 'phone-pad' }} />
+              <InputField label="Visit Date *" value={form.visitDate} onChange={(v) => setF('visitDate', v)} placeholder="YYYY-MM-DD" />
+
+              {/* ── Diagnosis ───────────────────────────────── */}
+              <Text style={[styles.sectionLabel, { marginTop: SPACING.md }]}>🏥 Diagnosis & Status</Text>
+              <Text style={styles.fieldLabel}>Diagnosis *</Text>
+              <TextInput
+                style={[styles.textArea]}
+                placeholder="Primary diagnosis / clinical findings…"
+                placeholderTextColor={COLORS.textMuted}
+                value={form.diagnosis}
+                onChangeText={(v) => setF('diagnosis', v)}
+                multiline numberOfLines={4} textAlignVertical="top"
+              />
+
+              <Text style={styles.fieldLabel}>Case Status</Text>
+              <View style={styles.statusRow}>
+                {STATUSES.map(s => (
+                  <TouchableOpacity
+                    key={s}
+                    style={[styles.statusChip, form.status === s && { backgroundColor: STATUS_COLOR[s] + '20', borderColor: STATUS_COLOR[s] }]}
+                    onPress={() => setF('status', s)}
+                  >
+                    <Text style={[styles.statusChipText, form.status === s && { color: STATUS_COLOR[s], fontWeight: '700' }]}>{s}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* ── Prescriptions ───────────────────────────── */}
+              <View style={styles.rxHeaderRow}>
+                <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>💊 Prescription</Text>
+                <TouchableOpacity style={styles.addRxBtn} onPress={addRx}>
+                  <Ionicons name="add" size={14} color={COLORS.primary} />
+                  <Text style={styles.addRxText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+              {form.prescription.map((rx, i) => (
+                <RxRow key={i} rx={rx} index={i} total={form.prescription.length}
+                  onChange={(field, val) => setRx(i, field, val)}
+                  onRemove={() => removeRx(i)} />
+              ))}
+
+              {/* ── Notes & Follow-up ───────────────────────── */}
+              <Text style={[styles.sectionLabel, { marginTop: SPACING.md }]}>📋 Notes & Follow-up</Text>
+              <Text style={styles.fieldLabel}>Clinical Notes</Text>
+              <TextInput
+                style={styles.textArea}
+                placeholder="Observations, test results, treatment plan…"
+                placeholderTextColor={COLORS.textMuted}
+                value={form.notes}
+                onChangeText={(v) => setF('notes', v)}
+                multiline numberOfLines={3} textAlignVertical="top"
+              />
+              <InputField label="Follow-up Date" value={form.followUpDate} onChange={(v) => setF('followUpDate', v)} placeholder="YYYY-MM-DD (optional)" />
+
+              {/* Save */}
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && { opacity: 0.65 }]}
+                onPress={handleSave} disabled={saving} activeOpacity={0.85}
+              >
+                {saving ? <ActivityIndicator color={COLORS.white} /> : (
+                  <>
+                    <Ionicons name="save-outline" size={17} color={COLORS.white} style={{ marginRight: 6 }} />
+                    <Text style={styles.saveBtnText}>{isEdit ? 'Update Entry' : 'Save Entry'}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+// ─── Field helper ────────────────────────────────────────────────────────────
+function InputField({ label, value, onChange, placeholder, extra = {} }) {
+  return (
+    <>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        style={styles.inputField}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.textMuted}
+        value={value}
+        onChangeText={onChange}
+        {...extra}
+      />
+    </>
+  );
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
+export default function DoctorJournalScreen() {
+  const [entries, setEntries] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [modal, setModal] = useState(null); // null | 'new' | entryObj
+  const [deletingId, setDeletingId] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [jRes, pRes] = await Promise.all([
+        api.get('/doctors/journal'),
+        api.get('/doctors/patients'),
+      ]);
+      setEntries(jRes.data || []);
+      setPatients(pRes.data || []);
+    } catch (e) { console.error('Journal load error', e); }
+    finally { setLoading(false); setRefreshing(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+  const onRefresh = () => { setRefreshing(true); load(); };
+
   const handleDelete = (id) => {
-    Alert.alert('Delete Entry', 'This will permanently delete this journal entry.', [
+    Alert.alert('Delete Entry?', 'This journal entry will be permanently deleted.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
+        text: 'Delete', style: 'destructive', onPress: async () => {
           setDeletingId(id);
           try {
             await api.delete(`/doctors/journal/${id}`);
-            setEntries((prev) => prev.filter((e) => e._id !== id));
-          } catch { Alert.alert('Error', 'Failed to delete'); }
+            setEntries(prev => prev.filter(e => e._id !== id));
+          } catch { Alert.alert('Error', 'Failed to delete entry.'); }
           finally { setDeletingId(null); }
         },
       },
     ]);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.card, { borderLeftColor: moodColor(item.mood) }]}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.moodEmoji}>{item.mood ?? '📓'}</Text>
-        <View style={styles.cardMeta}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.cardDate}>
-            {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          </Text>
-        </View>
-        <View style={styles.cardActions}>
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: `${COLORS.primary}15` }]} onPress={() => openEdit(item)}>
-            <Ionicons name="pencil-outline" size={17} color={COLORS.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: `${COLORS.error}15` }]}
-            onPress={() => handleDelete(item._id)}
-            disabled={deletingId === item._id}
-          >
-            {deletingId === item._id
-              ? <ActivityIndicator size="small" color={COLORS.error} />
-              : <Ionicons name="trash-outline" size={17} color={COLORS.error} />
-            }
-          </TouchableOpacity>
-        </View>
-      </View>
-      <Text style={styles.cardContent} numberOfLines={3}>{item.content}</Text>
-      {item.tags && item.tags.length > 0 && (
-        <View style={styles.tagsRow}>
-          {item.tags.map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: moodColor(item.mood) + '18' }]}>
-              <Text style={[styles.tagText, { color: moodColor(item.mood) }]}>#{tag}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
+  const filtered = entries.filter(e => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || e.patientName?.toLowerCase().includes(q) || e.diagnosis?.toLowerCase().includes(q);
+    const matchStatus = filterStatus === 'ALL' || e.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
 
-  const moodColor = (mood) => {
-    const map = { '😊': '#22C9A0', '😐': '#4E9AF1', '😔': '#9B59F5', '😤': '#E84545', '🤔': '#F5A623', '😴': '#8A96B3', '💪': '#22C9A0', '😰': '#E84545' };
-    return map[mood] || COLORS.doctorPrimary;
-  };
+  const counts = STATUSES.reduce((acc, s) => { acc[s] = entries.filter(e => e.status === s).length; return acc; }, {});
 
   return (
     <View style={styles.root}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Personal Journal</Text>
-          <Text style={styles.subtitle}>{entries.length} entries</Text>
+          <Text style={styles.pageTitle}>Patient Journal</Text>
+          <Text style={styles.pageSubtitle}>{entries.length} records</Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={openCreate} activeOpacity={0.8}>
-          <Ionicons name="add" size={24} color={COLORS.white} />
+        <TouchableOpacity style={styles.newBtn} onPress={() => setModal('new')} activeOpacity={0.85}>
+          <Ionicons name="add" size={22} color={COLORS.white} />
         </TouchableOpacity>
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} /> : (
+      {/* Search + Status filter */}
+      <View style={styles.searchBar}>
+        <Ionicons name="search-outline" size={16} color={COLORS.textMuted} style={{ marginRight: 8 }} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by patient name or diagnosis…"
+          placeholderTextColor={COLORS.textMuted}
+          value={search}
+          onChangeText={setSearch}
+        />
+        {!!search && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={16} color={COLORS.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Status filter chips */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: SPACING.sm }}>
+        {['ALL', ...STATUSES].map(s => (
+          <TouchableOpacity
+            key={s}
+            style={[styles.filterChip, filterStatus === s && { backgroundColor: s === 'ALL' ? COLORS.doctorPrimary : STATUS_COLOR[s], borderColor: s === 'ALL' ? COLORS.doctorPrimary : STATUS_COLOR[s] }]}
+            onPress={() => setFilterStatus(s)}
+          >
+            <Text style={[styles.filterChipText, filterStatus === s && { color: COLORS.white }]}>
+              {s}{s !== 'ALL' && counts[s] > 0 ? ` (${counts[s]})` : ''}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {loading ? (
+        <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} />
+      ) : (
         <FlatList
-          data={entries}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
+          data={filtered}
+          keyExtractor={item => item._id}
+          renderItem={({ item }) => (
+            <JournalCard
+              entry={item}
+              onEdit={setModal}
+              onDelete={handleDelete}
+            />
+          )}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.doctorPrimary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="book-outline" size={40} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>Your journal is empty</Text>
-              <TouchableOpacity onPress={openCreate} style={styles.emptyLink}>
-                <Text style={{ color: COLORS.doctorPrimary, fontWeight: '600' }}>Write your first entry →</Text>
-              </TouchableOpacity>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="book-outline" size={32} color={COLORS.doctorPrimary} />
+              </View>
+              <Text style={styles.emptyTitle}>
+                {search || filterStatus !== 'ALL' ? 'No matching records' : 'No journal entries yet'}
+              </Text>
+              <Text style={styles.emptyText}>
+                {search || filterStatus !== 'ALL' ? 'Try a different search or filter.' : "Tap '+' to record your first patient visit."}
+              </Text>
             </View>
           }
         />
       )}
 
-      {/* Create/Edit Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editEntry ? 'Edit Entry' : 'New Journal Entry'}</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Mood */}
-              <Text style={styles.fieldLabel}>How are you feeling?</Text>
-              <View style={styles.moodRow}>
-                {MOODS.map((m) => (
-                  <TouchableOpacity
-                    key={m}
-                    style={[styles.moodBtn, form.mood === m && styles.moodBtnActive]}
-                    onPress={() => setForm((f) => ({ ...f, mood: m }))}
-                  >
-                    <Text style={{ fontSize: 22 }}>{m}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Title */}
-              <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Title</Text>
-                <Text style={[styles.charCount, form.title.length > 90 && { color: COLORS.error }]}>{form.title.length}/100</Text>
-              </View>
-              <TextInput
-                style={[styles.textInput, form.title.length > 100 && styles.inputError]}
-                placeholder="Entry title..."
-                placeholderTextColor={COLORS.textMuted}
-                value={form.title}
-                onChangeText={(v) => setForm((f) => ({ ...f, title: v }))}
-                maxLength={105}
-              />
-
-              {/* Content */}
-              <View style={styles.fieldLabelRow}>
-                <Text style={styles.fieldLabel}>Content</Text>
-                <Text style={[styles.charCount, form.content.length < 10 && form.content.length > 0 && { color: COLORS.warning }]}>{form.content.length} chars</Text>
-              </View>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Write your thoughts, reflections, observations..."
-                placeholderTextColor={COLORS.textMuted}
-                value={form.content}
-                onChangeText={(v) => setForm((f) => ({ ...f, content: v }))}
-                multiline
-                numberOfLines={8}
-                textAlignVertical="top"
-              />
-
-              {/* Tags */}
-              <Text style={styles.fieldLabel}>Tags (comma separated)</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="clinical, research, personal..."
-                placeholderTextColor={COLORS.textMuted}
-                value={form.tags}
-                onChangeText={(v) => setForm((f) => ({ ...f, tags: v }))}
-                autoCapitalize="none"
-              />
-
-              <TouchableOpacity
-                style={[styles.saveBtn, saving && styles.btnDisabled]}
-                onPress={handleSave}
-                disabled={saving}
-                activeOpacity={0.8}
-              >
-                {saving
-                  ? <ActivityIndicator color={COLORS.white} />
-                  : <Text style={styles.saveBtnText}>{editEntry ? 'Save Changes' : 'Create Entry'}</Text>
-                }
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <JournalModal
+        visible={modal !== null}
+        entry={modal === 'new' ? null : modal}
+        patients={patients}
+        onClose={() => setModal(null)}
+        onSave={() => { setModal(null); load(); }}
+      />
     </View>
   );
 }
@@ -262,74 +565,137 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-  addBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: COLORS.doctorPrimary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.md,
+  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
+  pageSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  newBtn: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.doctorPrimary,
+    justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowGreen,
   },
-  list: { padding: SPACING.lg, paddingBottom: 80 },
+  searchBar: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(26,34,53,0.8)', borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.border,
+    marginHorizontal: SPACING.lg, marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md, height: 44,
+  },
+  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm },
+  filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm, maxHeight: 44 },
+  filterChip: {
+    paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)',
+  },
+  filterChipText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
+  list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border,
-    borderLeftWidth: 4, ...SHADOWS.sm,
+    backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: RADIUS.lg,
+    marginBottom: SPACING.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+    borderLeftWidth: 4, overflow: 'hidden',
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm },
-  moodEmoji: { fontSize: 28, marginRight: SPACING.md },
-  cardMeta: { flex: 1 },
-  cardTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  cardDate: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 2 },
-  cardActions: { flexDirection: 'row', gap: SPACING.sm },
-  iconBtn: {
-    width: 34, height: 34, borderRadius: 17, backgroundColor: `${COLORS.primary}11`,
-    justifyContent: 'center', alignItems: 'center',
+  cardHead: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md },
+  avatar: {
+    width: 40, height: 40, borderRadius: 20,
+    justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
   },
-  cardContent: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20 },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: SPACING.sm, gap: SPACING.xs },
-  tag: {
-    paddingHorizontal: SPACING.sm, paddingVertical: 2,
-    backgroundColor: `${COLORS.doctorPrimary}22`, borderRadius: RADIUS.full,
+  avatarText: { fontSize: FONT_SIZES.md, fontWeight: '800' },
+  linkedDot: {
+    position: 'absolute', bottom: -2, right: -2,
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: COLORS.success, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5, borderColor: COLORS.bg,
   },
-  tagText: { color: COLORS.doctorPrimary, fontSize: FONT_SIZES.xs, fontWeight: '600' },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md, fontSize: FONT_SIZES.base },
-  emptyLink: { marginTop: SPACING.md },
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' },
+  cardInfo: { flex: 1 },
+  patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
+  metaText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  statusPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
+  statusPillText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  diagRow: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: SPACING.md, paddingBottom: SPACING.sm, gap: 4 },
+  diagText: { flex: 1, fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
+  expanded: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)', padding: SPACING.md },
+  expandSection: { marginBottom: SPACING.sm },
+  expandLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  rxViewCard: { backgroundColor: 'rgba(78,154,241,0.08)', borderRadius: RADIUS.sm, padding: SPACING.sm, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(78,154,241,0.15)' },
+  rxMed: { fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textPrimary },
+  rxDetail: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  notesText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.06)', paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
+  metaPillText: { fontSize: 11, color: COLORS.textSecondary },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACING.sm, paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.04)' },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15` },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15` },
+  actionBtnText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
+  empty: { alignItems: 'center', paddingVertical: 60 },
+  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${COLORS.doctorPrimary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
+  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
+  emptyText: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginTop: 4, textAlign: 'center' },
+
+  // ── Modal ────────────────────────────────────────────────────────────────────
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   modalSheet: {
-    backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
-    padding: SPACING.lg, maxHeight: '90%', ...SHADOWS.lg,
+    backgroundColor: '#0E1525', borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl,
+    maxHeight: '92%', borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  modalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: COLORS.textPrimary },
-  fieldLabel: {
-    fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, textTransform: 'uppercase',
-    letterSpacing: 0.5, marginBottom: SPACING.sm, marginTop: SPACING.md, fontWeight: '700',
+  modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  modalIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.doctorPrimary, justifyContent: 'center', alignItems: 'center' },
+  modalTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary },
+  modalSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary },
+  closeBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.06)', justifyContent: 'center', alignItems: 'center' },
+  modalBody: { padding: SPACING.lg },
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: `${COLORS.error}15`,
+    borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.md,
+    borderLeftWidth: 3, borderLeftColor: COLORS.error,
   },
-  fieldLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md, marginBottom: SPACING.sm },
-  charCount: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted },
-  inputError: { borderColor: COLORS.error },
-  moodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
-  moodBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.bgInput,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border,
+  errorBannerText: { flex: 1, color: COLORS.error, fontSize: FONT_SIZES.xs },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: COLORS.doctorPrimary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm },
+  fieldLabel: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 6, marginTop: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  inputField: {
+    backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md,
+    color: COLORS.textPrimary, fontSize: FONT_SIZES.base, marginBottom: 2,
   },
-  moodBtnActive: { borderColor: COLORS.doctorPrimary, backgroundColor: `${COLORS.doctorPrimary}22` },
-  textInput: {
-    backgroundColor: COLORS.bgInput, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, padding: SPACING.md, color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.base,
+  textArea: {
+    backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary,
+    fontSize: FONT_SIZES.base, minHeight: 90, marginBottom: 2,
   },
-  textArea: { minHeight: 140, textAlignVertical: 'top' },
+  twoCol: { flexDirection: 'row' },
+  picker: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, height: 48,
+    marginBottom: 2,
+  },
+  pickerText: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm },
+  dropdownList: {
+    backgroundColor: '#0D1525', borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: COLORS.border, marginBottom: SPACING.sm, overflow: 'hidden',
+  },
+  dropdownItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
+  dropdownItemActive: { backgroundColor: `${COLORS.doctorPrimary}15` },
+  dropdownItemText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
+  statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)' },
+  statusChipText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
+  rxHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md, marginBottom: SPACING.sm },
+  addRxBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15`, borderWidth: 1, borderColor: `${COLORS.primary}33` },
+  addRxText: { fontSize: FONT_SIZES.xs, color: COLORS.primary, fontWeight: '700' },
+  rxCard: { backgroundColor: 'rgba(26,34,53,0.6)', borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+  rxHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  rxLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted },
+  rxInput: { backgroundColor: 'rgba(8,12,24,0.5)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, height: 38, paddingHorizontal: SPACING.sm, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm, marginBottom: 4 },
+  rxRow: { flexDirection: 'row' },
   saveBtn: {
     backgroundColor: COLORS.doctorPrimary, borderRadius: RADIUS.md, height: 52,
-    justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg, marginBottom: SPACING.xl,
-    ...SHADOWS.md,
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    marginTop: SPACING.md, ...SHADOWS.glowGreen,
   },
-  btnDisabled: { opacity: 0.7 },
-  saveBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '700' },
+  saveBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
 });
