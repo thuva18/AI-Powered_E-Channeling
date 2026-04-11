@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator, Alert, Modal
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +20,23 @@ export default function PatientProfileScreen() {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteText, setDeleteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (deleteText !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      await api.delete('/patients/profile');
+      await clearUser();
+      router.replace('/(auth)/login');
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to delete profile.');
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -80,6 +97,15 @@ export default function PatientProfileScreen() {
         </View>
 
         {/* Links */}
+        <TouchableOpacity style={styles.historyBtn} activeOpacity={0.8} onPress={() => router.push('/(patient)/journal')}>
+            <View style={styles.hIcon}><Ionicons name="book" size={24} color={COLORS.patientPrimary} /></View>
+            <View style={{flex: 1}}>
+                <Text style={styles.historyBtnTitle}>Health Journal</Text>
+                <Text style={styles.historyBtnSub}>Track daily mood, pain, and symptoms</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.historyBtn} activeOpacity={0.8} onPress={() => router.push('/(patient)/medical-history')}>
             <View style={styles.hIcon}><Ionicons name="medical" size={24} color={COLORS.patientPrimary} /></View>
             <View style={{flex: 1}}>
@@ -112,6 +138,21 @@ export default function PatientProfileScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Danger Zone */}
+        <View style={styles.dangerCard}>
+          <View style={styles.dangerHeader}>
+            <Ionicons name="warning" size={18} color={COLORS.error} />
+            <Text style={styles.dangerTitle}>Danger Zone</Text>
+          </View>
+          <Text style={styles.dangerText}>
+            Permanently delete your patient account. <Text style={{ color: COLORS.error, fontWeight: '700' }}>This cannot be undone.</Text>
+          </Text>
+          <TouchableOpacity style={styles.deleteAccBtn} onPress={() => { setShowDeleteConfirm(true); setDeleteText(''); }}>
+            <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+            <Text style={styles.deleteAccBtnText}>Delete My Profile</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={styles.logoutBtn}
           onPress={() => {
@@ -125,6 +166,48 @@ export default function PatientProfileScreen() {
           <Text style={styles.logoutText}>  Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Delete confirm modal */}
+      {showDeleteConfirm && (
+        <Modal transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.deleteModal}>
+              <View style={styles.deleteModalIcon}>
+                <Ionicons name="trash" size={28} color={COLORS.error} />
+              </View>
+              <Text style={styles.deleteModalTitle}>Delete Your Patient Profile?</Text>
+              <Text style={styles.deleteModalText}>
+                This will permanently delete your account and remove your access. <Text style={{ fontWeight: '700', color: COLORS.error }}>Cannot be undone.</Text>
+              </Text>
+              <Text style={styles.deleteModalPrompt}>
+                Type <Text style={{ fontFamily: 'monospace', color: COLORS.error, fontWeight: '700' }}>DELETE</Text> to confirm:
+              </Text>
+              <TextInput
+                style={styles.deleteModalInput}
+                value={deleteText}
+                onChangeText={setDeleteText}
+                placeholder="Type DELETE here"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="characters"
+              />
+              <View style={styles.deleteModalActions}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowDeleteConfirm(false)}>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmDeleteBtn, (deleteText !== 'DELETE' || deleting) && { opacity: 0.4 }]}
+                  onPress={handleDelete}
+                  disabled={deleteText !== 'DELETE' || deleting}
+                >
+                  {deleting ? <ActivityIndicator color={COLORS.white} size="small" /> : (
+                    <Text style={styles.confirmDeleteBtnText}>Delete Profile</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -214,4 +297,25 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg, height: 56, borderWidth: 1, borderColor: 'rgba(232, 69, 69, 0.2)',
   },
   logoutText: { color: COLORS.error, fontWeight: '800', fontSize: FONT_SIZES.base },
+  dangerCard: {
+    borderRadius: RADIUS.xl, padding: SPACING.lg, borderWidth: 1,
+    borderColor: `${COLORS.error}33`, backgroundColor: `${COLORS.error}08`, marginTop: SPACING.xl,
+  },
+  dangerHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
+  dangerTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.error },
+  dangerText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20, marginBottom: SPACING.md },
+  deleteAccBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15`, borderWidth: 1, borderColor: `${COLORS.error}33` },
+  deleteAccBtnText: { fontSize: FONT_SIZES.sm, color: COLORS.error, fontWeight: '700' },
+  modalOverlay: { position: 'absolute', inset: 0, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, zIndex: 999 },
+  deleteModal: { backgroundColor: '#0E1525', borderRadius: RADIUS.xl, padding: SPACING.xl, width: '100%', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  deleteModalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${COLORS.error}15`, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: SPACING.md },
+  deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
+  deleteModalText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
+  deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginBottom: SPACING.sm },
+  deleteModalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
+  deleteModalActions: { flexDirection: 'row', gap: SPACING.sm },
+  cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
+  cancelBtnText: { fontSize: FONT_SIZES.base, color: COLORS.textSecondary, fontWeight: '600' },
+  confirmDeleteBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center' },
+  confirmDeleteBtnText: { fontSize: FONT_SIZES.base, color: COLORS.white, fontWeight: '800' },
 });
