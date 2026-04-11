@@ -115,16 +115,13 @@ const formatSelectedDate = (selectedDate) => {
     });
 };
 
-const SymptomPanel = ({ apt }) => {
-    const [lightboxSrc, setLightboxSrc] = useState(null);
+const SymptomPanel = ({ apt, onImageClick }) => {
     const hasSymptoms = apt.symptomDescription || (apt.symptoms && apt.symptoms.length > 0);
     const hasImages = apt.symptomImages && apt.symptomImages.length > 0;
     const paymentMeta = PAYMENT_METHOD_META[apt.paymentMethod];
 
     return (
-        <>
-            {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-            <div className="px-8 py-5 bg-blue-50/40 border-t border-blue-100/60 space-y-4">
+        <div className="px-8 py-5 bg-blue-50/40 border-t border-blue-100/60 space-y-4">
 
                 {/* Payment verification badge */}
                 {apt.paymentStatus === 'PAID' && paymentMeta && (
@@ -175,7 +172,7 @@ const SymptomPanel = ({ apt }) => {
                         </div>
                         <div className="flex flex-wrap gap-3">
                             {apt.symptomImages.map((src, idx) => (
-                                <div key={idx} className="relative group cursor-pointer" onClick={() => setLightboxSrc(src)}>
+                                <div key={idx} className="relative group cursor-pointer" onClick={() => onImageClick(src)}>
                                     <img
                                         src={src}
                                         alt={`symptom-image-${idx + 1}`}
@@ -196,7 +193,6 @@ const SymptomPanel = ({ apt }) => {
                     </div>
                 )}
             </div>
-        </>
     );
 };
 
@@ -211,6 +207,7 @@ const DoctorAppointments = () => {
     const [toast, setToast] = useState(null);
     const [confirm, setConfirm] = useState(null); // { id, status }
     const [expandedId, setExpandedId] = useState(null); // which row is expanded
+    const [lightboxSrc, setLightboxSrc] = useState(null);
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -276,6 +273,7 @@ const DoctorAppointments = () => {
     return (
         <div className="space-y-6">
             <Toast toast={toast} />
+            {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
             <ConfirmDialog action={confirm} onConfirm={handleStatusConfirm} onCancel={() => setConfirm(null)} />
 
             <SectionHeader
@@ -459,7 +457,7 @@ const DoctorAppointments = () => {
                                         {expandedId === apt._id && (
                                             <tr className="bg-blue-50/20">
                                                 <td colSpan={7} className="p-0">
-                                                    <SymptomPanel apt={apt} />
+                                                    <SymptomPanel apt={apt} onImageClick={setLightboxSrc} />
                                                 </td>
                                             </tr>
                                         )}
