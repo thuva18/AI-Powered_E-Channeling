@@ -26,7 +26,7 @@ export default function DoctorAppointmentsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('ALL');
   const [expandedId, setExpandedId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -53,7 +53,7 @@ export default function DoctorAppointmentsScreen() {
     } finally { setUpdatingId(null); }
   };
 
-  const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter);
+  const displayList = filter === 'ALL' ? appointments : appointments.filter((a) => a.status === filter);
 
   const renderItem = ({ item }) => {
     const patientProfile = item.patientId?.patientProfile || {};
@@ -178,17 +178,25 @@ export default function DoctorAppointmentsScreen() {
       </View>
 
       {/* Filter */}
-      <View style={styles.filterRow}>
-        {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((f) => (
-          <TouchableOpacity
-            key={f} style={[styles.filterTab, filter === f && styles.filterTabActive]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED'].map((f) => {
+            const count = f === 'ALL' ? appointments.length : appointments.filter(a => a.status === f).length;
+            return (
+              <TouchableOpacity
+                key={f} style={[styles.filterTab, filter === f && styles.filterTabActive]}
+                onPress={() => setFilter(f)}
+              >
+                <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                  {f}
+                </Text>
+                <View style={[styles.badge, filter === f ? styles.badgeActive : styles.badgeInactive]}>
+                  <Text style={[styles.badgeText, filter === f && styles.badgeTextActive]}>{count}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {loading ? <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} /> : (
@@ -201,7 +209,7 @@ export default function DoctorAppointmentsScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="calendar-outline" size={40} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No {filter !== 'all' ? filter : ''} appointments</Text>
+              <Text style={styles.emptyText}>No {filter !== 'ALL' ? filter.toLowerCase() : ''} appointments</Text>
             </View>
           }
         />
@@ -242,15 +250,22 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
   subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
+  filterContainer: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
   filterRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm },
   filterTab: {
-    paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: SPACING.md, paddingVertical: 8,
     borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard,
     borderWidth: 1, borderColor: COLORS.border,
   },
   filterTabActive: { backgroundColor: COLORS.doctorPrimary, borderColor: COLORS.doctorPrimary },
-  filterText: { fontSize: 10, color: COLORS.textSecondary, fontWeight: '600' },
+  filterText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '700' },
   filterTextActive: { color: COLORS.textInverse },
+  badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full },
+  badgeInactive: { backgroundColor: 'rgba(255,255,255,0.05)' },
+  badgeActive: { backgroundColor: 'rgba(0,0,0,0.15)' },
+  badgeText: { fontSize: 10, fontWeight: '800', color: COLORS.textSecondary },
+  badgeTextActive: { color: COLORS.textInverse },
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
     backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
