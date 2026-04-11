@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl,
+  ActivityIndicator, Alert, RefreshControl, Image, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -14,10 +14,11 @@ import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/th
 // Types removed
 
 const VALID_TRANSITIONS = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['completed', 'cancelled'],
-  completed: [],
-  cancelled: [],
+  PENDING: ['ACCEPTED', 'REJECTED'],
+  ACCEPTED: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: [],
+  CANCELLED: [],
+  REJECTED: [],
 };
 
 export default function DoctorAppointmentsScreen() {
@@ -26,6 +27,7 @@ export default function DoctorAppointmentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [expandedId, setExpandedId] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -53,7 +55,14 @@ export default function DoctorAppointmentsScreen() {
   const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter);
 
   const renderItem = ({ item }) => {
-    const transitions = VALID_TRANSITIONS[item.status] ?? [];
+    const patientProfile = item.patientId?.patientProfile || {};
+    const patientName = patientProfile.firstName
+      ? `${patientProfile.firstName} ${patientProfile.lastName || ''}`.trim()
+      : (item.patientId?.email || 'Patient');
+    const isExpanded = expandedId === item._id;
+    const hasSymptoms = !!(item.symptomDescription || (item.symptoms && item.symptoms.length > 0));
+    const hasImages = item.symptomImages && item.symptomImages.length > 0;
+
     return (
       <View style={styles.card}>
         {/* Patient info */}
@@ -62,8 +71,8 @@ export default function DoctorAppointmentsScreen() {
             <Text style={{ fontSize: 20 }}>🧑</Text>
           </View>
           <View style={styles.patientInfo}>
-            <Text style={styles.patientName}>{item.patient?.name ?? 'Patient'}</Text>
-            {item.patient?.phone && <Text style={styles.patientContact}>📞 {item.patient.phone}</Text>}
+            <Text style={styles.patientName}>{patientName}</Text>
+            {patientProfile.phone && <Text style={styles.patientContact}>📞 {patientProfile.phone}</Text>}
             {item.appointmentDate && (
               <Text style={styles.aptDate}>
                 📅 {new Date(item.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -76,7 +85,64 @@ export default function DoctorAppointmentsScreen() {
           </View>
         </View>
 
-        {item.notes && <Text style={styles.notes}>📝 {item.notes}</Text>}
+        {/* Symptom expand toggle */}
+        {(hasSymptoms || hasImages) && (
+          <TouchableOpacity
+            style={styles.viewSymptomBtn}
+            onPress={() => setExpandedId(isExpanded ? null : item._id)}
+          >
+            <Ionicons name={isExpanded ? 'chevron-up' : 'document-text-outline'} size={14} color={COLORS.doctorPrimary} />
+            <Text style={styles.viewSymptomText}>
+              {isExpanded ? 'Hide Symptoms' : 'View Symptoms'}
+              {hasImages ? ` · ${item.symptomImages.length} image(s)` : ''}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Symptom detail panel */}
+        {isExpanded && (
+          <View style={styles.symptomPanel}>
+            {item.symptomDescription ? (
+              <View style={styles.symptomSection}>
+                <Text style={styles.symptomLabel}>SYMPTOM DESCRIPTION</Text>
+                <Text style={styles.symptomText}>{item.symptomDescription}</Text>
+              </View>
+            ) : null}
+
+            {item.symptoms && item.symptoms.length > 0 ? (
+              <View style={styles.symptomSection}>
+                <Text style={styles.symptomLabel}>SYMPTOM TAGS</Text>
+                <View style={styles.tagRow}>
+                  {item.symptoms.map((s, idx) => (
+                    <View key={idx} style={styles.tag}>
+                      <Text style={styles.tagText}>{s}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
+            {hasImages ? (
+              <View style={styles.symptomSection}>
+                <Text style={styles.symptomLabel}>UPLOADED IMAGES ({item.symptomImages.length})</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {item.symptomImages.map((src, idx) => (
+                      <Image
+                        key={idx}
+                        source={{ uri: src }}
+                        style={styles.symptomImage}
+                        resizeMode="cover"
+                      />
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+            ) : null}
+          </View>
+        )}
+
+        {item.notes && !isExpanded && <Text style={styles.notes}>📝 {item.notes}</Text>}
 
         {/* Status action buttons */}
         {transitions.length > 0 && (
@@ -143,15 +209,15 @@ export default function DoctorAppointmentsScreen() {
 }
 
 function statusColor(s) {
-  return { confirmed: COLORS.success, pending: COLORS.warning, cancelled: COLORS.error, completed: COLORS.info }[s] ?? COLORS.textSecondary;
+  return { ACCEPTED: COLORS.success, PENDING: COLORS.warning, CANCELLED: COLORS.error, COMPLETED: COLORS.info, REJECTED: COLORS.error }[s] ?? COLORS.textSecondary;
 }
 
 function actionBgColor(s) {
-  return { confirmed: COLORS.success, cancelled: COLORS.error, completed: COLORS.info }[s] ?? COLORS.primary;
+  return { ACCEPTED: COLORS.success, REJECTED: COLORS.error, CANCELLED: COLORS.error, COMPLETED: COLORS.info }[s] ?? COLORS.primary;
 }
 
 function actionLabel(s) {
-  return { confirmed: '✓ Confirm', cancelled: '✕ Cancel', completed: '✔ Complete' }[s] ?? s;
+  return { ACCEPTED: '✓ Accept', REJECTED: '✕ Reject', CANCELLED: '✕ Cancel', COMPLETED: '✔ Complete' }[s] ?? s;
 }
 
 const styles = StyleSheet.create({
@@ -196,4 +262,40 @@ const styles = StyleSheet.create({
   actionBtnText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { color: COLORS.textMuted, marginTop: SPACING.md },
+
+  // Symptom panel
+  viewSymptomBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: SPACING.sm, paddingVertical: 6, paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md, backgroundColor: `${COLORS.doctorPrimary}12`,
+    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}25`, alignSelf: 'flex-start',
+  },
+  viewSymptomText: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.doctorPrimary },
+  symptomPanel: {
+    marginTop: SPACING.sm, padding: SPACING.md,
+    backgroundColor: 'rgba(34, 201, 160, 0.05)', borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}20`,
+  },
+  symptomSection: { marginBottom: SPACING.sm },
+  symptomLabel: {
+    fontSize: 10, fontWeight: '800', color: COLORS.doctorPrimary,
+    textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4,
+  },
+  symptomText: {
+    fontSize: FONT_SIZES.sm, color: COLORS.textSecondary,
+    backgroundColor: 'rgba(255,255,255,0.03)', padding: SPACING.sm,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    lineHeight: 20,
+  },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    paddingHorizontal: SPACING.sm, paddingVertical: 3,
+    borderRadius: RADIUS.full, backgroundColor: `${COLORS.doctorPrimary}18`,
+    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
+  },
+  tagText: { fontSize: FONT_SIZES.xs, color: COLORS.doctorPrimary, fontWeight: '700' },
+  symptomImage: {
+    width: 80, height: 80, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
+  },
 });

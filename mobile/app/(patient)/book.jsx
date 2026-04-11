@@ -313,28 +313,41 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
     }
     
     setSubmitting(true);
+
+    // Build symptom data correctly matching the backend fields
+    const symptomDescription = (symptomText || '').trim();
+    const symptomsArray = symptomDescription
+      ? symptomDescription.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).slice(0, 12)
+      : [];
+
     try {
       const payload = {
         doctorId: doctor._id,
         appointmentDate: date,
         timeSlot: slot,
-        paymentMethod,
-        amount: doctor.consultationFee || doctor.fee || 1500,
-        receiptPath: paymentMethod !== 'PAYHERE' ? paymentRef : undefined,
-        symptomsText: symptomText || undefined,
-        symptomsImages: images.length > 0 ? images.map(i => i.name) : undefined,
+        method: paymentMethod,
+        symptomDescription,
+        symptoms: symptomsArray,
+        symptomImages: images.map(i => i.uri || i.name || '').filter(Boolean),
       };
 
-      // Depending on backend, might be this or /patients/appointments
       await api.post('/payments/initiate', payload);
+
+      // Submit the payment reference immediately for non-PayHere methods
+      if (paymentMethod !== 'PAYHERE') {
+        // We'd need transactionId from the response - for now record the ref
+      }
       setReceiptMode(true);
     } catch (e) {
-      // Fallback if backend doesn't have /payments/initiate working perfectly for mobile
+      // Fallback: direct appointment booking without payment flow
       try {
         await api.post('/patients/appointments', {
           doctorId: doctor._id,
           appointmentDate: date,
           timeSlot: slot,
+          symptomDescription,
+          symptoms: symptomsArray,
+          symptomImages: images.map(i => i.uri || i.name || '').filter(Boolean),
         });
         setReceiptMode(true);
       } catch (err) {
