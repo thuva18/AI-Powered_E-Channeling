@@ -993,7 +993,7 @@ const PatientBookAppointment = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">
-                                            AI Recommendation{aiSuggestion.ensembleUsed ? ' · Ensemble' : ''}
+                                            AI Recommendation{aiSuggestion.winningModel ? ` · ${aiSuggestion.winningModel}` : ''}
                                         </p>
                                         <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate">
                                             {aiSuggestion.predictedSpecialist}
@@ -1018,10 +1018,17 @@ const PatientBookAppointment = () => {
                                             style={{ width: `${Math.min(aiSuggestion.confidence, 100)}%` }}
                                         />
                                     </div>
-                                    {aiSuggestion.ensembleUsed && (
-                                        <p className="text-[10px] text-slate-400">
-                                            LightGBM: {aiSuggestion.lgbConfidence}% · Neural Net: {aiSuggestion.nnConfidence}%
-                                        </p>
+                                    {aiSuggestion.modelConfidences && (
+                                        <div className="text-[10px] text-slate-500 mt-2 space-y-1">
+                                            <p className="font-semibold text-slate-400 uppercase tracking-wider">Model Confidences</p>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                                <span>Ensemble: {aiSuggestion.modelConfidences.Ensemble}%</span>
+                                                <span>LightGBM: {aiSuggestion.modelConfidences.LightGBM}%</span>
+                                                <span>SVM: {aiSuggestion.modelConfidences.SVM}%</span>
+                                                <span>LogReg: {aiSuggestion.modelConfidences.LogReg}%</span>
+                                                {aiSuggestion.modelConfidences.NeuralNet && <span>Neural Net: {aiSuggestion.modelConfidences.NeuralNet}%</span>}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
 

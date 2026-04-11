@@ -1,7 +1,7 @@
 // app/_layout.tsx
 // Root layout – loads auth state and redirects to the correct role dashboard
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
@@ -26,9 +26,14 @@ function AuthGuard({ children }) {
   const { user, isLoading, isAuthenticated } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || isLoading) return;
 
     const inAuth = segments[0] === '(auth)';
 

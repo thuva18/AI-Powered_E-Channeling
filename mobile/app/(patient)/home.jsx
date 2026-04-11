@@ -104,9 +104,9 @@ export default function PatientHomeScreen() {
         {/* CTA Banner */}
         <TouchableOpacity style={styles.banner} onPress={() => router.push('/(patient)/book')} activeOpacity={0.85}>
           <View style={styles.bannerContent}>
-            <Text style={styles.bannerEyebrow}>AI POWERED</Text>
+            <Text style={styles.bannerEyebrow}>MEDICARE SMART CARE</Text>
             <Text style={styles.bannerTitle}>Book an Appointment</Text>
-            <Text style={styles.bannerSub}>Smart doctor matching via AI</Text>
+            <Text style={styles.bannerSub}>Find the right specialist with AI recommendation</Text>
           </View>
           <View style={styles.bannerIconContainer}>
             <Ionicons name="medical" size={36} color={COLORS.primary} />

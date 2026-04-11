@@ -1,7 +1,7 @@
 // app/(patient)/book.jsx
 // Premium Patient Book Appointment & AI Prediction (Matches Web Feature-for-Feature)
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, Modal, Image,
@@ -28,6 +28,9 @@ export default function BookAppointmentScreen() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  const scrollRef = useRef(null);
+  const doctorListRef = useRef(null);
+
   const fetchDoctors = useCallback(async () => {
     try {
       const res = await api.get('/patients/doctors');
@@ -49,7 +52,9 @@ export default function BookAppointmentScreen() {
       q
         ? doctors.filter(
             (d) =>
-              d.name.toLowerCase().includes(q) ||
+              d.firstName?.toLowerCase().includes(q) ||
+              d.lastName?.toLowerCase().includes(q) ||
+              d.name?.toLowerCase().includes(q) ||
               d.specialization?.toLowerCase().includes(q),
           )
         : doctors,
@@ -62,16 +67,24 @@ export default function BookAppointmentScreen() {
     setAiLoading(true);
     setAiError('');
     try {
-      const res = await api.post('/ai/predict', { symptoms: symptoms.trim() });
+      const res = await api.post('/ai/predict-specialist', { symptoms: symptoms.trim() });
       setAiResult(res.data);
-      // Auto-filter doctors
-      if (res.data?.specialist) {
-        setSearch(res.data.specialist);
-      }
     } catch (e) {
       setAiError(e.response?.data?.message || 'AI service unavailable.');
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const jumpToDoctors = (specialty) => {
+    if (specialty) {
+      setSearch(specialty);
+    }
+    // Scroll to the list area with a calculated offset
+    // The ScrollView header is roughly 100, AI card is variable.
+    // 600 is a safe bet to pass the prediction card.
+    if (scrollRef.current) {
+        scrollRef.current.scrollTo({ y: 620, animated: true });
     }
   };
 
@@ -93,7 +106,7 @@ export default function BookAppointmentScreen() {
         <Text style={styles.subtitle}>Find & book your doctor</Text>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
         {/* AI Symptom Check */}
         <View style={styles.aiCard}>
@@ -164,7 +177,7 @@ export default function BookAppointmentScreen() {
                   <Ionicons name="color-wand" size={18} color={COLORS.white} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.aiRecommendationLabel}>AI Recommendation {aiResult.ensembleUsed ? '· Ensemble' : ''}</Text>
+                  <Text style={styles.aiRecommendationLabel}>AI Recommendation {aiResult.winningModel ? `· ${aiResult.winningModel}` : ''}</Text>
                   <Text style={styles.aiSpecialist}>{aiResult.specialist || aiResult.predictedSpecialist}</Text>
                 </View>
                 {aiResult.belowThreshold && (
@@ -185,6 +198,14 @@ export default function BookAppointmentScreen() {
                   </View>
                 </View>
               )}
+
+              <TouchableOpacity 
+                style={styles.findDocsActionBtn}
+                onPress={() => jumpToDoctors(aiResult.predictedSpecialist)}
+              >
+                <Text style={styles.findDocsActionText}>Find {aiResult.predictedSpecialist} Doctors</Text>
+                <Ionicons name="arrow-down" size={14} color="#000" />
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -206,7 +227,18 @@ export default function BookAppointmentScreen() {
           ) : null}
         </View>
 
-        <Text style={styles.sectionTitle}>Available Doctors ({filtered.length})</Text>
+        <View style={styles.listHeaderRow}>
+          <Text style={styles.sectionTitle}>
+            {search && aiResult?.predictedSpecialist === search 
+              ? `Matched ${search}s (${filtered.length})`
+              : `Available Doctors (${filtered.length})`}
+          </Text>
+          {search ? (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Text style={styles.clearFilterText}>Show All</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         {loading ? (
           <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
@@ -522,6 +554,23 @@ const styles = StyleSheet.create({
   doctorFee: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 4 },
   bookActionBtn: { backgroundColor: COLORS.patientPrimary, borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: 8 },
   bookActionText: { color: '#000', fontWeight: '800', fontSize: FONT_SIZES.xs },
+
+  findDocsActionBtn: {
+    backgroundColor: COLORS.patientPrimary,
+    borderRadius: RADIUS.md,
+    marginTop: SPACING.md,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    ...SHADOWS.sm
+  },
+  findDocsActionText: {
+    color: '#000',
+    fontWeight: '800',
+    fontSize: FONT_SIZES.sm
+  },
 
   // Modal styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },

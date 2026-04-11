@@ -48,6 +48,8 @@ print("=" * 55)
 tfidf      = _load("tfidf.pkl")
 ensemble   = _load("ensemble_model.pkl")   # Soft Voting: LGB + SVM + LR
 lgb_model  = _load("lgb_model.pkl")
+svm_model  = _load("svm_model.pkl")
+lr_model   = _load("lr_model.pkl")
 iso_forest = _load("isolation_forest.pkl")
 le         = _load("label_encoder.pkl")
 
@@ -106,39 +108,56 @@ def predict_specialist(symptom_text: str) -> dict:
             "alternatives":        [],
         }
 
-    # ── 3. Soft Voting Ensemble probabilities ──────────────────────────────────
-    ensemble_probs = ensemble.predict_proba(user_vector)[0]
-
-    # ── 4. Optional NN blend ───────────────────────────────────────────────────
-    nn_confidence = None
+    # ── 3. Get probabilities from all models ───────────────────────────────────
+    all_probs = {
+        "Ensemble": ensemble.predict_proba(user_vector)[0],
+        "LightGBM": lgb_model.predict_proba(user_vector)[0],
+        "SVM": svm_model.predict_proba(user_vector)[0],
+        "LogReg": lr_model.predict_proba(user_vector)[0],
+    }
+    
     if nn_model is not None:
-        user_dense  = user_vector.toarray()
-        nn_probs    = nn_model.predict(user_dense, verbose=0)[0]
-        final_probs = 0.6 * ensemble_probs + 0.4 * nn_probs
-        nn_confidence = float(np.max(nn_probs))
-    else:
-        final_probs = ensemble_probs
+        user_dense = user_vector.toarray()
+        all_probs["NeuralNet"] = nn_model.predict(user_dense, verbose=0)[0]
+        
+    # ── 4. Find the model with the highest confidence ──────────────────────────
+    best_model_name = None
+    best_max_conf = -1.0
+    best_pred_idx = -1
+    best_probs = None
+    
+    for model_name, probs in all_probs.items():
+        max_conf = float(np.max(probs))
+        if max_conf > best_max_conf:
+            best_max_conf = max_conf
+            best_pred_idx = int(np.argmax(probs))
+            best_model_name = model_name
+            best_probs = probs
 
-    # ── 5. Confidence threshold ────────────────────────────────────────────────
-    max_confidence   = float(np.max(final_probs))
-    predicted_index  = int(np.argmax(final_probs))
-    model_prediction = le.inverse_transform([predicted_index])[0]
-
-    if max_confidence < CONFIDENCE_THRESHOLD:
+    # ── 5. Confidence threshold & Selection ────────────────────────────────────
+    model_prediction = le.inverse_transform([best_pred_idx])[0]
+    
+    if best_max_conf < CONFIDENCE_THRESHOLD:
         predicted_specialist = "General Physician"
-        reason = f"Low confidence ({round(max_confidence * 100, 2)}% < {int(CONFIDENCE_THRESHOLD * 100)}%)"
+        reason = f"Low confidence across all models (Best was {best_model_name} at {round(best_max_conf * 100, 2)}% < {int(CONFIDENCE_THRESHOLD * 100)}%)"
         below_threshold = True
     else:
         predicted_specialist = model_prediction
-        reason = "High confidence prediction"
+        reason = f"High confidence prediction (Selected from {best_model_name})"
         below_threshold = False
-
-    # ── 6. Top-3 alternatives ──────────────────────────────────────────────────
-    top3_idx = np.argsort(final_probs)[-3:][::-1]
+        
+    # Extract individual model confidences for the chosen class
+    model_confidences = {
+        name: round(float(probs[best_pred_idx]) * 100, 2)
+        for name, probs in all_probs.items()
+    }
+    
+    # ── 6. Top-3 alternatives from the winning model ───────────────────────────
+    top3_idx = np.argsort(best_probs)[-3:][::-1]
     alternatives = [
         {
             "specialist": le.inverse_transform([int(i)])[0],
-            "confidence": round(float(final_probs[i]) * 100, 1),
+            "confidence": round(float(best_probs[i]) * 100, 1),
         }
         for i in top3_idx
     ]
@@ -146,12 +165,12 @@ def predict_specialist(symptom_text: str) -> dict:
     return {
         "predictedSpecialist": predicted_specialist,
         "modelPrediction":     model_prediction,
-        "confidence":          round(max_confidence * 100, 2),
+        "confidence":          round(best_max_conf * 100, 2),
         "reason":              reason,
+        "winningModel":        best_model_name,
         "anomaly":             False,
         "belowThreshold":      below_threshold,
-        "ensembleUsed":        nn_model is not None,
-        "nnConfidence":        round(nn_confidence * 100, 2) if nn_confidence is not None else None,
+        "modelConfidences":    model_confidences,
         "alternatives":        alternatives,
     }
 

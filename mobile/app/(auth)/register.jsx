@@ -134,7 +134,7 @@ export default function RegisterScreen() {
           </TouchableOpacity>
           <View>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join AI E-Channeling</Text>
+            <Text style={styles.subtitle}>Join Medicare E-Channeling</Text>
           </View>
         </View>
 

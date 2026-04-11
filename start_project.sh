@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/web"
 AI_DIR="$ROOT_DIR/ai-service"
+MOBILE_DIR="$ROOT_DIR/mobile"
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "Error: npm is not installed. Install Node.js and npm first."
@@ -16,8 +17,8 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ ! -d "$BACKEND_DIR" ] || [ ! -d "$FRONTEND_DIR" ] || [ ! -d "$AI_DIR" ]; then
-  echo "Error: backend, frontend, or ai-service directory is missing."
+if [ ! -d "$BACKEND_DIR" ] || [ ! -d "$FRONTEND_DIR" ] || [ ! -d "$AI_DIR" ] || [ ! -d "$MOBILE_DIR" ]; then
+  echo "Error: backend, frontend, ai-service, or mobile directory is missing."
   exit 1
 fi
 
@@ -60,6 +61,7 @@ install_python_deps() {
 
 install_if_missing "$BACKEND_DIR" "backend"
 install_if_missing "$FRONTEND_DIR" "frontend"
+install_if_missing "$MOBILE_DIR" "mobile"
 install_python_deps "$AI_DIR" "ai-service"
 
 cleanup() {
@@ -74,18 +76,22 @@ cleanup() {
   if [ -n "${AI_PID:-}" ] && kill -0 "$AI_PID" >/dev/null 2>&1; then
     kill "$AI_PID" >/dev/null 2>&1 || true
   fi
+  if [ -n "${MOBILE_PID:-}" ] && kill -0 "$MOBILE_PID" >/dev/null 2>&1; then
+    kill "$MOBILE_PID" >/dev/null 2>&1 || true
+  fi
   wait 2>/dev/null || true
   echo "Services stopped."
 }
 
 trap cleanup INT TERM EXIT
 
-echo "Starting backend, frontend, and AI service in development mode..."
+echo "Starting backend, frontend, mobile, and AI service in development mode..."
 
 # Kill existing processes on ports
 kill_port 8000
 kill_port 5173
 kill_port 5001
+kill_port 8081
 
 (
   cd "$BACKEND_DIR"
@@ -110,9 +116,16 @@ FRONTEND_PID=$!
 ) &
 AI_PID=$!
 
-echo "Backend PID: $BACKEND_PID"
+(
+  cd "$MOBILE_DIR"
+  npm start
+) &
+MOBILE_PID=$!
+
+echo "Backend PID:  $BACKEND_PID"
 echo "Frontend PID: $FRONTEND_PID"
 echo "AI Service PID: $AI_PID"
+echo "Mobile PID:   $MOBILE_PID"
 echo "Press Ctrl+C to stop all services."
 
-wait "$BACKEND_PID" "$FRONTEND_PID" "$AI_PID"
+wait "$BACKEND_PID" "$FRONTEND_PID" "$AI_PID" "$MOBILE_PID"

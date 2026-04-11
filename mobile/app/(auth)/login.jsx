@@ -85,10 +85,10 @@ export default function LoginScreen() {
         <View style={styles.hero}>
           <View style={styles.logoOuter}>
             <View style={styles.logoInner}>
-              <Text style={styles.logoEmoji}>🏥</Text>
+              <Ionicons name="medkit" size={36} color={COLORS.primary} />
             </View>
           </View>
-          <Text style={styles.appName}>AI E-Channeling</Text>
+          <Text style={styles.appName}>Medicare E-Channeling</Text>
           <Text style={styles.tagline}>Your health, intelligently managed</Text>
         </View>
 

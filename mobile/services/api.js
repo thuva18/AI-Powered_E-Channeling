@@ -7,8 +7,11 @@ import useAuthStore from '../store/authStore';
 // ─── Base URL ──────────────────────────────────────────────────────────────────
 // Update BASE_URL after deploying backend to Render/Railway.
 // Now securely pointing to the live Render backend!
+// Use your local machine's IP (e.g. 192.168.x.x) if testing on a physical device
+// The local backend from start_project.sh runs on port 8000
 export const BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://echanneling-backend.onrender.com/api/v1';
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://192.168.1.8:8000/api/v1'; // Local Dev
+  // ?? 'https://echanneling-backend.onrender.com/api/v1'; // Production
 
 const api = axios.create({
   baseURL: BASE_URL,
