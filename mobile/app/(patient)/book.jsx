@@ -294,12 +294,37 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const [paymentRef, setPaymentRef] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [receiptMode, setReceiptMode] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [fetchingSlots, setFetchingSlots] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setStep(1); setDate(''); setSlot(''); setPaymentMethod(''); setPaymentRef(''); setReceiptMode(false);
+      setAvailableSlots([]);
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (date.length === 10 && step === 1) {
+      fetchSlots(date);
+    } else {
+      setAvailableSlots([]);
+      setSlot('');
+    }
+  }, [date]);
+
+  const fetchSlots = async (selectedDate) => {
+    setFetchingSlots(true);
+    try {
+      const res = await api.get(`/patients/doctors/${doctor._id}/slots?date=${selectedDate}`);
+      setAvailableSlots(res.data?.slots || []);
+    } catch (e) {
+      // Fallback or error
+      setAvailableSlots([]);
+    } finally {
+      setFetchingSlots(false);
+    }
+  };
 
   const handleNext = () => {
     if (!date.trim()) { Alert.alert('Error', 'Please enter a date.'); return; }
@@ -371,17 +396,41 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
       />
 
       <Text style={styles.label}>Time Slot</Text>
-      <View style={styles.slotRow}>
-        {['morning', 'afternoon', 'evening'].map((s) => (
-          <TouchableOpacity
-            key={s}
-            style={[styles.slotSelectBtn, slot === s && styles.slotSelectBtnActive]}
-            onPress={() => setSlot(s)}
-          >
-            <Text style={[styles.slotSelectText, slot === s && styles.slotSelectTextActive]}>{s}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      {fetchingSlots ? (
+        <ActivityIndicator size="small" color={COLORS.patientPrimary} style={{ marginVertical: SPACING.md }} />
+      ) : availableSlots.length > 0 ? (
+        <View style={styles.dynamicSlotRow}>
+          {availableSlots.map((s, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={[
+                styles.slotSelectBtn,
+                { flex: 0, width: '48%', marginBottom: SPACING.sm },
+                slot === s.slot && styles.slotSelectBtnActive,
+                !s.available && styles.slotSelectBtnDisabled,
+              ]}
+              onPress={() => s.available && setSlot(s.slot)}
+              disabled={!s.available}
+            >
+              <Text style={[
+                styles.slotSelectText,
+                slot === s.slot && styles.slotSelectTextActive,
+                !s.available && styles.slotSelectTextDisabled,
+              ]}>
+                {s.slot}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : date.length === 10 ? (
+        <Text style={{ color: COLORS.error, fontSize: FONT_SIZES.sm, marginTop: 4, marginBottom: SPACING.md }}>
+          No slots available for this date.
+        </Text>
+      ) : (
+        <Text style={{ color: COLORS.textMuted, fontSize: FONT_SIZES.xs, marginTop: 4, marginBottom: SPACING.md }}>
+          Enter date (YYYY-MM-DD) to see slots
+        </Text>
+      )}
 
       <TouchableOpacity style={styles.primaryModalBtn} onPress={handleNext}>
         <Text style={styles.primaryModalBtnText}>Continue to Payment</Text>
@@ -596,8 +645,11 @@ const styles = StyleSheet.create({
   slotRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
   slotSelectBtn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)', alignItems: 'center' },
   slotSelectBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
+  slotSelectBtnDisabled: { borderColor: 'rgba(255,255,255,0.02)', backgroundColor: 'transparent', opacity: 0.5 },
   slotSelectText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm, fontWeight: '600', textTransform: 'capitalize' },
   slotSelectTextActive: { color: COLORS.patientPrimary, fontWeight: '800' },
+  slotSelectTextDisabled: { color: COLORS.textMuted, textDecorationLine: 'line-through' },
+  dynamicSlotRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: SPACING.sm },
   
   billBox: { backgroundColor: 'rgba(255,255,255,0.03)', padding: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: SPACING.md },
   billText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },

@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Image, ScrollView,
+  ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -28,6 +28,7 @@ export default function DoctorAppointmentsScreen() {
   const [updatingId, setUpdatingId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -128,12 +129,13 @@ export default function DoctorAppointmentsScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     {item.symptomImages.map((src, idx) => (
-                      <Image
-                        key={idx}
-                        source={{ uri: src }}
-                        style={styles.symptomImage}
-                        resizeMode="cover"
-                      />
+                      <TouchableOpacity key={idx} onPress={() => setSelectedImage(src)}>
+                        <Image
+                          source={{ uri: src }}
+                          style={styles.symptomImage}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
                     ))}
                   </View>
                 </ScrollView>
@@ -204,6 +206,18 @@ export default function DoctorAppointmentsScreen() {
           }
         />
       )}
+
+      {/* Image Lightbox Modal */}
+      <Modal visible={!!selectedImage} transparent animationType="fade" onRequestClose={() => setSelectedImage(null)}>
+        <View style={styles.lightboxOverlay}>
+          <TouchableOpacity style={styles.lightboxClose} onPress={() => setSelectedImage(null)}>
+            <Ionicons name="close" size={32} color={COLORS.white} />
+          </TouchableOpacity>
+          {selectedImage && (
+            <Image source={{ uri: selectedImage }} style={styles.lightboxImage} resizeMode="contain" />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -298,4 +312,13 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
   },
+  lightboxOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  lightboxClose: {
+    position: 'absolute', top: 50, right: 30, zIndex: 10,
+    padding: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: RADIUS.full,
+  },
+  lightboxImage: { width: '90%', height: '80%' },
 });

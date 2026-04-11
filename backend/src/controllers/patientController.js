@@ -297,6 +297,67 @@ const getJournals = async (req, res) => {
     }
 };
 
+// @desc    Get available time slots for a doctor on a given date
+// @route   GET /api/v1/patients/doctors/:doctorId/slots?date=YYYY-MM-DD
+// @access  Private/Patient
+const getDoctorSlots = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+        const { date } = req.query;
+
+        if (!date) return res.status(400).json({ message: 'date query param is required (YYYY-MM-DD)' });
+
+        const doctor = await Doctor.findById(doctorId);
+        if (!doctor || doctor.approvalStatus !== 'APPROVED') {
+            return res.status(404).json({ message: 'Doctor not found' });
+        }
+
+        // Get day name from date
+        const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+        const avail = (doctor.availability || []).find(a => a.day === dayName);
+
+        if (!avail) {
+            return res.json({ slots: [], message: `Doctor is not available on ${dayName}` });
+        }
+
+        // Generate 30-min slots
+        const [sh, sm] = avail.startTime.split(':').map(Number);
+        const [eh, em] = avail.endTime.split(':').map(Number);
+        let cur = sh * 60 + sm;
+        const end = eh * 60 + em;
+        const allSlots = [];
+        while (cur + 30 <= end) {
+            const from = `${String(Math.floor(cur / 60)).padStart(2, '0')}:${String(cur % 60).padStart(2, '0')}`;
+            const to = `${String(Math.floor((cur + 30) / 60)).padStart(2, '0')}:${String((cur + 30) % 60).padStart(2, '0')}`;
+            allSlots.push(`${from} - ${to}`);
+            cur += 30;
+        }
+
+        // Find booked slots for this date
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const booked = await Appointment.find({
+            doctorId,
+            appointmentDate: { $gte: startOfDay, $lte: endOfDay },
+            status: { $in: ['PENDING', 'ACCEPTED'] },
+        }).select('timeSlot');
+
+        const bookedSlots = new Set(booked.map(a => a.timeSlot));
+
+        const slots = allSlots.map(slot => ({
+            slot,
+            available: !bookedSlots.has(slot),
+        }));
+
+        return res.json({ slots, day: dayName });
+    } catch (error) {
+        return sendServerError(res, error);
+    }
+};
+
 module.exports = {
     getApprovedDoctors,
     getMyAppointments,
@@ -307,4 +368,5 @@ module.exports = {
     deleteMyProfile,
     getPatientAnalytics,
     getJournals,
+    getDoctorSlots,
 };

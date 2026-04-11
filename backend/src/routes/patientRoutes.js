@@ -10,6 +10,7 @@ const {
     deleteMyProfile,
     getPatientAnalytics,
     getJournals,
+    getDoctorSlots,
 } = require('../controllers/patientController');
 const { protect, patientOnly } = require('../middlewares/authMiddleware');
 
@@ -19,6 +20,7 @@ router.use(patientOnly);
 router.route('/profile').get(getMyProfile).put(updateMyProfile).delete(deleteMyProfile);
 router.get('/analytics', getPatientAnalytics);
 router.get('/doctors', getApprovedDoctors);
+router.get('/doctors/:doctorId/slots', getDoctorSlots);
 router.get('/medical-history', getJournals);
 router.get('/appointments', getMyAppointments);
 router.post('/appointments', bookAppointment);
