@@ -313,12 +313,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
   },
   lightboxOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.92)',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
     justifyContent: 'center', alignItems: 'center',
   },
   lightboxClose: {
-    position: 'absolute', top: 50, right: 30, zIndex: 10,
-    padding: 10, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: RADIUS.full,
+    position: 'absolute', top: 50, right: 20, zIndex: 10,
+    padding: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: RADIUS.full,
   },
-  lightboxImage: { width: '90%', height: '80%' },
+  lightboxImage: { flex: 1, width: '100%', height: '100%' },
 });

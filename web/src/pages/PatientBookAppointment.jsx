@@ -102,25 +102,22 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
 
     const today = new Date().toISOString().split('T')[0];
 
-    const getSlots = () => {
-        if (!date || !doctor?.availability?.length) return [];
-        const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-        const avail = doctor.availability.find(a => a.day === dayName);
-        if (!avail) return [];
-        const slots = [];
-        const [sh, sm] = avail.startTime.split(':').map(Number);
-        const [eh, em] = avail.endTime.split(':').map(Number);
-        let cur = sh * 60 + sm;
-        const end = eh * 60 + em;
-        while (cur + 30 <= end) {
-            const from = `${String(Math.floor(cur / 60)).padStart(2, '0')}:${String(cur % 60).padStart(2, '0')}`;
-            const to = `${String(Math.floor((cur + 30) / 60)).padStart(2, '0')}:${String((cur + 30) % 60).padStart(2, '0')}`;
-            slots.push(`${from} - ${to}`);
-            cur += 30;
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [fetchingSlots, setFetchingSlots] = useState(false);
+
+    useEffect(() => {
+        if (date && date.length === 10) {
+            setFetchingSlots(true);
+            setSlot('');
+            api.get(`/patients/doctors/${doctor._id}/slots?date=${date}`)
+                .then(res => setAvailableSlots(res.data?.slots || []))
+                .catch(() => setAvailableSlots([]))
+                .finally(() => setFetchingSlots(false));
+        } else {
+            setAvailableSlots([]);
+            setSlot('');
         }
-        return slots;
-    };
-    const slots = getSlots();
+    }, [date, doctor._id]);
 
     // Proceed from step 1 → step 2
     const handleProceedToPayment = () => {
@@ -439,7 +436,7 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
                                         setError('');
                                     }}
                                 />
-                                {date && slots.length === 0 && (
+                                {date && availableSlots.length === 0 && !fetchingSlots && (
                                     <p className="text-xs text-amber-600 flex items-center gap-1">
                                         <AlertCircle size={11} /> No availability on this day. Try another date.
                                     </p>
@@ -447,22 +444,32 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
                             </div>
 
                             {/* Time slots */}
-                            {slots.length > 0 && (
+                            {fetchingSlots ? (
+                                <div className="flex justify-center items-center py-4">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
+                            ) : availableSlots.length > 0 ? (
                                 <div className="space-y-1.5">
                                     <label className="block text-sm font-semibold text-slate-700">Select Time Slot</label>
                                     <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-0.5">
-                                        {slots.map(s => (
-                                            <button key={s} onClick={() => { setSlot(s); setError(''); }}
-                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${slot === s
+                                        {availableSlots.map(({ slot: s, available }) => (
+                                            <button key={s} disabled={!available} onClick={() => { setSlot(s); setError(''); }}
+                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                                                    !available ? 'bg-slate-50 border-slate-100 text-slate-400 opacity-50 cursor-not-allowed line-through' :
+                                                    slot === s
                                                     ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/30'
                                                     : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50'
                                                     }`}>
-                                                <Clock size={13} className={slot === s ? 'text-white' : 'text-slate-400'} />
+                                                <Clock size={13} className={!available ? 'text-slate-300' : slot === s ? 'text-white' : 'text-slate-400'} />
                                                 {s}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
+                            ) : (date && date.length === 10) && (
+                                <p className="text-sm text-red-500 bg-red-50 border border-dashed border-red-200 rounded-xl p-4 text-center mt-2">
+                                    No slots available for this date
+                                </p>
                             )}
 
                             {/* Fee */}
