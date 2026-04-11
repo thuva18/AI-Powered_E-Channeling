@@ -75,6 +75,10 @@ export default function PatientLayout() {
         name="medical-history" 
         options={{ href: null, title: 'Medical History' }} 
       />
+      <Tabs.Screen 
+        name="journal" 
+        options={{ href: null, title: 'Health Journal' }} 
+      />
     </Tabs>
   );
 }

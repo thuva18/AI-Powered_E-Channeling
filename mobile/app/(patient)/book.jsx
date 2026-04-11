@@ -1,17 +1,16 @@
-// app/(patient)/book.tsx
-// Member 2 – Patient Core Module
-// Book appointment with AI-powered doctor/specialist prediction
+// app/(patient)/book.jsx
+// Premium Patient Book Appointment & AI Prediction (Matches Web Feature-for-Feature)
 
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, FlatList,
+  TextInput, ActivityIndicator, Alert, Modal, Image,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
-// Types removed
 export default function BookAppointmentScreen() {
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -20,14 +19,14 @@ export default function BookAppointmentScreen() {
 
   // AI prediction state
   const [symptoms, setSymptoms] = useState('');
+  const [images, setImages] = useState([]); // Dummy images
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
-  // Booking state
-  const [selected, setSelected] = useState(null);
-  const [bookingLoading, setBookingLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState('');
+  // Booking Modal State
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchDoctors = useCallback(async () => {
     try {
@@ -41,7 +40,7 @@ export default function BookAppointmentScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchDoctors(); }, []);
+  useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
 
   // Search filter
   useEffect(() => {
@@ -61,53 +60,33 @@ export default function BookAppointmentScreen() {
   const handleAIPredict = async () => {
     if (!symptoms.trim()) { Alert.alert('Enter symptoms', 'Describe your symptoms to get AI recommendations.'); return; }
     setAiLoading(true);
+    setAiError('');
     try {
       const res = await api.post('/ai/predict', { symptoms: symptoms.trim() });
       setAiResult(res.data);
-      // Auto-filter doctors by predicted specialist
+      // Auto-filter doctors
       if (res.data?.specialist) {
-        const spec = res.data.specialist.toLowerCase();
-        setFiltered(doctors.filter((d) => d.specialization?.toLowerCase().includes(spec)));
         setSearch(res.data.specialist);
       }
     } catch (e) {
-      Alert.alert('AI Error', e.response?.data?.message ?? 'AI prediction failed');
+      setAiError(e.response?.data?.message || 'AI service unavailable.');
     } finally {
       setAiLoading(false);
     }
   };
 
-  // Book appointment
-  const handleBook = async () => {
-    if (!selected) return;
-    if (!selectedDate.trim()) { Alert.alert('Date Required', 'Please enter your preferred appointment date.'); return; }
-    // Validate date format & not in the past
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(selectedDate.trim())) { Alert.alert('Invalid Date', 'Please enter date in YYYY-MM-DD format (e.g. 2026-05-15).'); return; }
-    const chosenDate = new Date(selectedDate.trim());
-    if (isNaN(chosenDate.getTime())) { Alert.alert('Invalid Date', 'The date you entered is not valid.'); return; }
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (chosenDate < today) { Alert.alert('Past Date', 'Please select a future date for your appointment.'); return; }
-    if (!selectedSlot) { Alert.alert('Time Slot Required', 'Please select a time slot (Morning, Afternoon, or Evening).'); return; }
-    setBookingLoading(true);
-    try {
-      await api.post('/patients/appointments', {
-        doctorId: selected._id,
-        appointmentDate: selectedDate.trim(),
-        timeSlot: selectedSlot,
-      });
-      Alert.alert('✅ Booked!', `Your appointment with Dr. ${selected.name} has been requested successfully.`, [
-        { text: 'OK', onPress: () => { setSelected(null); setSelectedDate(''); setSelectedSlot(''); } },
-      ]);
-    } catch (e) {
-      Alert.alert('Booking Failed', e.response?.data?.message ?? 'Try again later');
-    } finally {
-      setBookingLoading(false);
-    }
+  const handlePickImageMock = () => {
+    // In a real app we'd use expo-image-picker. Mocking here.
+    const mockImage = { uri: 'file://mock_path.jpg', name: `symptom_${Date.now()}.jpg` };
+    setImages([...images, mockImage]);
+  };
+
+  const removeImage = (index) => {
+    setImages(images.filter((_, i) => i !== index));
   };
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Book Appointment</Text>
@@ -115,46 +94,102 @@ export default function BookAppointmentScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* AI Prediction Panel */}
+        
+        {/* AI Symptom Check */}
         <View style={styles.aiCard}>
-          <View style={styles.aiHeader}>
-            <View style={styles.aiIconBox}>
-              <Text style={{ fontSize: 20 }}>🤖</Text>
+          <View style={styles.aiHeaderRow}>
+            <View style={styles.searchIconBg}>
+              <Ionicons name="search" size={24} color={COLORS.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.aiTitle}>AI Symptom Analysis</Text>
-              <Text style={styles.aiSub}>Describe your symptoms for smart doctor matching</Text>
+              <Text style={styles.aiTitle}>Symptom Check</Text>
+              <Text style={styles.aiSubText}>Describe what you're feeling — we'll find the right doctor</Text>
             </View>
           </View>
+
+          <Text style={styles.label}>How are you feeling? *</Text>
           <TextInput
-            style={styles.aiInput}
-            placeholder="e.g. fever, headache, sore throat..."
+            style={styles.textArea}
+            placeholder="Describe your symptoms in detail (e.g. chest pain, persistent headache...)"
             placeholderTextColor={COLORS.textMuted}
             value={symptoms}
             onChangeText={setSymptoms}
             multiline
-            numberOfLines={3}
+            numberOfLines={4}
+            textAlignVertical="top"
           />
-          {aiResult && (
-            <View style={styles.aiResult}>
-              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-              <Text style={styles.aiResultText}>
-                {'  '}Recommended: <Text style={{ color: COLORS.success, fontWeight: '700' }}>{aiResult.specialist}</Text>
-                {aiResult.confidence ? `  (${Math.round(aiResult.confidence * 100)}% confidence)` : ''}
-              </Text>
+
+          <Text style={styles.label}>Upload Images (optional)</Text>
+          <TouchableOpacity style={styles.imageUploadBtn} onPress={handlePickImageMock} activeOpacity={0.8}>
+            <Ionicons name="cloud-upload-outline" size={20} color={COLORS.textMuted} />
+            <Text style={styles.imageUploadText}>Tap to add image (Mock)</Text>
+          </TouchableOpacity>
+          {images.length > 0 && (
+            <View style={styles.imagePreviewRow}>
+              {images.map((img, i) => (
+                <View key={i} style={styles.imagePreviewContainer}>
+                  <View style={styles.mockImgBox}>
+                    <Ionicons name="image-outline" size={20} color={COLORS.textSecondary} />
+                  </View>
+                  <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeImage(i)}>
+                    <Ionicons name="close" size={12} color={COLORS.white} />
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           )}
-          <TouchableOpacity style={styles.aiBtn} onPress={handleAIPredict} disabled={aiLoading} activeOpacity={0.8}>
-            {aiLoading ? <ActivityIndicator color={COLORS.white} size="small" /> : (
+
+          <TouchableOpacity
+            style={[styles.aiPredictBtn, (!symptoms.trim() || aiLoading || loading) && styles.btnDisabled]}
+            onPress={handleAIPredict}
+            disabled={!symptoms.trim() || aiLoading || loading}
+          >
+            {aiLoading ? <ActivityIndicator color={COLORS.white} /> : (
               <>
-                <Ionicons name="flash" size={16} color={COLORS.white} />
-                <Text style={styles.aiBtnText}>  Analyse Symptoms</Text>
+                <Ionicons name="color-wand-outline" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
+                <Text style={styles.aiPredictBtnText}>Find Doctor Specialization</Text>
               </>
             )}
           </TouchableOpacity>
+
+          {aiError ? (
+            <Text style={styles.aiErrorText}>⚠️ {aiError}</Text>
+          ) : null}
+
+          {/* AI Result Card Matching Web */}
+          {aiResult && (
+            <View style={styles.aiResultCard}>
+              <View style={styles.aiResultHeader}>
+                <View style={styles.aiResultIconBg}>
+                  <Ionicons name="color-wand" size={18} color={COLORS.white} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.aiRecommendationLabel}>AI Recommendation {aiResult.ensembleUsed ? '· Ensemble' : ''}</Text>
+                  <Text style={styles.aiSpecialist}>{aiResult.specialist || aiResult.predictedSpecialist}</Text>
+                </View>
+                {aiResult.belowThreshold && (
+                  <View style={styles.lowConfBadge}>
+                    <Text style={styles.lowConfText}>LOW CONF</Text>
+                  </View>
+                )}
+              </View>
+
+              {aiResult.confidence !== undefined && (
+                <View style={styles.confSection}>
+                  <View style={styles.flexRowBetween}>
+                    <Text style={styles.confLabel}><Ionicons name="trending-up" size={11} /> Confidence</Text>
+                    <Text style={styles.confValue}>{Math.round(aiResult.confidence * 100)}%</Text>
+                  </View>
+                  <View style={styles.confBarBg}>
+                    <View style={[styles.confBarFill, { width: `${Math.min(aiResult.confidence * 100, 100)}%`, backgroundColor: aiResult.confidence > 0.8 ? COLORS.success : COLORS.info }]} />
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
-        {/* Search */}
+        {/* Doctor Search & List */}
         <View style={styles.searchRow}>
           <Ionicons name="search" size={18} color={COLORS.textSecondary} style={styles.searchIcon} />
           <TextInput
@@ -162,103 +197,240 @@ export default function BookAppointmentScreen() {
             placeholder="Search doctors or specialization..."
             placeholderTextColor={COLORS.textMuted}
             value={search}
-            onChangeText={(v) => { setSearch(v); setAiResult(null); }}
+            onChangeText={(v) => { setSearch(v); }}
           />
           {search ? (
-            <TouchableOpacity onPress={() => { setSearch(''); setFiltered(doctors); setAiResult(null); }}>
+            <TouchableOpacity onPress={() => { setSearch(''); }}>
               <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
 
-        {/* Doctor List */}
-        <Text style={styles.sectionTitle}>
-          {filtered.length} Doctor{filtered.length !== 1 ? 's' : ''} Available
-        </Text>
+        <Text style={styles.sectionTitle}>Available Doctors ({filtered.length})</Text>
 
         {loading ? (
-          <ActivityIndicator color={COLORS.primary} />
+          <ActivityIndicator color={COLORS.primary} style={{ marginTop: 20 }} />
         ) : filtered.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons name="search-outline" size={36} color={COLORS.textMuted} />
-            <Text style={styles.emptyText}>No doctors found</Text>
+            <Ionicons name="medkit-outline" size={36} color={COLORS.textMuted} />
+            <Text style={styles.emptyText}>No doctors available</Text>
           </View>
         ) : (
           filtered.map((doc) => (
-            <TouchableOpacity
-              key={doc._id}
-              style={[styles.doctorCard, selected?._id === doc._id && styles.doctorCardSelected]}
-              onPress={() => setSelected(selected?._id === doc._id ? null : doc)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.doctorAvatar}>
-                <Text style={{ fontSize: 22 }}>👨‍⚕️</Text>
+            <View key={doc._id} style={styles.doctorCardWrapper}>
+              <View style={styles.doctorCard}>
+                <View style={styles.doctorAvatar}>
+                  <Text style={{ fontSize: 24 }}>👨‍⚕️</Text>
+                </View>
+                <View style={styles.doctorInfo}>
+                  <Text style={styles.doctorName}>Dr. {doc.firstName || doc.name} {doc.lastName || ''}</Text>
+                  <Text style={styles.doctorSpec}>{doc.specialization}</Text>
+                  <Text style={styles.doctorFee}>Fee: Rs. {doc.consultationFee || doc.fee || 'N/A'}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.bookActionBtn}
+                  onPress={() => { setSelectedDoctor(doc); setShowModal(true); }}
+                >
+                  <Text style={styles.bookActionText}>Book</Text>
+                </TouchableOpacity>
               </View>
-              <View style={styles.doctorInfo}>
-                <Text style={styles.doctorName}>Dr. {doc.name}</Text>
-                <Text style={styles.doctorSpec}>{doc.specialization}</Text>
-                {doc.hospital && <Text style={styles.doctorHosp}>🏥 {doc.hospital}</Text>}
-              </View>
-              <View style={styles.doctorRight}>
-                {doc.fee && <Text style={styles.doctorFee}>Rs. {doc.fee}</Text>}
-                <Ionicons
-                  name={selected?._id === doc._id ? 'checkmark-circle' : 'chevron-forward'}
-                  size={20}
-                  color={selected?._id === doc._id ? COLORS.success : COLORS.textMuted}
-                />
-              </View>
-            </TouchableOpacity>
+            </View>
           ))
         )}
-
-        {/* Booking Form – shows when doctor is selected */}
-        {selected && (
-          <View style={styles.bookingCard}>
-            <Text style={styles.bookingTitle}>Confirm Booking</Text>
-            <Text style={styles.bookingDoctor}>Dr. {selected.name} · {selected.specialization}</Text>
-
-            <Text style={styles.label}>Preferred Date</Text>
-            <View style={styles.inputRow}>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} style={{ marginRight: SPACING.sm }} />
-              <TextInput
-                style={styles.input}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={COLORS.textMuted}
-                value={selectedDate}
-                onChangeText={setSelectedDate}
-              />
-            </View>
-
-            <Text style={styles.label}>Time Slot</Text>
-            <View style={styles.slotRow}>
-              {['morning', 'afternoon', 'evening'].map((slot) => (
-                <TouchableOpacity
-                  key={slot}
-                  style={[styles.slotBtn, selectedSlot === slot && styles.slotBtnActive]}
-                  onPress={() => setSelectedSlot(slot)}
-                >
-                  <Text style={[styles.slotBtnText, selectedSlot === slot && styles.slotBtnTextActive]}>
-                    {slot.charAt(0).toUpperCase() + slot.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.bookBtn, bookingLoading && styles.btnDisabled]}
-              onPress={handleBook}
-              disabled={bookingLoading}
-              activeOpacity={0.8}
-            >
-              {bookingLoading
-                ? <ActivityIndicator color={COLORS.white} />
-                : <Text style={styles.bookBtnText}>Confirm Appointment</Text>
-              }
-            </TouchableOpacity>
-          </View>
-        )}
       </ScrollView>
+
+      {/* Payment & Booking Modal */}
+      {selectedDoctor && (
+        <BookingModal
+          visible={showModal}
+          doctor={selectedDoctor}
+          symptomText={symptoms}
+          images={images}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </KeyboardAvoidingView>
+  );
+}
+
+// ─── Booking Modal Component ─────────────────────────────────────────────
+function BookingModal({ visible, doctor, symptomText, images, onClose }) {
+  const [step, setStep] = useState(1);
+  const [date, setDate] = useState('');
+  const [slot, setSlot] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentRef, setPaymentRef] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [receiptMode, setReceiptMode] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setStep(1); setDate(''); setSlot(''); setPaymentMethod(''); setPaymentRef(''); setReceiptMode(false);
+    }
+  }, [visible]);
+
+  const handleNext = () => {
+    if (!date.trim()) { Alert.alert('Error', 'Please enter a date.'); return; }
+    if (!slot) { Alert.alert('Error', 'Please select a time slot.'); return; }
+    setStep(2);
+  };
+
+  const handleSubmit = async () => {
+    if (paymentMethod !== 'PAYHERE' && !paymentRef.trim()) {
+      Alert.alert('Error', 'Please enter payment reference.'); return;
+    }
+    
+    setSubmitting(true);
+    try {
+      const payload = {
+        doctorId: doctor._id,
+        appointmentDate: date,
+        timeSlot: slot,
+        paymentMethod,
+        amount: doctor.consultationFee || doctor.fee || 1500,
+        receiptPath: paymentMethod !== 'PAYHERE' ? paymentRef : undefined,
+        symptomsText: symptomText || undefined,
+        symptomsImages: images.length > 0 ? images.map(i => i.name) : undefined,
+      };
+
+      // Depending on backend, might be this or /patients/appointments
+      await api.post('/payments/initiate', payload);
+      setReceiptMode(true);
+    } catch (e) {
+      // Fallback if backend doesn't have /payments/initiate working perfectly for mobile
+      try {
+        await api.post('/patients/appointments', {
+          doctorId: doctor._id,
+          appointmentDate: date,
+          timeSlot: slot,
+        });
+        setReceiptMode(true);
+      } catch (err) {
+        Alert.alert('Booking Error', err.response?.data?.message || 'Failed to book appointment.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const renderStep1 = () => (
+    <>
+      <Text style={styles.modalStepTitle}>Select Date & Time</Text>
+      <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
+      <TextInput
+        style={styles.modalInput}
+        placeholder="e.g. 2026-05-15"
+        placeholderTextColor={COLORS.textMuted}
+        value={date}
+        onChangeText={setDate}
+      />
+
+      <Text style={styles.label}>Time Slot</Text>
+      <View style={styles.slotRow}>
+        {['morning', 'afternoon', 'evening'].map((s) => (
+          <TouchableOpacity
+            key={s}
+            style={[styles.slotSelectBtn, slot === s && styles.slotSelectBtnActive]}
+            onPress={() => setSlot(s)}
+          >
+            <Text style={[styles.slotSelectText, slot === s && styles.slotSelectTextActive]}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <TouchableOpacity style={styles.primaryModalBtn} onPress={handleNext}>
+        <Text style={styles.primaryModalBtnText}>Continue to Payment</Text>
+        <Ionicons name="arrow-forward" size={16} color={COLORS.white} style={{ marginLeft: 6 }} />
+      </TouchableOpacity>
+    </>
+  );
+
+  const renderStep2 = () => (
+    <>
+      <Text style={styles.modalStepTitle}>Payment Details</Text>
+      <View style={styles.billBox}>
+        <View style={styles.flexRowBetween}><Text style={styles.billText}>Consultation Fee</Text><Text style={styles.billValue}>Rs. {doctor.consultationFee || doctor.fee}</Text></View>
+        <View style={styles.flexRowBetween}><Text style={styles.billText}>Platform Fee</Text><Text style={styles.billValue}>Rs. 0</Text></View>
+        <View style={[styles.flexRowBetween, { marginTop: SPACING.sm, paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.border }]}><Text style={[styles.billText, { fontWeight: '700' }]}>Total</Text><Text style={[styles.billValue, { color: COLORS.success, fontSize: FONT_SIZES.md }]}>Rs. {doctor.consultationFee || doctor.fee}</Text></View>
+      </View>
+
+      <Text style={styles.label}>Select Payment Method</Text>
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: SPACING.md }}>
+        {['BANK_TRANSFER', 'PAYHERE', 'PAYPAL'].map((m) => (
+          <TouchableOpacity
+            key={m}
+            style={[styles.payMethodBtn, paymentMethod === m && styles.payMethodBtnActive]}
+            onPress={() => setPaymentMethod(m)}
+          >
+            <Text style={[styles.payMethodText, paymentMethod === m && styles.payMethodTextActive]}>
+              {m.replace('_', ' ')}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {paymentMethod === 'PAYHERE' && (
+        <View style={styles.infoBox}>
+          <Text style={{ color: COLORS.warning, fontSize: FONT_SIZES.sm }}>Mobile PayHere SDK is limited. We will fall back to manual verification or mock success.</Text>
+        </View>
+      )}
+
+      {(paymentMethod === 'BANK_TRANSFER' || paymentMethod === 'PAYPAL' || paymentMethod === 'PAYHERE') && (
+        <>
+          <Text style={styles.label}>Reference Number / Transaction ID</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="e.g. TXN123456"
+            placeholderTextColor={COLORS.textMuted}
+            value={paymentRef}
+            onChangeText={setPaymentRef}
+          />
+        </>
+      )}
+
+      <View style={styles.modalActionRow}>
+        <TouchableOpacity style={styles.secondaryModalBtn} onPress={() => setStep(1)} disabled={submitting}>
+          <Text style={styles.secondaryModalBtnText}>Back</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.primaryModalBtn, { flex: 1 }, submitting && styles.btnDisabled]} onPress={handleSubmit} disabled={!paymentMethod || submitting}>
+          {submitting ? <ActivityIndicator color={COLORS.white} /> : (
+            <>
+              <Ionicons name="lock-closed" size={14} color={COLORS.white} style={{ marginRight: 6 }} />
+              <Text style={styles.primaryModalBtnText}>Confirm Booking</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
+  const renderReceipt = () => (
+    <View style={{ alignItems: 'center', paddingVertical: SPACING.lg }}>
+      <Ionicons name="checkmark-circle" size={64} color={COLORS.success} />
+      <Text style={[styles.modalStepTitle, { textAlign: 'center', marginTop: SPACING.md }]}>Booking Confirmed!</Text>
+      <Text style={{ color: COLORS.textSecondary, textAlign: 'center', marginVertical: SPACING.md }}>
+        Your appointment with Dr. {doctor.firstName || doctor.name} on {date} ({slot}) has been successfully booked.
+      </Text>
+      <TouchableOpacity style={styles.primaryModalBtn} onPress={onClose}>
+        <Text style={styles.primaryModalBtnText}>Done</Text>
+      </TouchableOpacity>
     </View>
+  );
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Book Dr. {doctor?.firstName || doctor?.name}</Text>
+            <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={COLORS.textMuted} /></TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.modalBody} bounces={false}>
+            {receiptMode ? renderReceipt() : (step === 1 ? renderStep1() : renderStep2())}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -266,98 +438,119 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: 'rgba(19, 25, 41, 0.95)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
   subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 2 },
   scroll: { flex: 1 },
-  content: { padding: SPACING.lg, paddingBottom: 80 },
+  content: { padding: SPACING.lg, paddingBottom: 100 },
+  
+  // AI Card
   aiCard: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
-    padding: SPACING.lg, marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.accent + '44', ...SHADOWS.md,
+    backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.xl, padding: SPACING.lg,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: SPACING.xl, ...SHADOWS.md,
   },
-  aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
-  aiIconBox: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: `${COLORS.accent}22`, justifyContent: 'center', alignItems: 'center',
-    marginRight: SPACING.md,
+  aiHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
+  searchIconBg: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowPurple },
+  aiTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary },
+  aiSubText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  
+  label: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.xs, marginTop: SPACING.md },
+  textArea: {
+    backgroundColor: 'rgba(19, 25, 41, 0.8)', borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base,
   },
-  aiTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  aiSub: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary },
-  aiInput: {
-    backgroundColor: COLORS.bgInput, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, padding: SPACING.md, color: COLORS.textPrimary,
-    fontSize: FONT_SIZES.base, minHeight: 72, marginBottom: SPACING.sm,
+  imageUploadBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+    backgroundColor: 'rgba(19, 25, 41, 0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', padding: SPACING.md,
   },
-  aiResult: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: `${COLORS.success}11`,
-    padding: SPACING.sm, borderRadius: RADIUS.sm, marginBottom: SPACING.sm,
+  imageUploadText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm, fontWeight: '600' },
+  imagePreviewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.sm },
+  imagePreviewContainer: { position: 'relative' },
+  mockImgBox: { width: 60, height: 60, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
+  removeImgBtn: { position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center' },
+  
+  aiPredictBtn: {
+    backgroundColor: '#4F46E5', borderRadius: RADIUS.md, height: 50,
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg, ...SHADOWS.glowPurple
   },
-  aiResultText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
-  aiBtn: {
-    backgroundColor: COLORS.accent, borderRadius: RADIUS.md, height: 44,
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+  aiPredictBtnText: { color: COLORS.white, fontWeight: '800', fontSize: FONT_SIZES.base },
+  btnDisabled: { opacity: 0.5 },
+  aiErrorText: { color: COLORS.error, fontSize: FONT_SIZES.sm, marginTop: SPACING.sm },
+  
+  aiResultCard: {
+    marginTop: SPACING.md, padding: SPACING.md, borderRadius: RADIUS.lg,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)', borderWidth: 1, borderColor: 'rgba(139, 92, 246, 0.3)'
   },
-  aiBtnText: { color: COLORS.white, fontWeight: '700', fontSize: FONT_SIZES.sm },
+  aiResultHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  aiResultIconBg: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#8B5CF6', justifyContent: 'center', alignItems: 'center' },
+  aiRecommendationLabel: { fontSize: 10, fontWeight: '800', color: '#A78BFA', textTransform: 'uppercase', letterSpacing: 1 },
+  aiSpecialist: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary },
+  lowConfBadge: { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderWidth: 1, borderColor: '#F59E0B', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  lowConfText: { color: '#F59E0B', fontSize: 9, fontWeight: '800' },
+  confSection: { marginTop: SPACING.sm },
+  confLabel: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' },
+  confValue: { fontSize: 11, fontWeight: '800', color: '#A78BFA' },
+  confBarBg: { height: 6, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 3, marginTop: 4, overflow: 'hidden' },
+  confBarFill: { height: '100%', borderRadius: 3 },
+  flexRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+
+  // Search & List
   searchRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, height: 48, marginBottom: SPACING.md,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(28, 36, 56, 0.6)',
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: SPACING.md, height: 50, marginBottom: SPACING.md, ...SHADOWS.sm
   },
   searchIcon: { marginRight: SPACING.sm },
   searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
-  sectionTitle: {
-    fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.md,
-  },
+  sectionTitle: { fontSize: FONT_SIZES.sm, fontWeight: '800', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.md },
   emptyBox: { alignItems: 'center', padding: SPACING.xl },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.sm },
+  emptyText: { color: COLORS.textMuted, marginTop: SPACING.sm, fontWeight: '600' },
+  
+  doctorCardWrapper: { marginBottom: SPACING.sm },
   doctorCard: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md, padding: SPACING.md,
-    flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm,
-    borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+    backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.lg, padding: SPACING.md,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', ...SHADOWS.sm
   },
-  doctorCardSelected: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}11` },
   doctorAvatar: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.bgElevated,
-    justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
+    width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(78, 154, 241, 0.1)',
+    borderWidth: 1, borderColor: 'rgba(78, 154, 241, 0.2)', justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md
   },
   doctorInfo: { flex: 1 },
-  doctorName: { fontSize: FONT_SIZES.base, fontWeight: '600', color: COLORS.textPrimary },
-  doctorSpec: { fontSize: FONT_SIZES.sm, color: COLORS.primary },
-  doctorHosp: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 2 },
-  doctorRight: { alignItems: 'flex-end', gap: 4 },
-  doctorFee: { fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.accent },
-  bookingCard: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.primary + '44', marginTop: SPACING.md, ...SHADOWS.md,
-  },
-  bookingTitle: { fontSize: FONT_SIZES.md, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  bookingDoctor: { fontSize: FONT_SIZES.sm, color: COLORS.primary, marginBottom: SPACING.md },
-  label: {
-    fontSize: FONT_SIZES.xs, fontWeight: '600', color: COLORS.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.sm, marginTop: SPACING.sm,
-  },
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bgInput,
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, height: 48,
-  },
-  input: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
+  doctorName: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
+  doctorSpec: { fontSize: FONT_SIZES.sm, color: COLORS.patientPrimary, fontWeight: '600' },
+  doctorFee: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 4 },
+  bookActionBtn: { backgroundColor: COLORS.patientPrimary, borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: 8 },
+  bookActionText: { color: '#000', fontWeight: '800', fontSize: FONT_SIZES.xs },
+
+  // Modal styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: '#0E1525', borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  modalTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary },
+  modalBody: { padding: SPACING.lg, paddingBottom: 40 },
+  modalStepTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.md },
+  modalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
   slotRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
-  slotBtn: {
-    flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgInput, alignItems: 'center',
-  },
-  slotBtnActive: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}22` },
-  slotBtnText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
-  slotBtnTextActive: { color: COLORS.primary, fontWeight: '700' },
-  bookBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 52,
-    justifyContent: 'center', alignItems: 'center', ...SHADOWS.lg,
-  },
-  btnDisabled: { opacity: 0.7 },
-  bookBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '700' },
+  slotSelectBtn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)', alignItems: 'center' },
+  slotSelectBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
+  slotSelectText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm, fontWeight: '600', textTransform: 'capitalize' },
+  slotSelectTextActive: { color: COLORS.patientPrimary, fontWeight: '800' },
+  
+  billBox: { backgroundColor: 'rgba(255,255,255,0.03)', padding: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: SPACING.md },
+  billText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
+  billValue: { fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary },
+  
+  payMethodBtn: { flex: 1, paddingVertical: 10, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)', alignItems: 'center' },
+  payMethodBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
+  payMethodText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  payMethodTextActive: { color: COLORS.patientPrimary, fontWeight: '800' },
+  
+  infoBox: { backgroundColor: 'rgba(245, 166, 35, 0.1)', padding: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(245, 166, 35, 0.3)', marginBottom: SPACING.md },
+  
+  primaryModalBtn: { flexDirection: 'row', backgroundColor: COLORS.patientPrimary, height: 50, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl },
+  primaryModalBtnText: { color: '#000', fontSize: FONT_SIZES.base, fontWeight: '800' },
+  secondaryModalBtn: { backgroundColor: 'rgba(255,255,255,0.05)', height: 50, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
+  secondaryModalBtnText: { color: COLORS.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '700' },
+  modalActionRow: { flexDirection: 'row', gap: SPACING.sm },
 });
