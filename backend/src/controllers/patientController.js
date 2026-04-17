@@ -2,6 +2,7 @@ const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const Journal = require('../models/Journal');
+const { createNotification } = require('../utils/notificationHelper');
 
 const sendServerError = (res, error) =>
     res.status(500).json({ message: error?.message || 'Server Error' });
@@ -156,6 +157,15 @@ const bookAppointment = async (req, res) => {
             path: 'doctorId',
             select: 'firstName lastName specialization consultationFee',
         });
+
+        // Notify the doctor
+        await createNotification(
+            doctor.userId,
+            'New Appointment Request',
+            `You have a new appointment request for ${new Date(appointmentDate).toLocaleDateString()} at ${timeSlot}.`,
+            'info',
+            '/(doctor)/appointments'
+        );
 
         return res.status(201).json(populated);
     } catch (error) {

@@ -119,9 +119,11 @@ AI_PID=""
 
 (
   cd "$MOBILE_DIR"
-  # Install ngrok and start via tunnel to bypass all firewall/LAN issues
-  npm install @expo/ngrok > /dev/null 2>&1 || true
-  npx expo start --tunnel --clear
+  # Set Android environment variables
+  export ANDROID_HOME="/Users/thuva/Library/Android/sdk"
+  export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
+  # Start expo without tunnel to avoid ngrok rate limit/outage issues
+  npx expo start --clear
 ) &
 MOBILE_PID=$!
 

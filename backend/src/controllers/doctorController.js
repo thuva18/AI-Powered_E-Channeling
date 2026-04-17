@@ -1,6 +1,7 @@
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const { deleteDoctorAccountByUserId } = require('../utils/deleteDoctorAccount');
+const { createNotification } = require('../utils/notificationHelper');
 
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
 const sendServerError = (res) => res.status(500).json({ message: 'Server Error' });
@@ -138,6 +139,19 @@ const updateAppointmentStatus = async (req, res) => {
 
         appointment.status = status;
         const updatedAppointment = await appointment.save();
+
+        // Notify patient
+        let msg = `Your appointment status has been updated to ${status}.`;
+        if (status === 'ACCEPTED') msg = `Your appointment on ${new Date(appointment.appointmentDate).toLocaleDateString()} has been ACCEPTED.`;
+        if (status === 'REJECTED') msg = `Your appointment on ${new Date(appointment.appointmentDate).toLocaleDateString()} has been REJECTED.`;
+
+        await createNotification(
+            appointment.patientId,
+            'Appointment Status Update',
+            msg,
+            status === 'ACCEPTED' ? 'success' : (status === 'REJECTED' ? 'error' : 'info'),
+            '/(patient)/appointments'
+        );
 
         res.json(updatedAppointment);
     } catch (error) {

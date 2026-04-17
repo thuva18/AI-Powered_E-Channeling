@@ -28,29 +28,39 @@ export const Toast = ({ toast, onDismiss }) => {
 };
 
 // ── Notification item ──────────────────────────────────────────────────────────
-const NotifItem = ({ apt }) => {
-    const statusColor = {
-        PENDING: 'text-amber-600 bg-amber-50',
-        ACCEPTED: 'text-emerald-600 bg-emerald-50',
-        REJECTED: 'text-red-600 bg-red-50',
-        COMPLETED: 'text-blue-600 bg-blue-50',
+const SystemNotifItem = ({ notif, onRead }) => {
+    const typeColor = {
+        info: 'text-blue-600 bg-blue-50',
+        success: 'text-emerald-600 bg-emerald-50',
+        warning: 'text-amber-600 bg-amber-50',
+        error: 'text-red-600 bg-red-50',
     };
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        if (!notif.isRead) onRead(notif._id);
+        if (notif.link) {
+            navigate(notif.link);
+        }
+    };
+
     return (
-        <div className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
-            <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 ${statusColor[apt.status] || 'bg-slate-100 text-slate-600'}`}>
-                {apt.patientId?.email?.[0]?.toUpperCase() || 'P'}
+        <div onClick={handleClick} className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors ${notif.isRead ? 'opacity-60 hover:bg-slate-50' : 'bg-blue-50/30 hover:bg-blue-50/50'}`}>
+            <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${typeColor[notif.type] || 'bg-slate-100 text-slate-600'}`}>
+                {notif.type === 'success' ? <CheckCircle size={14} /> : notif.type === 'error' ? <AlertCircle size={14} /> : <Bell size={14} />}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800 truncate">
-                    {apt.patientId?.email || 'Patient'}
+                <p className={`text-sm ${notif.isRead ? 'font-medium text-slate-700' : 'font-bold text-slate-900'} truncate`}>
+                    {notif.title}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                    {new Date(apt.appointmentDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })} · {apt.timeSlot || '—'}
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                    {notif.message}
+                </p>
+                <p className="text-[10px] text-slate-400 mt-1">
+                    {new Date(notif.createdAt).toLocaleString()}
                 </p>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${statusColor[apt.status] || 'bg-slate-100 text-slate-500'}`}>
-                {apt.status}
-            </span>
+            {!notif.isRead && <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />}
         </div>
     );
 };
@@ -64,7 +74,7 @@ const DashboardLayout = ({ allowedRoles }) => {
     const [avatarOpen, setAvatarOpen] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
-    const [pendingCount, setPendingCount] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
     const [calendarAppointments, setCalendarAppointments] = useState([]);
     const [fullCalOpen, setFullCalOpen] = useState(false);
 
@@ -81,15 +91,48 @@ const DashboardLayout = ({ allowedRoles }) => {
         return () => document.removeEventListener('mousedown', handle);
     }, []);
 
-    // Fetch appointments for notifications + calendar (doctors only)
+    // Fetch system notifications (all users)
+    useEffect(() => {
+        if (!user) return;
+        const fetchNotifs = () => {
+            api.get('/notifications').then(({ data }) => {
+                setNotifications(data);
+                setUnreadCount(data.filter(n => !n.isRead).length);
+            }).catch(() => {});
+        };
+        fetchNotifs();
+        // Optional: Polling every 30s
+        const interval = setInterval(fetchNotifs, 30000);
+        return () => clearInterval(interval);
+    }, [user]);
+
+    // Fetch calendar appointments (doctors only)
     useEffect(() => {
         if (user?.role !== 'DOCTOR' || user?.approvalStatus !== 'APPROVED') return;
         api.get('/doctors/appointments').then(({ data }) => {
-            setNotifications(data.slice(0, 5));
-            setPendingCount(data.filter(a => a.status === 'PENDING').length);
             setCalendarAppointments(data);
         }).catch(() => { });
     }, [user]);
+
+    const markAsRead = async (id) => {
+        try {
+            await api.patch(`/notifications/${id}/read`);
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Failed to mark notification as read');
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await api.patch('/notifications/read-all');
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to mark all as read');
+        }
+    };
 
     if (!user) return <Navigate to="/login" replace />;
     if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
@@ -296,41 +339,32 @@ const DashboardLayout = ({ allowedRoles }) => {
                                 className="relative h-9 w-9 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center"
                             >
                                 <Bell size={16} className="text-slate-600" />
-                                {pendingCount > 0 && (
+                                {unreadCount > 0 && (
                                     <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-                                        {pendingCount > 9 ? '9+' : pendingCount}
+                                        {unreadCount > 9 ? '9+' : unreadCount}
                                     </span>
                                 )}
                             </button>
 
                             {notifOpen && (
-                                <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-fade-up">
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                                        <h4 className="text-sm font-bold text-slate-900">Recent Appointments</h4>
-                                        {pendingCount > 0 && (
-                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                                {pendingCount} pending
-                                            </span>
+                                <div className="absolute right-0 top-11 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-50 animate-fade-up max-h-[80vh]">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+                                        <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
+                                        {unreadCount > 0 && (
+                                            <button onClick={markAllAsRead} className="text-[10px] font-semibold text-blue-600 hover:text-blue-700">
+                                                Mark all read
+                                            </button>
                                         )}
                                     </div>
-                                    {notifications.length === 0 ? (
-                                        <div className="py-8 text-center">
-                                            <Clock size={24} className="mx-auto text-slate-300 mb-2" />
-                                            <p className="text-sm text-slate-400">No recent appointments</p>
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-slate-50">
-                                            {notifications.map(apt => <NotifItem key={apt._id} apt={apt} />)}
-                                        </div>
-                                    )}
-                                    <div className="border-t border-slate-100">
-                                        <Link
-                                            to="/dashboard/appointments"
-                                            onClick={() => setNotifOpen(false)}
-                                            className="flex items-center justify-center gap-1.5 py-3 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-                                        >
-                                            View all appointments <ChevronRight size={13} />
-                                        </Link>
+                                    <div className="overflow-y-auto overflow-x-hidden flex-1 divide-y divide-slate-50">
+                                        {notifications.length === 0 ? (
+                                            <div className="py-8 text-center">
+                                                <Bell size={24} className="mx-auto text-slate-300 mb-2" />
+                                                <p className="text-sm text-slate-400">No notifications yet</p>
+                                            </div>
+                                        ) : (
+                                            notifications.map(notif => <SystemNotifItem key={notif._id} notif={notif} onRead={markAsRead} />)
+                                        )}
                                     </div>
                                 </div>
                             )}

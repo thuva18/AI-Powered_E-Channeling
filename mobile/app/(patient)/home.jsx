@@ -12,6 +12,7 @@ import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import useTheme from '../../hooks/useTheme';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import NotificationBell from '../../components/NotificationBell';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 function getGreeting() {
@@ -97,6 +98,7 @@ export default function PatientHomeScreen() {
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+          <NotificationBell size={38} />
           <ThemeToggle size={38} />
           <TouchableOpacity
             style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: `${C.error}18`, justifyContent: 'center', alignItems: 'center' }}

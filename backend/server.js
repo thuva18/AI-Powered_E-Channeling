@@ -11,6 +11,7 @@ const patientRoutes = require('./src/routes/patientRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
 const patientJournalRoutes = require('./src/routes/patientJournalRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/v1/patients/journals', patientJournalRoutes); // ← must be BEFOR
 app.use('/api/v1/patients', patientRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {
