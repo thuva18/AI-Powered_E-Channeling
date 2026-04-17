@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(19, 25, 41, 0.95)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: COLORS.headerBg, borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder,
   },
   title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
   subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 2 },
@@ -541,8 +541,8 @@ const styles = StyleSheet.create({
   
   // AI Card
   aiCard: {
-    backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.xl, padding: SPACING.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: SPACING.xl, ...SHADOWS.md,
+    backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.xl, padding: SPACING.lg,
+    borderWidth: 1, borderColor: COLORS.cardInnerBorder, marginBottom: SPACING.xl, ...SHADOWS.md,
   },
   aiHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
   searchIconBg: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowPurple },
@@ -551,17 +551,17 @@ const styles = StyleSheet.create({
   
   label: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: SPACING.xs, marginTop: SPACING.md },
   textArea: {
-    backgroundColor: 'rgba(19, 25, 41, 0.8)', borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
     borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base,
   },
   imageUploadBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
-    backgroundColor: 'rgba(19, 25, 41, 0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', padding: SPACING.md,
+    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', padding: SPACING.md,
   },
   imageUploadText: { color: COLORS.textMuted, fontSize: FONT_SIZES.sm, fontWeight: '600' },
   imagePreviewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.sm },
   imagePreviewContainer: { position: 'relative' },
-  mockImgBox: { width: 60, height: 60, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
+  mockImgBox: { width: 60, height: 60, backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
   removeImgBtn: { position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center' },
   
   aiPredictBtn: {
@@ -585,14 +585,14 @@ const styles = StyleSheet.create({
   confSection: { marginTop: SPACING.sm },
   confLabel: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' },
   confValue: { fontSize: 11, fontWeight: '800', color: '#A78BFA' },
-  confBarBg: { height: 6, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 3, marginTop: 4, overflow: 'hidden' },
+  confBarBg: { height: 6, backgroundColor: COLORS.bgElevated, borderRadius: 3, marginTop: 4, overflow: 'hidden' },
   confBarFill: { height: '100%', borderRadius: 3 },
   flexRowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   // Search & List
   searchRow: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(28, 36, 56, 0.6)',
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBgTranslucent,
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.cardInnerBorder,
     paddingHorizontal: SPACING.md, height: 50, marginBottom: SPACING.md, ...SHADOWS.sm
   },
   searchIcon: { marginRight: SPACING.sm },
@@ -603,8 +603,8 @@ const styles = StyleSheet.create({
   
   doctorCardWrapper: { marginBottom: SPACING.sm },
   doctorCard: {
-    backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.lg, padding: SPACING.md,
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', ...SHADOWS.sm
+    backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.cardInnerBorder, ...SHADOWS.sm
   },
   doctorAvatar: {
     width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(78, 154, 241, 0.1)',
@@ -635,15 +635,15 @@ const styles = StyleSheet.create({
   },
 
   // Modal styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#0E1525', borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, maxHeight: '90%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  modalOverlay: { flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: COLORS.modalBg, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder },
   modalTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary },
   modalBody: { padding: SPACING.lg, paddingBottom: 40 },
   modalStepTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.md },
-  modalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
+  modalInput: { backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
   slotRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
-  slotSelectBtn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)', alignItems: 'center' },
+  slotSelectBtn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt, alignItems: 'center' },
   slotSelectBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
   slotSelectBtnDisabled: { borderColor: 'rgba(255,255,255,0.02)', backgroundColor: 'transparent', opacity: 0.5 },
   slotSelectText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm, fontWeight: '600', textTransform: 'capitalize' },
@@ -651,11 +651,11 @@ const styles = StyleSheet.create({
   slotSelectTextDisabled: { color: COLORS.textMuted, textDecorationLine: 'line-through' },
   dynamicSlotRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: SPACING.sm },
   
-  billBox: { backgroundColor: 'rgba(255,255,255,0.03)', padding: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: SPACING.md },
+  billBox: { backgroundColor: COLORS.subtleBg, padding: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.cardInnerBorder, marginBottom: SPACING.md },
   billText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
   billValue: { fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary },
   
-  payMethodBtn: { flex: 1, paddingVertical: 10, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: 'rgba(26,34,53,0.8)', alignItems: 'center' },
+  payMethodBtn: { flex: 1, paddingVertical: 10, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt, alignItems: 'center' },
   payMethodBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
   payMethodText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
   payMethodTextActive: { color: COLORS.patientPrimary, fontWeight: '800' },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   
   primaryModalBtn: { flexDirection: 'row', backgroundColor: COLORS.patientPrimary, height: 50, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl },
   primaryModalBtnText: { color: '#000', fontSize: FONT_SIZES.base, fontWeight: '800' },
-  secondaryModalBtn: { backgroundColor: 'rgba(255,255,255,0.05)', height: 50, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
+  secondaryModalBtn: { backgroundColor: COLORS.bgElevated, height: 50, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
   secondaryModalBtnText: { color: COLORS.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '700' },
   modalActionRow: { flexDirection: 'row', gap: SPACING.sm },
 });

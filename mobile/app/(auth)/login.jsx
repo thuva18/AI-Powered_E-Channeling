@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: 'rgba(17, 24, 39, 0.95)',
     borderRadius: RADIUS.xl, padding: SPACING.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1, borderColor: COLORS.cardInnerBorder,
     ...SHADOWS.lg,
   },
   cardTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary },

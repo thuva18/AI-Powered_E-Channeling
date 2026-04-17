@@ -334,11 +334,11 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   container: { flexGrow: 1, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.xl, paddingBottom: 60 },
   header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', justifyContent: 'center', alignItems: 'center' },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.bgElevated, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
   subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
 
-  toggleRow: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: RADIUS.lg, padding: 4, marginBottom: SPACING.md },
+  toggleRow: { flexDirection: 'row', backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.lg, padding: 4, marginBottom: SPACING.md },
   toggleBtn: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: SPACING.sm, borderRadius: RADIUS.md },
   toggleBtnActive: { backgroundColor: COLORS.primary, ...SHADOWS.glowBlue },
   toggleBtnDoctor: { backgroundColor: COLORS.doctorPrimary, ...SHADOWS.glowGreen },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
 
   card: {
     backgroundColor: 'rgba(17, 24, 39, 0.95)', borderRadius: RADIUS.xl,
-    padding: SPACING.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
+    padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.cardInnerBorder,
     borderTopWidth: 3, ...SHADOWS.lg,
   },
   nameRow: { flexDirection: 'row', gap: SPACING.sm },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(17, 24, 39, 0.98)', borderRadius: RADIUS.md, borderWidth: 1,
     borderColor: COLORS.border, marginBottom: SPACING.sm, maxHeight: 220, overflow: 'hidden',
   },
-  specItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.04)' },
+  specItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder },
   specItemActive: { backgroundColor: `${COLORS.doctorPrimary}15` },
   specItemText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
 
