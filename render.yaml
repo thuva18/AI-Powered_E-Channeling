@@ -45,7 +45,6 @@ services:
   # 3. React Frontend Static Site
   - type: web
     name: echanneling-frontend
-    plan: free
     env: static
     rootDir: web
     buildCommand: npm install && npm run build
