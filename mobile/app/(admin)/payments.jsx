@@ -1,13 +1,15 @@
 // app/(admin)/payments.jsx
-// Mobile Admin Payments Screen
+// Mobile Admin Payments Screen – theme aware
 
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import useTheme from '../../hooks/useTheme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function AdminPaymentsScreen() {
+  const { C, S, isDark } = useTheme();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -20,101 +22,73 @@ export default function AdminPaymentsScreen() {
       const totalAmount = data.reduce((acc, p) => p.status === 'COMPLETED' ? acc + p.amount : acc, 0);
       const pendingCount = data.filter(p => p.status === 'PENDING').length;
       setStats({ total: totalAmount, count: data.length, pending: pendingCount });
-    } catch (e) {
-      console.error('Failed fetching payments');
-    } finally {
-      setLoading(false); setRefreshing(false);
-    }
+    } catch (e) { console.error('Failed fetching payments'); }
+    finally { setLoading(false); setRefreshing(false); }
   };
 
   useEffect(() => { fetchPayments(); }, []);
-
   const onRefresh = () => { setRefreshing(true); fetchPayments(); };
 
   const getStatusColor = (status) => {
-    if (status === 'COMPLETED') return COLORS.success;
-    if (status === 'PENDING') return COLORS.warning;
-    return COLORS.error;
+    if (status === 'COMPLETED') return C.success;
+    if (status === 'PENDING') return C.warning;
+    return C.error;
   };
 
+  const cardBg = isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard;
+  const cardBorder = isDark ? 'rgba(255,255,255,0.05)' : C.border;
+
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Transactions</Text>
-        <Text style={styles.headerSub}>Manage all system payments</Text>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.lg, backgroundColor: isDark ? 'rgba(19, 25, 41, 0.95)' : C.bgCard, borderBottomWidth: 1, borderBottomColor: cardBorder }}>
+        <Text style={{ fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary }}>Transactions</Text>
+        <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 4 }}>Manage all system payments</Text>
       </View>
 
-      <ScrollView 
-        style={styles.scroll} contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.adminPrimary}/>}
-      >
-        <View style={styles.statsCard}>
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Total Revenue</Text>
-            <Text style={styles.statValue}>LKR {stats.total.toLocaleString()}</Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.adminPrimary} />}>
+
+        <View style={{ flexDirection: 'row', backgroundColor: cardBg, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.xl, borderWidth: 1, borderColor: cardBorder }}>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ fontSize: 12, color: C.textSecondary, textTransform: 'uppercase', fontWeight: '700', marginBottom: 4 }}>Total Revenue</Text>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: C.success }}>LKR {stats.total.toLocaleString()}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Total TXNs</Text>
-            <Text style={[styles.statValue, {color: COLORS.primary}]}>{stats.count}</Text>
+          <View style={{ width: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : C.border }} />
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ fontSize: 12, color: C.textSecondary, textTransform: 'uppercase', fontWeight: '700', marginBottom: 4 }}>Total TXNs</Text>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: C.primary }}>{stats.count}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
-        
-        {loading ? <ActivityIndicator color={COLORS.adminPrimary} style={{marginTop: 40}} /> : (
-            payments.length === 0 ? (
-                <View style={styles.emptyWrap}>
-                    <Ionicons name="receipt-outline" size={48} color={COLORS.textMuted} />
-                    <Text style={styles.emptyText}>No transactions found</Text>
+        <Text style={{ fontSize: FONT_SIZES.md, fontWeight: '800', color: C.textPrimary, marginBottom: SPACING.md }}>Recent Transactions</Text>
+
+        {loading ? <ActivityIndicator color={C.adminPrimary} style={{ marginTop: 40 }} /> : (
+          payments.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <Ionicons name="receipt-outline" size={48} color={C.textMuted} />
+              <Text style={{ color: C.textMuted, marginTop: SPACING.md, fontWeight: '600' }}>No transactions found</Text>
+            </View>
+          ) : (
+            payments.map(p => (
+              <View key={p._id} style={{ backgroundColor: cardBg, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: cardBorder, ...S.sm }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm }}>
+                  <View>
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: 2 }}>#{p.referenceId?.substring(0, 8) || p._id.substring(0, 8)}</Text>
+                    <Text style={{ fontSize: 12, color: C.textSecondary }}>{new Date(p.createdAt).toLocaleDateString()}</Text>
+                  </View>
+                  <Text style={{ fontSize: FONT_SIZES.md, fontWeight: '800', color: C.textPrimary }}>LKR {p.amount}</Text>
                 </View>
-            ) : (
-                payments.map(p => (
-                    <View key={p._id} style={styles.paymentCard}>
-                        <View style={styles.pTop}>
-                            <View>
-                                <Text style={styles.pRef}>#{p.referenceId?.substring(0,8) || p._id.substring(0,8)}</Text>
-                                <Text style={styles.pDate}>{new Date(p.createdAt).toLocaleDateString()}</Text>
-                            </View>
-                            <Text style={styles.pAmount}>LKR {p.amount}</Text>
-                        </View>
-                        <View style={styles.pBottom}>
-                            <View style={[styles.badge, { backgroundColor: `${getStatusColor(p.status)}20` }]}>
-                                <Text style={[styles.badgeText, { color: getStatusColor(p.status) }]}>{p.status}</Text>
-                            </View>
-                            <Text style={styles.pMethod}>{p.method || 'Online'}</Text>
-                        </View>
-                    </View>
-                ))
-            )
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: cardBorder }}>
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: `${getStatusColor(p.status)}20` }}>
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: getStatusColor(p.status) }}>{p.status}</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: C.adminPrimary }}>{p.method || 'Online'}</Text>
+                </View>
+              </View>
+            ))
+          )
         )}
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: { paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.lg, backgroundColor: 'rgba(19, 25, 41, 0.95)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)'},
-  headerTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  headerSub: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 4 },
-  scroll: { flex: 1 },
-  content: { padding: SPACING.lg, paddingBottom: 100 },
-  statsCard: { flexDirection: 'row', backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.xl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  statBox: { flex: 1, alignItems: 'center' },
-  statLabel: { fontSize: 12, color: COLORS.textSecondary, textTransform: 'uppercase', fontWeight: '700', marginBottom: 4 },
-  statValue: { fontSize: 22, fontWeight: '900', color: COLORS.success },
-  statDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  sectionTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.md },
-  emptyWrap: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md, fontWeight: '600' },
-  paymentCard: { backgroundColor: 'rgba(28, 36, 56, 0.6)', borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', ...SHADOWS.sm },
-  pTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm },
-  pRef: { fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  pDate: { fontSize: 12, color: COLORS.textSecondary },
-  pAmount: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary },
-  pBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  pMethod: { fontSize: 12, fontWeight: '600', color: COLORS.adminPrimary }
-});

@@ -1,17 +1,18 @@
-// app/(admin)/patients.tsx
-// Admin Patient Management screen
+// app/(admin)/patients.jsx
+// Admin Patient Management – theme aware
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TextInput,
+  View, Text, FlatList, TextInput,
   ActivityIndicator, Alert, RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import useTheme from '../../hooks/useTheme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
-// Types removed
 export default function AdminPatientsScreen() {
+  const { C, S, isDark } = useTheme();
   const [patients, setPatients] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,82 +34,67 @@ export default function AdminPatientsScreen() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(
-      q ? patients.filter((p) =>
-        p.name.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q) || p.nic?.includes(q),
-      ) : patients,
-    );
+    setFiltered(q ? patients.filter((p) => p.name.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q) || p.nic?.includes(q)) : patients);
   }, [search, patients]);
 
   const toggleActive = async (id, currentState) => {
     setTogglingId(id);
     try {
       await api.patch(`/admin/users/${id}/toggle-active`);
-      setPatients((prev) =>
-        prev.map((p) => p._id === id ? { ...p, isActive: !currentState } : p),
-      );
+      setPatients((prev) => prev.map((p) => p._id === id ? { ...p, isActive: !currentState } : p));
     } catch { Alert.alert('Error', 'Failed to toggle status'); }
     finally { setTogglingId(null); }
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Manage Patients</Text>
-        <Text style={styles.subtitle}>{patients.length} total</Text>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border }}>
+        <Text style={{ fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary }}>Manage Patients</Text>
+        <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary }}>{patients.length} total</Text>
       </View>
 
-      <View style={styles.searchBox}>
-        <Ionicons name="search" size={18} color={COLORS.textSecondary} style={{ marginRight: SPACING.sm }} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, email or NIC..."
-          placeholderTextColor={COLORS.textMuted}
-          value={search}
-          onChangeText={setSearch}
-        />
+      <View style={{ flexDirection: 'row', alignItems: 'center', margin: SPACING.lg, backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, paddingHorizontal: SPACING.md, height: 48 }}>
+        <Ionicons name="search" size={18} color={C.textSecondary} style={{ marginRight: SPACING.sm }} />
+        <TextInput style={{ flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base }} placeholder="Search by name, email or NIC..." placeholderTextColor={C.textMuted} value={search} onChangeText={setSearch} />
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.adminPrimary} style={{ marginTop: 40 }} /> : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.adminPrimary} />}
+      {loading ? <ActivityIndicator color={C.adminPrimary} style={{ marginTop: 40 }} /> : (
+        <FlatList data={filtered} keyExtractor={(item) => item._id}
+          contentContainerStyle={{ paddingHorizontal: SPACING.lg, paddingBottom: 80 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.adminPrimary} />}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardTop}>
-                <View style={styles.avatar}><Text style={{ fontSize: 20 }}>🧑</Text></View>
-                <View style={styles.info}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  {item.email && <Text style={styles.detail}>✉️ {item.email}</Text>}
-                  {item.nic && <Text style={styles.detail}>🪪 {item.nic}</Text>}
-                  {item.phone && <Text style={styles.detail}>📞 {item.phone}</Text>}
+            <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: SPACING.sm }}>
+                <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: C.bgElevated, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md }}>
+                  <Text style={{ fontSize: 20 }}>🧑</Text>
                 </View>
-                <View style={[styles.activeBadge, { backgroundColor: item.isActive !== false ? COLORS.success + '22' : COLORS.error + '22' }]}>
-                  <Text style={{ color: item.isActive !== false ? COLORS.success : COLORS.error, fontSize: 10, fontWeight: '700' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>{item.name}</Text>
+                  {item.email && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>✉️ {item.email}</Text>}
+                  {item.nic && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>🪪 {item.nic}</Text>}
+                  {item.phone && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>📞 {item.phone}</Text>}
+                </View>
+                <View style={{ paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full, backgroundColor: item.isActive !== false ? C.success + '22' : C.error + '22' }}>
+                  <Text style={{ color: item.isActive !== false ? C.success : C.error, fontSize: 10, fontWeight: '700' }}>
                     {item.isActive !== false ? 'Active' : 'Inactive'}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity
-                style={[styles.toggleBtn, { borderColor: (item.isActive !== false ? COLORS.error : COLORS.success) + '44' }]}
-                onPress={() => toggleActive(item._id, item.isActive !== false)}
-                disabled={togglingId === item._id}
-              >
+                style={{ paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, alignItems: 'center', borderColor: (item.isActive !== false ? C.error : C.success) + '44' }}
+                onPress={() => toggleActive(item._id, item.isActive !== false)} disabled={togglingId === item._id}>
                 {togglingId === item._id
-                  ? <ActivityIndicator size="small" color={COLORS.adminPrimary} />
-                  : <Text style={[styles.toggleText, { color: item.isActive !== false ? COLORS.error : COLORS.success }]}>
+                  ? <ActivityIndicator size="small" color={C.adminPrimary} />
+                  : <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: item.isActive !== false ? C.error : C.success }}>
                       {item.isActive !== false ? 'Deactivate Account' : 'Activate Account'}
-                    </Text>
-                }
+                    </Text>}
               </TouchableOpacity>
             </View>
           )}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="people-outline" size={40} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No patients found</Text>
+            <View style={{ alignItems: 'center', paddingTop: 60 }}>
+              <Ionicons name="people-outline" size={40} color={C.textMuted} />
+              <Text style={{ color: C.textMuted, marginTop: SPACING.md }}>No patients found</Text>
             </View>
           }
         />
@@ -116,40 +102,3 @@ export default function AdminPatientsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-  searchBox: {
-    flexDirection: 'row', alignItems: 'center', margin: SPACING.lg,
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, paddingHorizontal: SPACING.md, height: 48,
-  },
-  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
-  list: { paddingHorizontal: SPACING.lg, paddingBottom: 80 },
-  card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
-  },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: SPACING.sm },
-  avatar: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: COLORS.bgElevated,
-    justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
-  },
-  info: { flex: 1 },
-  name: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  detail: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  activeBadge: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
-  toggleBtn: {
-    paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1,
-    alignItems: 'center',
-  },
-  toggleText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md },
-});

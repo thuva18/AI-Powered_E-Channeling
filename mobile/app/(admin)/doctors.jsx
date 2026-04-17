@@ -1,6 +1,5 @@
-// app/(admin)/doctors.tsx
-// Member 4 – Admin Module: Doctor Management
-// Approve, reject, delete doctors
+// app/(admin)/doctors.jsx
+// Admin Doctor Management – theme aware
 
 import { useEffect, useState, useCallback } from 'react';
 import {
@@ -9,11 +8,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-
-// Types removed
+import useTheme from '../../hooks/useTheme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function AdminDoctorsScreen() {
+  const { C, S, isDark } = useTheme();
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +45,7 @@ export default function AdminDoctorsScreen() {
     setProcessingId(id);
     try {
       await api.patch(`/admin/doctors/${id}/approve`, { approvalStatus: status });
-      setDoctors((prev) =>
-        prev.map((d) => d._id === id ? { ...d, approvalStatus: status } : d),
-      );
+      setDoctors((prev) => prev.map((d) => d._id === id ? { ...d, approvalStatus: status } : d));
     } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Action failed');
     } finally { setProcessingId(null); }
@@ -72,71 +69,56 @@ export default function AdminDoctorsScreen() {
   };
 
   const statusConfig = {
-    approved: { color: COLORS.success, icon: 'checkmark-circle' },
-    pending: { color: COLORS.warning, icon: 'time-outline' },
-    rejected: { color: COLORS.error, icon: 'close-circle' },
+    approved: { color: C.success, icon: 'checkmark-circle' },
+    pending: { color: C.warning, icon: 'time-outline' },
+    rejected: { color: C.error, icon: 'close-circle' },
   };
 
+  const cardBg = isDark ? C.bgCard : C.bgCard;
+  const cardBorder = isDark ? C.border : C.border;
+
   const renderItem = ({ item }) => {
-    const cfg = statusConfig[item.approvalStatus] ?? { color: COLORS.textMuted, icon: 'help-circle' };
+    const cfg = statusConfig[item.approvalStatus] ?? { color: C.textMuted, icon: 'help-circle' };
     const isProcessing = processingId === item._id;
     return (
-      <View style={styles.card}>
-        <View style={styles.cardTop}>
-          <View style={styles.avatar}><Text style={{ fontSize: 22 }}>👨‍⚕️</Text></View>
-          <View style={styles.info}>
-            <Text style={styles.docName}>Dr. {item.name}</Text>
-            {item.specialization && <Text style={styles.spec}>{item.specialization}</Text>}
-            {item.hospital && <Text style={styles.hospital}>🏥 {item.hospital}</Text>}
-            {item.email && <Text style={styles.email}>✉️ {item.email}</Text>}
+      <View style={{ backgroundColor: cardBg, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md, borderWidth: 1, borderColor: cardBorder, ...S.sm }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: SPACING.md }}>
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.bgElevated, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md }}>
+            <Text style={{ fontSize: 22 }}>👨‍⚕️</Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: cfg.color + '22' }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>Dr. {item.name}</Text>
+            {item.specialization && <Text style={{ fontSize: FONT_SIZES.sm, color: C.adminPrimary, marginTop: 2 }}>{item.specialization}</Text>}
+            {item.hospital && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>🏥 {item.hospital}</Text>}
+            {item.email && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 2 }}>✉️ {item.email}</Text>}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full, backgroundColor: cfg.color + '22' }}>
             <Ionicons name={cfg.icon} size={14} color={cfg.color} />
-            <Text style={[styles.statusText, { color: cfg.color }]}> {item.approvalStatus}</Text>
+            <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize', color: cfg.color }}> {item.approvalStatus}</Text>
           </View>
         </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsRow}>
+        <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
           {item.approvalStatus === 'pending' && (
             <>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.approveBtn]}
-                onPress={() => updateApproval(item._id, 'approved')}
-                disabled={isProcessing}
-              >
-                {isProcessing
-                  ? <ActivityIndicator size="small" color={COLORS.success} />
-                  : <><Ionicons name="checkmark" size={16} color={COLORS.success} /><Text style={[styles.actionBtnText, { color: COLORS.success }]}> Approve</Text></>
-                }
+              <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.success + '44', backgroundColor: C.success + '11' }}
+                onPress={() => updateApproval(item._id, 'approved')} disabled={isProcessing}>
+                {isProcessing ? <ActivityIndicator size="small" color={C.success} /> : <><Ionicons name="checkmark" size={16} color={C.success} /><Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.success }}> Approve</Text></>}
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.rejectBtn]}
-                onPress={() => updateApproval(item._id, 'rejected')}
-                disabled={isProcessing}
-              >
-                <Ionicons name="close" size={16} color={COLORS.warning} />
-                <Text style={[styles.actionBtnText, { color: COLORS.warning }]}> Reject</Text>
+              <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.warning + '44', backgroundColor: C.warning + '11' }}
+                onPress={() => updateApproval(item._id, 'rejected')} disabled={isProcessing}>
+                <Ionicons name="close" size={16} color={C.warning} /><Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.warning }}> Reject</Text>
               </TouchableOpacity>
             </>
           )}
           {item.approvalStatus === 'rejected' && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.approveBtn]}
-              onPress={() => updateApproval(item._id, 'approved')}
-              disabled={isProcessing}
-            >
-              <Ionicons name="checkmark" size={16} color={COLORS.success} />
-              <Text style={[styles.actionBtnText, { color: COLORS.success }]}> Approve</Text>
+            <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.success + '44', backgroundColor: C.success + '11' }}
+              onPress={() => updateApproval(item._id, 'approved')} disabled={isProcessing}>
+              <Ionicons name="checkmark" size={16} color={C.success} /><Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.success }}> Approve</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.deleteBtn]}
-            onPress={() => deleteDoctor(item._id, item.name)}
-            disabled={isProcessing}
-          >
-            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-            <Text style={[styles.actionBtnText, { color: COLORS.error }]}> Delete</Text>
+          <TouchableOpacity style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.error + '44', backgroundColor: C.error + '11' }}
+            onPress={() => deleteDoctor(item._id, item.name)} disabled={isProcessing}>
+            <Ionicons name="trash-outline" size={16} color={C.error} /><Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.error }}> Delete</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -144,49 +126,39 @@ export default function AdminDoctorsScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Manage Doctors</Text>
-        <Text style={styles.subtitle}>{doctors.length} total | {doctors.filter((d) => d.approvalStatus === 'pending').length} pending</Text>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border }}>
+        <Text style={{ fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary }}>Manage Doctors</Text>
+        <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary }}>{doctors.length} total | {doctors.filter((d) => d.approvalStatus === 'pending').length} pending</Text>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchBox}>
-        <Ionicons name="search" size={18} color={COLORS.textSecondary} style={{ marginRight: SPACING.sm }} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search doctors..."
-          placeholderTextColor={COLORS.textMuted}
-          value={search}
-          onChangeText={setSearch}
-        />
+      <View style={{ flexDirection: 'row', alignItems: 'center', margin: SPACING.lg, marginBottom: 0, backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, paddingHorizontal: SPACING.md, height: 48 }}>
+        <Ionicons name="search" size={18} color={C.textSecondary} style={{ marginRight: SPACING.sm }} />
+        <TextInput style={{ flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base }} placeholder="Search doctors..." placeholderTextColor={C.textMuted} value={search} onChangeText={setSearch} />
       </View>
 
-      {/* Filter */}
-      <View style={styles.filterRow}>
+      <View style={{ flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm }}>
         {['all', 'pending', 'approved', 'rejected'].map((f) => (
-          <TouchableOpacity
-            key={f} style={[styles.filterTab, filter === f && styles.filterTabActive]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+          <TouchableOpacity key={f} style={{
+            paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.full,
+            backgroundColor: filter === f ? C.adminPrimary : C.bgCard,
+            borderWidth: 1, borderColor: filter === f ? C.adminPrimary : C.border,
+          }} onPress={() => setFilter(f)}>
+            <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '600', color: filter === f ? C.white : C.textSecondary }}>
               {f.charAt(0).toUpperCase() + f.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.adminPrimary} style={{ marginTop: 40 }} /> : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.adminPrimary} />}
+      {loading ? <ActivityIndicator color={C.adminPrimary} style={{ marginTop: 40 }} /> : (
+        <FlatList data={filtered} keyExtractor={(item) => item._id} renderItem={renderItem}
+          contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 80 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.adminPrimary} />}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="medical-outline" size={40} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No doctors found</Text>
+            <View style={{ alignItems: 'center', paddingTop: 60 }}>
+              <Ionicons name="medical-outline" size={40} color={C.textMuted} />
+              <Text style={{ color: C.textMuted, marginTop: SPACING.md }}>No doctors found</Text>
             </View>
           }
         />
@@ -194,57 +166,3 @@ export default function AdminDoctorsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: {
-    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-  },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-  searchBox: {
-    flexDirection: 'row', alignItems: 'center', margin: SPACING.lg,
-    marginBottom: 0, backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, height: 48,
-  },
-  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
-  filterRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm },
-  filterTab: {
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  filterTabActive: { backgroundColor: COLORS.adminPrimary, borderColor: COLORS.adminPrimary },
-  filterText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
-  filterTextActive: { color: COLORS.white },
-  list: { padding: SPACING.lg, paddingBottom: 80 },
-  card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
-  },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: SPACING.md },
-  avatar: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.bgElevated,
-    justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
-  },
-  info: { flex: 1 },
-  docName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  spec: { fontSize: FONT_SIZES.sm, color: COLORS.adminPrimary, marginTop: 2 },
-  hospital: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  email: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 2 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
-  statusText: { fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize' },
-  actionsRow: { flexDirection: 'row', gap: SPACING.sm },
-  actionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1,
-  },
-  approveBtn: { borderColor: COLORS.success + '44', backgroundColor: COLORS.success + '11' },
-  rejectBtn: { borderColor: COLORS.warning + '44', backgroundColor: COLORS.warning + '11' },
-  deleteBtn: { borderColor: COLORS.error + '44', backgroundColor: COLORS.error + '11' },
-  actionBtnText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md },
-});

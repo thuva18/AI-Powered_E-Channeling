@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import ThemeToggle from '../../components/common/ThemeToggle';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export default function LoginScreen() {
@@ -80,6 +81,11 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+        {/* Theme Toggle */}
+        <View style={{ alignItems: 'flex-end', paddingTop: 50 }}>
+          <ThemeToggle size={40} />
+        </View>
 
         {/* Hero Section */}
         <View style={styles.hero}>

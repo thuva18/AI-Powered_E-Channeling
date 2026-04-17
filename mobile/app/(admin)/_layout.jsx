@@ -1,18 +1,19 @@
 // app/(admin)/_layout.jsx
-// Admin tab navigation layout
+// Admin tab navigation layout – theme aware
 
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../constants/theme';
+import useTheme from '../../hooks/useTheme';
 
 export default function AdminLayout() {
+  const { C } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: 'rgba(19, 25, 41, 0.95)',
-          borderTopColor: 'rgba(255,255,255,0.05)',
+          backgroundColor: C.tabBar,
+          borderTopColor: C.tabBarBorder,
           borderTopWidth: 1,
           height: 70,
           paddingBottom: 16,
@@ -20,8 +21,8 @@ export default function AdminLayout() {
           position: 'absolute',
           elevation: 0,
         },
-        tabBarActiveTintColor: COLORS.adminPrimary,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: C.adminPrimary,
+        tabBarInactiveTintColor: C.textMuted,
         tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 4 },
       }}
     >
