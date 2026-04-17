@@ -1,26 +1,30 @@
-// app/_layout.tsx
-// Root layout – loads auth state and redirects to the correct role dashboard
+// app/_layout.jsx
+// Root layout – loads auth + theme state and redirects to the correct role dashboard
 
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
-import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
+import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import useAuthStore from '../store/authStore';
-import { COLORS } from '../constants/theme';
+import useThemeStore from '../store/themeStore';
+import { DARK_COLORS, LIGHT_COLORS } from '../constants/theme';
 
-// Custom Material Design 3 dark theme matching our design system
-const appTheme = {
-  ...MD3DarkTheme,
-  colors: {
-    ...MD3DarkTheme.colors,
-    primary: COLORS.primary,
-    background: COLORS.bg,
-    surface: COLORS.bgCard,
-    onSurface: COLORS.textPrimary,
-    secondary: COLORS.accent,
-  },
-};
+function buildPaperTheme(isDark) {
+  const C = isDark ? DARK_COLORS : LIGHT_COLORS;
+  const base = isDark ? MD3DarkTheme : MD3LightTheme;
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: C.primary,
+      background: C.bg,
+      surface: C.bgCard,
+      onSurface: C.textPrimary,
+      secondary: C.accent,
+    },
+  };
+}
 
 function AuthGuard({ children }) {
   const { user, isLoading, isAuthenticated } = useAuthStore();
@@ -38,10 +42,8 @@ function AuthGuard({ children }) {
     const inAuth = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuth) {
-      // If not authenticated and trying to access protected route (including root '/')
       router.replace('/(auth)/login');
     } else if (isAuthenticated && (inAuth || segments.length === 0 || segments[0] === undefined)) {
-      // If authenticated and trying to access login page OR root '/'
       const role = (user?.role || '').toLowerCase();
       if (role === 'patient') router.replace('/(patient)/home');
       else if (role === 'doctor') router.replace('/(doctor)/home');
@@ -50,10 +52,13 @@ function AuthGuard({ children }) {
     }
   }, [isAuthenticated, isLoading, segments, user]);
 
+  const { isDark } = useThemeStore();
+  const C = isDark ? DARK_COLORS : LIGHT_COLORS;
+
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.bg }}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg }}>
+        <ActivityIndicator size="large" color={C.primary} />
       </View>
     );
   }
@@ -63,19 +68,25 @@ function AuthGuard({ children }) {
 
 export default function RootLayout() {
   const { loadUser } = useAuthStore();
+  const { isDark, loadTheme } = useThemeStore();
 
   useEffect(() => {
     loadUser();
+    loadTheme();
   }, []);
 
+  const C = isDark ? DARK_COLORS : LIGHT_COLORS;
+  const paperTheme = buildPaperTheme(isDark);
+
   return (
-    <PaperProvider theme={appTheme}>
-      <StatusBar style="light" backgroundColor={COLORS.bg} />
+    <PaperProvider theme={paperTheme}>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={C.bg} />
       <AuthGuard>
         <Stack
+          key={isDark ? 'dark' : 'light'}
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: COLORS.bg },
+            contentStyle: { backgroundColor: C.bg },
             animation: 'slide_from_right',
           }}
         />
