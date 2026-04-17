@@ -62,7 +62,7 @@ install_python_deps() {
 install_if_missing "$BACKEND_DIR" "backend"
 install_if_missing "$FRONTEND_DIR" "frontend"
 install_if_missing "$MOBILE_DIR" "mobile"
-install_python_deps "$AI_DIR" "ai-service"
+# install_python_deps "$AI_DIR" "ai-service" # Disabled, using Render deployed service
 
 cleanup() {
   echo ""
@@ -85,12 +85,12 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-echo "Starting backend, frontend, mobile, and AI service in development mode..."
+echo "Starting backend, frontend, and mobile in development mode... (AI service is deployed on Render)"
 
 # Kill existing processes on ports
 kill_port 8000
 kill_port 5173
-kill_port 5001
+# kill_port 5001 # AI service port
 kill_port 8081
 
 (
@@ -105,16 +105,17 @@ BACKEND_PID=$!
 ) &
 FRONTEND_PID=$!
 
-(
-  cd "$AI_DIR"
-  # Use the dedicated venv if available (has all ML packages), else fall back to system python3
-  if [ -f "$AI_DIR/venv/bin/python3" ]; then
-    "$AI_DIR/venv/bin/python3" app.py
-  else
-    python3 app.py
-  fi
-) &
-AI_PID=$!
+# AI service is now deployed on Render, skipping local startup
+# (
+#   cd "$AI_DIR"
+#   if [ -f "$AI_DIR/venv/bin/python3" ]; then
+#     "$AI_DIR/venv/bin/python3" app.py
+#   else
+#     python3 app.py
+#   fi
+# ) &
+# AI_PID=$!
+AI_PID=""
 
 (
   cd "$MOBILE_DIR"
@@ -124,8 +125,8 @@ MOBILE_PID=$!
 
 echo "Backend PID:  $BACKEND_PID"
 echo "Frontend PID: $FRONTEND_PID"
-echo "AI Service PID: $AI_PID"
+echo "AI Service:   Deployed on Render"
 echo "Mobile PID:   $MOBILE_PID"
 echo "Press Ctrl+C to stop all services."
 
-wait "$BACKEND_PID" "$FRONTEND_PID" "$AI_PID" "$MOBILE_PID"
+wait "$BACKEND_PID" "$FRONTEND_PID" "$MOBILE_PID"

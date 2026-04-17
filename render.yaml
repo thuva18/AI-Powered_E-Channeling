@@ -41,3 +41,22 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.0
+
+  # 3. React Frontend Static Site
+  - type: web
+    name: echanneling-frontend
+    plan: free
+    env: static
+    rootDir: web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: echanneling-backend
+          envVarKey: RENDER_EXTERNAL_URL
+        # Append /api/v1 so the frontend calls the right backend path
+        # Note: Render doesn't support suffixing in fromService directly, but the frontend code typically appends /api/v1 if not present,
+        # or we can define it directly. Actually, the frontend code says:
+        # const apiBaseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1';

@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal,
+  ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -27,6 +27,7 @@ export default function DoctorAppointmentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [filter, setFilter] = useState('ALL');
+  const [selectedDateFilter, setSelectedDateFilter] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -53,7 +54,21 @@ export default function DoctorAppointmentsScreen() {
     } finally { setUpdatingId(null); }
   };
 
-  const displayList = filter === 'ALL' ? appointments : appointments.filter((a) => a.status === filter);
+  const isSameCalendarDate = (dateValue, selectedDate) => {
+    if (!selectedDate) return true;
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return false;
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    if (!year || !month || !day) return false;
+    return (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    );
+  };
+
+  const filteredByStatus = filter === 'ALL' ? appointments : appointments.filter((a) => a.status === filter);
+  const displayList = filteredByStatus.filter((a) => isSameCalendarDate(a.appointmentDate, selectedDateFilter));
 
   const renderItem = ({ item }) => {
     const patientProfile = item.patientId?.patientProfile || {};
@@ -63,6 +78,7 @@ export default function DoctorAppointmentsScreen() {
     const isExpanded = expandedId === item._id;
     const hasSymptoms = !!(item.symptomDescription || (item.symptoms && item.symptoms.length > 0));
     const hasImages = item.symptomImages && item.symptomImages.length > 0;
+    const transitions = VALID_TRANSITIONS[item.status] || [];
 
     return (
       <View style={styles.card}>
@@ -197,6 +213,21 @@ export default function DoctorAppointmentsScreen() {
             );
           })}
         </ScrollView>
+        <View style={styles.dateFilterContainer}>
+          <Ionicons name="calendar" size={16} color={COLORS.textSecondary} />
+          <TextInput
+            style={styles.dateInput}
+            placeholder="Filter by Date (YYYY-MM-DD)"
+            placeholderTextColor={COLORS.textMuted}
+            value={selectedDateFilter}
+            onChangeText={setSelectedDateFilter}
+          />
+          {selectedDateFilter ? (
+            <TouchableOpacity onPress={() => setSelectedDateFilter('')}>
+              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       {loading ? <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} /> : (
@@ -266,6 +297,13 @@ const styles = StyleSheet.create({
   badgeActive: { backgroundColor: 'rgba(0,0,0,0.15)' },
   badgeText: { fontSize: 10, fontWeight: '800', color: COLORS.textSecondary },
   badgeTextActive: { color: COLORS.textInverse },
+  dateFilterContainer: {
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, gap: SPACING.sm
+  },
+  dateInput: {
+    flex: 1, height: 40, backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
+    color: COLORS.textPrimary, fontSize: FONT_SIZES.sm, borderWidth: 1, borderColor: COLORS.border
+  },
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
     backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
