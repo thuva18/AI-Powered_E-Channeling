@@ -42,6 +42,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 
 // Basic Route for testing
 app.get('/', (req, res) => {
+    // Ping endpoint for health checks and deployment triggers
     res.send('Doctor Management API is running...');
 });
 
