@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const STATUS_META = {
   SUCCESS: { label: 'Paid', icon: 'checkmark-circle', color: '#10B981' },
@@ -49,10 +49,10 @@ function ReceiptModal({ transactionId, onClose }) {
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' }}>
-        <View style={{ backgroundColor: COLORS.bgCard, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, maxHeight: '92%' }}>
+      <View style={{ flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: C.bgCard, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, maxHeight: '92%' }}>
           {/* Header */}
-          <View style={{ backgroundColor: COLORS.primary, padding: SPACING.lg, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, alignItems: 'center' }}>
+          <View style={{ backgroundColor: C.primary, padding: SPACING.lg, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, alignItems: 'center' }}>
             <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: SPACING.md, right: SPACING.md, width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
               <Ionicons name="close" size={16} color="#fff" />
             </TouchableOpacity>
@@ -72,13 +72,13 @@ function ReceiptModal({ transactionId, onClose }) {
 
           {loading ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator color={COLORS.primary} size="large" />
-              <Text style={{ color: COLORS.textMuted, marginTop: SPACING.md, fontSize: FONT_SIZES.sm }}>Loading receipt…</Text>
+              <ActivityIndicator color={C.primary} size="large" />
+              <Text style={{ color: C.textMuted, marginTop: SPACING.md, fontSize: FONT_SIZES.sm }}>Loading receipt…</Text>
             </View>
           ) : error ? (
             <View style={{ padding: 40, alignItems: 'center' }}>
-              <Ionicons name="receipt-outline" size={36} color={COLORS.textMuted} />
-              <Text style={{ color: COLORS.textSecondary, fontWeight: '600', marginTop: SPACING.md }}>{error}</Text>
+              <Ionicons name="receipt-outline" size={36} color={C.textMuted} />
+              <Text style={{ color: C.textSecondary, fontWeight: '600', marginTop: SPACING.md }}>{error}</Text>
             </View>
           ) : receipt ? (
             <ScrollView style={{ padding: SPACING.lg }}>
@@ -95,64 +95,64 @@ function ReceiptModal({ transactionId, onClose }) {
 
               {/* Patient & Doctor */}
               <View style={{ flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md }}>
-                <View style={{ flex: 1, backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md }}>
+                <View style={{ flex: 1, backgroundColor: C.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.sm }}>
-                    <Ionicons name="person" size={12} color={COLORS.primary} />
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase' }}>Patient</Text>
+                    <Ionicons name="person" size={12} color={C.primary} />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase' }}>Patient</Text>
                   </View>
-                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textPrimary }}>{receipt.patient?.name || 'N/A'}</Text>
-                  <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 }}>{receipt.patient?.email}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary }}>{receipt.patient?.name || 'N/A'}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>{receipt.patient?.email}</Text>
                 </View>
-                <View style={{ flex: 1, backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md }}>
+                <View style={{ flex: 1, backgroundColor: C.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.sm }}>
-                    <Ionicons name="medical" size={12} color={COLORS.primary} />
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase' }}>Doctor</Text>
+                    <Ionicons name="medical" size={12} color={C.primary} />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase' }}>Doctor</Text>
                   </View>
-                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textPrimary }}>{receipt.doctor?.name}</Text>
-                  <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 }}>{receipt.doctor?.specialization}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary }}>{receipt.doctor?.name}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>{receipt.doctor?.specialization}</Text>
                 </View>
               </View>
 
               {/* Appointment */}
-              <View style={{ backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: SPACING.sm }}>Appointment Details</Text>
+              <View style={{ backgroundColor: C.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', marginBottom: SPACING.sm }}>Appointment Details</Text>
                 <View style={{ flexDirection: 'row', gap: SPACING.lg }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="calendar" size={14} color={COLORS.primary} />
+                    <Ionicons name="calendar" size={14} color={C.primary} />
                     <View>
-                      <Text style={{ fontSize: 10, color: COLORS.textMuted }}>Date</Text>
-                      <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary }}>
+                      <Text style={{ fontSize: 10, color: C.textMuted }}>Date</Text>
+                      <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: C.textPrimary }}>
                         {receipt.appointment?.date ? new Date(receipt.appointment.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
                       </Text>
                     </View>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="time" size={14} color={COLORS.primary} />
+                    <Ionicons name="time" size={14} color={C.primary} />
                     <View>
-                      <Text style={{ fontSize: 10, color: COLORS.textMuted }}>Time Slot</Text>
-                      <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary }}>{receipt.appointment?.timeSlot || '—'}</Text>
+                      <Text style={{ fontSize: 10, color: C.textMuted }}>Time Slot</Text>
+                      <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: C.textPrimary }}>{receipt.appointment?.timeSlot || '—'}</Text>
                     </View>
                   </View>
                 </View>
               </View>
 
               {/* Payment */}
-              <View style={{ backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: SPACING.sm }}>Payment Details</Text>
+              <View style={{ backgroundColor: C.bgElevated, borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.md }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', marginBottom: SPACING.sm }}>Payment Details</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.sm }}>
-                  <Text style={{ fontSize: FONT_SIZES.sm, color: COLORS.textSecondary }}>Method</Text>
-                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary }}>{method?.icon} {method?.label}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary }}>Method</Text>
+                  <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: C.textPrimary }}>{method?.icon} {method?.label}</Text>
                 </View>
                 {receipt.payment?.reference && (
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.sm }}>
-                    <Text style={{ fontSize: FONT_SIZES.sm, color: COLORS.textSecondary }}>Reference</Text>
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: COLORS.textPrimary }}>{receipt.payment.reference}</Text>
+                    <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary }}>Reference</Text>
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: C.textPrimary }}>{receipt.payment.reference}</Text>
                   </View>
                 )}
-                <View style={{ borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.sm, marginTop: SPACING.xs }}>
+                <View style={{ borderTopWidth: 1, borderTopColor: C.border, paddingTop: SPACING.sm, marginTop: SPACING.xs }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary }}>Total Paid</Text>
-                    <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.primary }}>
+                    <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>Total Paid</Text>
+                    <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.primary }}>
                       LKR {receipt.payment?.amount?.toLocaleString()}
                     </Text>
                   </View>
@@ -162,7 +162,7 @@ function ReceiptModal({ transactionId, onClose }) {
               {/* Security footer */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: SPACING.md }}>
                 <Ionicons name="shield-checkmark" size={13} color="#10B981" />
-                <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textMuted }}>Digitally generated receipt. No signature required.</Text>
+                <Text style={{ fontSize: FONT_SIZES.xs, color: C.textMuted }}>Digitally generated receipt. No signature required.</Text>
               </View>
             </ScrollView>
           ) : null}
@@ -209,8 +209,8 @@ export default function PatientPaymentsScreen() {
 
     return (
       <View style={{
-        backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-        marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+        backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
+        marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           <View style={{
@@ -222,17 +222,17 @@ export default function PatientPaymentsScreen() {
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1, marginRight: SPACING.sm }}>
-                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary }}>{doctorName}</Text>
-                <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textSecondary }}>{doctor?.specialization || 'Specialist'}</Text>
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>{doctorName}</Text>
+                <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary }}>{doctor?.specialization || 'Specialist'}</Text>
               </View>
-              <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary }}>LKR {item.amount?.toLocaleString()}</Text>
+              <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary }}>LKR {item.amount?.toLocaleString()}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: SPACING.sm }}>
               {apt?.appointmentDate && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Ionicons name="calendar" size={11} color={COLORS.primary} />
-                  <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textSecondary }}>
+                  <Ionicons name="calendar" size={11} color={C.primary} />
+                  <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary }}>
                     {new Date(apt.appointmentDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </Text>
                 </View>
@@ -240,20 +240,20 @@ export default function PatientPaymentsScreen() {
               <View style={{ backgroundColor: sm.color + '22', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full }}>
                 <Text style={{ fontSize: 10, fontWeight: '700', color: sm.color }}>{sm.label}</Text>
               </View>
-              <View style={{ backgroundColor: `${COLORS.primary}15`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full }}>
-                <Text style={{ fontSize: 10, fontWeight: '600', color: COLORS.primary }}>{mm.icon} {mm.label}</Text>
+              <View style={{ backgroundColor: `${C.primary}15`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full }}>
+                <Text style={{ fontSize: 10, fontWeight: '600', color: C.primary }}>{mm.icon} {mm.label}</Text>
               </View>
             </View>
 
             {item.paymentReference && (
-              <Text style={{ fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 4 }}>Ref: {item.paymentReference}</Text>
+              <Text style={{ fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 }}>Ref: {item.paymentReference}</Text>
             )}
 
             {canViewReceipt(item.status) && (
               <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: SPACING.sm }}
                 onPress={() => setReceiptId(item._id)}>
-                <Ionicons name="receipt" size={12} color={COLORS.primary} />
-                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.primary }}>View Receipt</Text>
+                <Ionicons name="receipt" size={12} color={C.primary} />
+                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.primary }}>View Receipt</Text>
               </TouchableOpacity>
             )}
 
@@ -277,11 +277,11 @@ export default function PatientPaymentsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.bg }}>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       {/* Header */}
-      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
-        <Text style={{ fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary }}>Payment History</Text>
-        <Text style={{ fontSize: FONT_SIZES.sm, color: COLORS.textSecondary }}>Your consultation payment records</Text>
+      <View style={{ paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border }}>
+        <Text style={{ fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary }}>Payment History</Text>
+        <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary }}>Your consultation payment records</Text>
       </View>
 
       {/* Stats */}
@@ -289,29 +289,29 @@ export default function PatientPaymentsScreen() {
         <View style={{
           margin: SPACING.md, flexDirection: 'row', gap: SPACING.sm,
         }}>
-          <View style={{ flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#10B98118', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
               <Ionicons name="checkmark-circle" size={18} color="#10B981" />
             </View>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>Total Paid</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>Total Paid</Text>
             <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: '#10B981' }}>LKR {totalPaid.toLocaleString()}</Text>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>{paidCount} txns</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>{paidCount} txns</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#F59E0B18', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
               <Ionicons name="time" size={18} color="#F59E0B" />
             </View>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>Pending</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>Pending</Text>
             <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: '#F59E0B' }}>{pendingCount}</Text>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>awaiting</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>awaiting</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
-            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${COLORS.primary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
-              <Ionicons name="bar-chart" size={18} color={COLORS.primary} />
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
+            <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${C.primary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
+              <Ionicons name="bar-chart" size={18} color={C.primary} />
             </View>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>Total</Text>
-            <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary }}>{transactions.length}</Text>
-            <Text style={{ fontSize: 10, color: COLORS.textMuted }}>all txns</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>Total</Text>
+            <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary }}>{transactions.length}</Text>
+            <Text style={{ fontSize: 10, color: C.textMuted }}>all txns</Text>
           </View>
         </View>
       )}
@@ -327,14 +327,14 @@ export default function PatientPaymentsScreen() {
               <TouchableOpacity key={t} onPress={() => setActiveTab(t)} style={{
                 flexDirection: 'row', alignItems: 'center', gap: 6,
                 paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
-                backgroundColor: active ? COLORS.primary : COLORS.bgCard,
-                borderWidth: 1, borderColor: active ? COLORS.primary : COLORS.border,
+                backgroundColor: active ? C.primary : C.bgCard,
+                borderWidth: 1, borderColor: active ? C.primary : C.border,
               }}>
-                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: active ? '#fff' : COLORS.textSecondary }}>
+                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: active ? '#fff' : C.textSecondary }}>
                   {TAB_LABELS[t]}
                 </Text>
-                <View style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : COLORS.bgElevated, paddingHorizontal: 6, paddingVertical: 1, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: active ? '#fff' : COLORS.textMuted }}>{count}</Text>
+                <View style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : C.bgElevated, paddingHorizontal: 6, paddingVertical: 1, borderRadius: RADIUS.full }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: active ? '#fff' : C.textMuted }}>{count}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -344,22 +344,22 @@ export default function PatientPaymentsScreen() {
 
       {/* Content */}
       {loading ? (
-        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.primary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={item => item._id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingHorizontal: SPACING.md, paddingBottom: 100 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} />}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingTop: 60 }}>
-              <Ionicons name="card-outline" size={40} color={COLORS.textMuted} />
-              <Text style={{ color: COLORS.textSecondary, fontWeight: '600', marginTop: SPACING.md }}>
+              <Ionicons name="card-outline" size={40} color={C.textMuted} />
+              <Text style={{ color: C.textSecondary, fontWeight: '600', marginTop: SPACING.md }}>
                 {activeTab !== 'ALL' ? 'No transactions in this category' : 'No payment records yet'}
               </Text>
               {activeTab === 'ALL' && (
-                <Text style={{ color: COLORS.textMuted, fontSize: FONT_SIZES.sm, marginTop: 4 }}>
+                <Text style={{ color: C.textMuted, fontSize: FONT_SIZES.sm, marginTop: 4 }}>
                   Book an appointment to see payment records here
                 </Text>
               )}

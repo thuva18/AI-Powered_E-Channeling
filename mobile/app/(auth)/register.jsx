@@ -2,6 +2,7 @@
 // Patient + Doctor Registration Screen (with role toggle)
 
 import { useState } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
@@ -9,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const SPECIALIZATIONS = [
   'General Physician', 'Cardiologist', 'Neurologist', 'Dermatologist',
@@ -19,6 +20,7 @@ const SPECIALIZATIONS = [
 ];
 
 export default function RegisterScreen() {
+  const styles = useStyles(getStyles);
   const router = useRouter();
   const [role, setRole] = useState('patient'); // 'patient' | 'doctor'
 
@@ -121,7 +123,7 @@ export default function RegisterScreen() {
     }
   };
 
-  const accentColor = role === 'doctor' ? COLORS.doctorPrimary : COLORS.primary;
+  const accentColor = role === 'doctor' ? C.doctorPrimary : C.primary;
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -130,7 +132,7 @@ export default function RegisterScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={22} color={C.textPrimary} />
           </TouchableOpacity>
           <View>
             <Text style={styles.title}>Create Account</Text>
@@ -145,7 +147,7 @@ export default function RegisterScreen() {
             onPress={() => setRole('patient')}
             activeOpacity={0.8}
           >
-            <Ionicons name="person" size={16} color={role === 'patient' ? COLORS.white : COLORS.textSecondary} />
+            <Ionicons name="person" size={16} color={role === 'patient' ? C.white : C.textSecondary} />
             <Text style={[styles.toggleText, role === 'patient' && styles.toggleTextActive]}>Patient</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -153,14 +155,14 @@ export default function RegisterScreen() {
             onPress={() => setRole('doctor')}
             activeOpacity={0.8}
           >
-            <Ionicons name="medical" size={16} color={role === 'doctor' ? COLORS.white : COLORS.textSecondary} />
+            <Ionicons name="medical" size={16} color={role === 'doctor' ? C.white : C.textSecondary} />
             <Text style={[styles.toggleText, role === 'doctor' && styles.toggleTextActive]}>Doctor</Text>
           </TouchableOpacity>
         </View>
 
         {role === 'doctor' && (
           <View style={styles.approvalNote}>
-            <Ionicons name="information-circle-outline" size={14} color={COLORS.doctorPrimary} />
+            <Ionicons name="information-circle-outline" size={14} color={C.doctorPrimary} />
             <Text style={styles.approvalNoteText}>Doctor accounts require admin approval before login.</Text>
           </View>
         )}
@@ -209,7 +211,7 @@ export default function RegisterScreen() {
                     style={[styles.genderBtn, form.gender === opt.value && styles.genderBtnActive]}
                     onPress={() => setField('gender', opt.value)}
                   >
-                    <Text style={[styles.genderBtnText, form.gender === opt.value && { color: COLORS.primary, fontWeight: '700' }]}>
+                    <Text style={[styles.genderBtnText, form.gender === opt.value && { color: C.primary, fontWeight: '700' }]}>
                       {opt.label}
                     </Text>
                   </TouchableOpacity>
@@ -232,11 +234,11 @@ export default function RegisterScreen() {
                 onPress={() => setShowSpecPicker(!showSpecPicker)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="briefcase-outline" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
-                <Text style={[styles.pickerText, !form.specialization && { color: COLORS.textMuted }]}>
+                <Ionicons name="briefcase-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
+                <Text style={[styles.pickerText, !form.specialization && { color: C.textMuted }]}>
                   {form.specialization || 'Select specialization...'}
                 </Text>
-                <Ionicons name={showSpecPicker ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.textSecondary} />
+                <Ionicons name={showSpecPicker ? 'chevron-up' : 'chevron-down'} size={16} color={C.textSecondary} />
               </TouchableOpacity>
               {errors.specialization && <Text style={styles.errorText}>{errors.specialization}</Text>}
 
@@ -248,7 +250,7 @@ export default function RegisterScreen() {
                       style={[styles.specItem, form.specialization === s && styles.specItemActive]}
                       onPress={() => { setField('specialization', s); setShowSpecPicker(false); }}
                     >
-                      <Text style={[styles.specItemText, form.specialization === s && { color: COLORS.doctorPrimary, fontWeight: '700' }]}>{s}</Text>
+                      <Text style={[styles.specItemText, form.specialization === s && { color: C.doctorPrimary, fontWeight: '700' }]}>{s}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -259,17 +261,17 @@ export default function RegisterScreen() {
           {/* ── Password ─────────────────────────────────────────────────── */}
           <Text style={styles.label}>Password</Text>
           <View style={[styles.inputRow, errors.password && styles.inputError]}>
-            <Ionicons name="lock-closed-outline" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+            <Ionicons name="lock-closed-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="Min 6 chars, at least 1 number"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={C.textMuted}
               value={form.password}
               onChangeText={(v) => setField('password', v)}
               secureTextEntry={!showPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
-              <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={18} color={COLORS.textSecondary} />
+              <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={18} color={C.textSecondary} />
             </TouchableOpacity>
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
@@ -286,10 +288,10 @@ export default function RegisterScreen() {
             activeOpacity={0.85}
           >
             {loading
-              ? <ActivityIndicator color={COLORS.white} />
+              ? <ActivityIndicator color={C.white} />
               : (
                 <>
-                  <Ionicons name={role === 'doctor' ? 'medical' : 'person-add'} size={18} color={COLORS.white} style={{ marginRight: 8 }} />
+                  <Ionicons name={role === 'doctor' ? 'medical' : 'person-add'} size={18} color={C.white} style={{ marginRight: 8 }} />
                   <Text style={styles.submitBtnText}>
                     {role === 'doctor' ? 'Submit for Approval' : 'Create Account'}
                   </Text>
@@ -312,14 +314,15 @@ export default function RegisterScreen() {
 
 // ─── Reusable Field Component ────────────────────────────────────────────────
 function Field({ icon, label, value, onChange, error, extra = {} }) {
+  const styles = useStyles(getStyles);
   return (
     <>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, error && styles.inputError]}>
-        <Ionicons name={icon} size={18} color={error ? COLORS.error : COLORS.textSecondary} style={styles.inputIcon} />
+        <Ionicons name={icon} size={18} color={error ? C.error : C.textSecondary} style={styles.inputIcon} />
         <TextInput
           style={styles.input}
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={C.textMuted}
           value={value}
           onChangeText={onChange}
           {...extra}
@@ -330,75 +333,75 @@ function Field({ icon, label, value, onChange, error, extra = {} }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   container: { flexGrow: 1, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.xl, paddingBottom: 60 },
   header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: COLORS.bgElevated, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.bgElevated, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  subtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary },
 
-  toggleRow: { flexDirection: 'row', backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.lg, padding: 4, marginBottom: SPACING.md },
+  toggleRow: { flexDirection: 'row', backgroundColor: C.bgElevated, borderRadius: RADIUS.lg, padding: 4, marginBottom: SPACING.md },
   toggleBtn: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, paddingVertical: SPACING.sm, borderRadius: RADIUS.md },
-  toggleBtnActive: { backgroundColor: COLORS.primary, ...SHADOWS.glowBlue },
-  toggleBtnDoctor: { backgroundColor: COLORS.doctorPrimary, ...SHADOWS.glowGreen },
-  toggleText: { fontSize: FONT_SIZES.base, color: COLORS.textSecondary, fontWeight: '600' },
-  toggleTextActive: { color: COLORS.white, fontWeight: '800' },
+  toggleBtnActive: { backgroundColor: C.primary, ...SHADOWS.glowBlue },
+  toggleBtnDoctor: { backgroundColor: C.doctorPrimary, ...SHADOWS.glowGreen },
+  toggleText: { fontSize: FONT_SIZES.base, color: C.textSecondary, fontWeight: '600' },
+  toggleTextActive: { color: C.white, fontWeight: '800' },
 
   approvalNote: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: `${COLORS.doctorPrimary}15`, borderRadius: RADIUS.md,
+    backgroundColor: `${C.doctorPrimary}15`, borderRadius: RADIUS.md,
     padding: SPACING.sm, marginBottom: SPACING.md,
-    borderLeftWidth: 3, borderLeftColor: COLORS.doctorPrimary,
+    borderLeftWidth: 3, borderLeftColor: C.doctorPrimary,
   },
-  approvalNoteText: { flex: 1, fontSize: FONT_SIZES.xs, color: COLORS.doctorPrimary, lineHeight: 18 },
+  approvalNoteText: { flex: 1, fontSize: FONT_SIZES.xs, color: C.doctorPrimary, lineHeight: 18 },
 
   card: {
-    backgroundColor: 'rgba(17, 24, 39, 0.95)', borderRadius: RADIUS.xl,
-    padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.cardInnerBorder,
+    backgroundColor: C.cardBgTranslucent || 'rgba(17, 24, 39, 0.95)', borderRadius: RADIUS.xl,
+    padding: SPACING.lg, borderWidth: 1, borderColor: C.cardInnerBorder,
     borderTopWidth: 3, ...SHADOWS.lg,
   },
   nameRow: { flexDirection: 'row', gap: SPACING.sm },
   label: {
-    fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary,
     marginBottom: SPACING.sm, marginTop: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5,
   },
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(26, 34, 53, 0.8)',
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt || 'rgba(26, 34, 53, 0.8)',
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border,
     paddingHorizontal: SPACING.md, height: 50, marginBottom: 2,
   },
-  inputError: { borderColor: COLORS.error },
+  inputError: { borderColor: C.error },
   inputIcon: { marginRight: SPACING.sm },
-  input: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
-  pickerText: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
-  errorText: { color: COLORS.error, fontSize: FONT_SIZES.xs, marginBottom: SPACING.xs, marginTop: 2 },
+  input: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
+  pickerText: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
+  errorText: { color: C.error, fontSize: FONT_SIZES.xs, marginBottom: SPACING.xs, marginTop: 2 },
 
   genderRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: 2 },
   genderBtn: {
     flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, backgroundColor: 'rgba(26, 34, 53, 0.8)', alignItems: 'center',
+    borderColor: C.border, backgroundColor: C.inputBgAlt || 'rgba(26, 34, 53, 0.8)', alignItems: 'center',
   },
-  genderBtnActive: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}22` },
-  genderBtnText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
+  genderBtnActive: { borderColor: C.primary, backgroundColor: `${C.primary}22` },
+  genderBtnText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
 
   specDropdown: {
-    backgroundColor: 'rgba(17, 24, 39, 0.98)', borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, marginBottom: SPACING.sm, maxHeight: 220, overflow: 'hidden',
+    backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: C.border, marginBottom: SPACING.sm, maxHeight: 220, overflow: 'hidden',
   },
-  specItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder },
-  specItemActive: { backgroundColor: `${COLORS.doctorPrimary}15` },
-  specItemText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
+  specItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
+  specItemActive: { backgroundColor: `${C.doctorPrimary}15` },
+  specItemText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
 
   submitBtn: {
     borderRadius: RADIUS.md, height: 54, flexDirection: 'row',
     justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg,
   },
   btnDisabled: { opacity: 0.65 },
-  submitBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '800', letterSpacing: 0.3 },
+  submitBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800', letterSpacing: 0.3 },
 
   loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: SPACING.md },
-  loginText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
+  loginText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
   loginLink: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
 });

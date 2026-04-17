@@ -3,6 +3,7 @@
 // Matches web PersonalJournal.jsx feature-for-feature
 
 import { useState, useEffect, useCallback } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
   Modal, ScrollView, Alert, ActivityIndicator, RefreshControl,
@@ -10,17 +11,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const STATUSES = ['Active', 'Recovered', 'Follow-up', 'Referred', 'Chronic'];
 const GENDERS = ['Male', 'Female', 'Other'];
 
 const STATUS_COLOR = {
-  Active: COLORS.primary,
-  Recovered: COLORS.success,
-  'Follow-up': COLORS.warning,
+  Active: C.primary,
+  Recovered: C.success,
+  'Follow-up': C.warning,
   Referred: '#9B59F5',
-  Chronic: COLORS.error,
+  Chronic: C.error,
 };
 
 const emptyRx = () => ({ medication: '', dosage: '', frequency: '', duration: '' });
@@ -34,34 +35,36 @@ const BLANK_FORM = {
 
 // ─── Prescription Row ────────────────────────────────────────────────────────
 function RxRow({ rx, index, total, onChange, onRemove }) {
+  const styles = useStyles(getStyles);
   return (
     <View style={styles.rxCard}>
       <View style={styles.rxHeader}>
         <Text style={styles.rxLabel}>Medication #{index + 1}</Text>
         {total > 1 && (
           <TouchableOpacity onPress={onRemove}>
-            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+            <Ionicons name="trash-outline" size={16} color={C.error} />
           </TouchableOpacity>
         )}
       </View>
-      <TextInput style={styles.rxInput} placeholder="Medication name *" placeholderTextColor={COLORS.textMuted}
+      <TextInput style={styles.rxInput} placeholder="Medication name *" placeholderTextColor={C.textMuted}
         value={rx.medication} onChangeText={(v) => onChange('medication', v)} />
       <View style={styles.rxRow}>
         <TextInput style={[styles.rxInput, { flex: 1 }]} placeholder="Dosage (e.g. 500mg)"
-          placeholderTextColor={COLORS.textMuted} value={rx.dosage} onChangeText={(v) => onChange('dosage', v)} />
+          placeholderTextColor={C.textMuted} value={rx.dosage} onChangeText={(v) => onChange('dosage', v)} />
         <TextInput style={[styles.rxInput, { flex: 1, marginLeft: SPACING.sm }]} placeholder="Frequency"
-          placeholderTextColor={COLORS.textMuted} value={rx.frequency} onChangeText={(v) => onChange('frequency', v)} />
+          placeholderTextColor={C.textMuted} value={rx.frequency} onChangeText={(v) => onChange('frequency', v)} />
       </View>
       <TextInput style={styles.rxInput} placeholder="Duration (e.g. 7 days)"
-        placeholderTextColor={COLORS.textMuted} value={rx.duration} onChangeText={(v) => onChange('duration', v)} />
+        placeholderTextColor={C.textMuted} value={rx.duration} onChangeText={(v) => onChange('duration', v)} />
     </View>
   );
 }
 
 // ─── Journal Entry Card ──────────────────────────────────────────────────────
 function JournalCard({ entry, onEdit, onDelete }) {
+  const styles = useStyles(getStyles);
   const [expanded, setExpanded] = useState(false);
-  const sc = STATUS_COLOR[entry.status] || COLORS.textSecondary;
+  const sc = STATUS_COLOR[entry.status] || C.textSecondary;
   const initials = (entry.patientName?.[0] || 'P').toUpperCase();
   return (
     <View style={[styles.card, { borderLeftColor: sc }]}>
@@ -70,7 +73,7 @@ function JournalCard({ entry, onEdit, onDelete }) {
           <Text style={[styles.avatarText, { color: sc }]}>{initials}</Text>
           {entry.patientId && (
             <View style={styles.linkedDot}>
-              <Ionicons name="checkmark" size={8} color={COLORS.white} />
+              <Ionicons name="checkmark" size={8} color={C.white} />
             </View>
           )}
         </View>
@@ -84,12 +87,12 @@ function JournalCard({ entry, onEdit, onDelete }) {
         <View style={[styles.statusPill, { backgroundColor: sc + '20' }]}>
           <Text style={[styles.statusPillText, { color: sc }]}>{entry.status}</Text>
         </View>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.textMuted} style={{ marginLeft: 4 }} />
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={C.textMuted} style={{ marginLeft: 4 }} />
       </TouchableOpacity>
 
       {/* Diagnosis preview always visible */}
       <View style={styles.diagRow}>
-        <Ionicons name="medkit-outline" size={13} color={COLORS.textMuted} />
+        <Ionicons name="medkit-outline" size={13} color={C.textMuted} />
         <Text style={styles.diagText} numberOfLines={expanded ? undefined : 2}>{entry.diagnosis}</Text>
       </View>
 
@@ -123,13 +126,13 @@ function JournalCard({ entry, onEdit, onDelete }) {
           <View style={styles.metaRow}>
             {!!entry.contactNumber && (
               <View style={styles.metaPill}>
-                <Ionicons name="call-outline" size={12} color={COLORS.textMuted} />
+                <Ionicons name="call-outline" size={12} color={C.textMuted} />
                 <Text style={styles.metaPillText}>{entry.contactNumber}</Text>
               </View>
             )}
             {!!entry.followUpDate && (
               <View style={styles.metaPill}>
-                <Ionicons name="calendar-outline" size={12} color={COLORS.textMuted} />
+                <Ionicons name="calendar-outline" size={12} color={C.textMuted} />
                 <Text style={styles.metaPillText}>
                   Follow-up: {new Date(entry.followUpDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
                 </Text>
@@ -140,12 +143,12 @@ function JournalCard({ entry, onEdit, onDelete }) {
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(entry)}>
-              <Ionicons name="pencil-outline" size={15} color={COLORS.primary} />
-              <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>Edit</Text>
+              <Ionicons name="pencil-outline" size={15} color={C.primary} />
+              <Text style={[styles.actionBtnText, { color: C.primary }]}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(entry._id)}>
-              <Ionicons name="trash-outline" size={15} color={COLORS.error} />
-              <Text style={[styles.actionBtnText, { color: COLORS.error }]}>Delete</Text>
+              <Ionicons name="trash-outline" size={15} color={C.error} />
+              <Text style={[styles.actionBtnText, { color: C.error }]}>Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -156,6 +159,7 @@ function JournalCard({ entry, onEdit, onDelete }) {
 
 // ─── Journal Modal ───────────────────────────────────────────────────────────
 function JournalModal({ visible, entry, patients, onClose, onSave }) {
+  const styles = useStyles(getStyles);
   const isEdit = !!entry?._id;
   const [form, setForm] = useState(BLANK_FORM);
   const [saving, setSaving] = useState(false);
@@ -240,7 +244,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleRow}>
               <View style={styles.modalIcon}>
-                <Ionicons name="book-outline" size={18} color={COLORS.white} />
+                <Ionicons name="book-outline" size={18} color={C.white} />
               </View>
               <View>
                 <Text style={styles.modalTitle}>{isEdit ? 'Edit Entry' : 'New Journal Entry'}</Text>
@@ -248,7 +252,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+              <Ionicons name="close" size={22} color={C.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -256,7 +260,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
             <View style={styles.modalBody}>
               {!!error && (
                 <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle" size={14} color={COLORS.error} />
+                  <Ionicons name="alert-circle" size={14} color={C.error} />
                   <Text style={styles.errorBannerText}>{error}</Text>
                 </View>
               )}
@@ -271,13 +275,13 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
                 onPress={() => setShowPatientPicker(!showPatientPicker)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="people-outline" size={16} color={COLORS.textSecondary} style={{ marginRight: 8 }} />
-                <Text style={[styles.pickerText, !form.patientId && { color: COLORS.textMuted }]}>
+                <Ionicons name="people-outline" size={16} color={C.textSecondary} style={{ marginRight: 8 }} />
+                <Text style={[styles.pickerText, !form.patientId && { color: C.textMuted }]}>
                   {form.patientId
                     ? (patients.find(p => p._id === form.patientId)?.name || 'Linked patient')
                     : '-- External / unregistered patient --'}
                 </Text>
-                <Ionicons name={showPatientPicker ? 'chevron-up' : 'chevron-down'} size={14} color={COLORS.textMuted} />
+                <Ionicons name={showPatientPicker ? 'chevron-up' : 'chevron-down'} size={14} color={C.textMuted} />
               </TouchableOpacity>
               {showPatientPicker && (
                 <View style={styles.dropdownList}>
@@ -296,7 +300,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
                         }));
                         setShowPatientPicker(false);
                       }}>
-                      <Text style={[styles.dropdownItemText, form.patientId === p._id && { color: COLORS.doctorPrimary, fontWeight: '700' }]}>
+                      <Text style={[styles.dropdownItemText, form.patientId === p._id && { color: C.doctorPrimary, fontWeight: '700' }]}>
                         {p.name}
                       </Text>
                     </TouchableOpacity>
@@ -313,10 +317,10 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
                 <View style={{ flex: 1, marginLeft: SPACING.sm }}>
                   <Text style={styles.fieldLabel}>Gender</Text>
                   <TouchableOpacity style={styles.picker} onPress={() => setShowGenderPicker(!showGenderPicker)}>
-                    <Text style={[styles.pickerText, !form.patientGender && { color: COLORS.textMuted }]}>
+                    <Text style={[styles.pickerText, !form.patientGender && { color: C.textMuted }]}>
                       {form.patientGender || 'Select...'}
                     </Text>
-                    <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+                    <Ionicons name="chevron-down" size={14} color={C.textMuted} />
                   </TouchableOpacity>
                   {showGenderPicker && (
                     <View style={styles.dropdownList}>
@@ -339,7 +343,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
               <TextInput
                 style={[styles.textArea]}
                 placeholder="Primary diagnosis / clinical findings…"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={form.diagnosis}
                 onChangeText={(v) => setF('diagnosis', v)}
                 multiline numberOfLines={4} textAlignVertical="top"
@@ -362,7 +366,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
               <View style={styles.rxHeaderRow}>
                 <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>💊 Prescription</Text>
                 <TouchableOpacity style={styles.addRxBtn} onPress={addRx}>
-                  <Ionicons name="add" size={14} color={COLORS.primary} />
+                  <Ionicons name="add" size={14} color={C.primary} />
                   <Text style={styles.addRxText}>Add</Text>
                 </TouchableOpacity>
               </View>
@@ -378,7 +382,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
               <TextInput
                 style={styles.textArea}
                 placeholder="Observations, test results, treatment plan…"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={form.notes}
                 onChangeText={(v) => setF('notes', v)}
                 multiline numberOfLines={3} textAlignVertical="top"
@@ -390,9 +394,9 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
                 style={[styles.saveBtn, saving && { opacity: 0.65 }]}
                 onPress={handleSave} disabled={saving} activeOpacity={0.85}
               >
-                {saving ? <ActivityIndicator color={COLORS.white} /> : (
+                {saving ? <ActivityIndicator color={C.white} /> : (
                   <>
-                    <Ionicons name="save-outline" size={17} color={COLORS.white} style={{ marginRight: 6 }} />
+                    <Ionicons name="save-outline" size={17} color={C.white} style={{ marginRight: 6 }} />
                     <Text style={styles.saveBtnText}>{isEdit ? 'Update Entry' : 'Save Entry'}</Text>
                   </>
                 )}
@@ -407,13 +411,14 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
 
 // ─── Field helper ────────────────────────────────────────────────────────────
 function InputField({ label, value, onChange, placeholder, extra = {} }) {
+  const styles = useStyles(getStyles);
   return (
     <>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         style={styles.inputField}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={C.textMuted}
         value={value}
         onChangeText={onChange}
         {...extra}
@@ -424,6 +429,7 @@ function InputField({ label, value, onChange, placeholder, extra = {} }) {
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function DoctorJournalScreen() {
+  const styles = useStyles(getStyles);
   const [entries, setEntries] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -482,23 +488,23 @@ export default function DoctorJournalScreen() {
           <Text style={styles.pageSubtitle}>{entries.length} records</Text>
         </View>
         <TouchableOpacity style={styles.newBtn} onPress={() => setModal('new')} activeOpacity={0.85}>
-          <Ionicons name="add" size={22} color={COLORS.white} />
+          <Ionicons name="add" size={22} color={C.white} />
         </TouchableOpacity>
       </View>
 
       {/* Search + Status filter */}
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={16} color={COLORS.textMuted} style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={16} color={C.textMuted} style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by patient name or diagnosis…"
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={C.textMuted}
           value={search}
           onChangeText={setSearch}
         />
         {!!search && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color={COLORS.textMuted} />
+            <Ionicons name="close-circle" size={16} color={C.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -508,10 +514,10 @@ export default function DoctorJournalScreen() {
         {['ALL', ...STATUSES].map(s => (
           <TouchableOpacity
             key={s}
-            style={[styles.filterChip, filterStatus === s && { backgroundColor: s === 'ALL' ? COLORS.doctorPrimary : STATUS_COLOR[s], borderColor: s === 'ALL' ? COLORS.doctorPrimary : STATUS_COLOR[s] }]}
+            style={[styles.filterChip, filterStatus === s && { backgroundColor: s === 'ALL' ? C.doctorPrimary : STATUS_COLOR[s], borderColor: s === 'ALL' ? C.doctorPrimary : STATUS_COLOR[s] }]}
             onPress={() => setFilterStatus(s)}
           >
-            <Text style={[styles.filterChipText, filterStatus === s && { color: COLORS.white }]}>
+            <Text style={[styles.filterChipText, filterStatus === s && { color: C.white }]}>
               {s}{s !== 'ALL' && counts[s] > 0 ? ` (${counts[s]})` : ''}
             </Text>
           </TouchableOpacity>
@@ -519,7 +525,7 @@ export default function DoctorJournalScreen() {
       </ScrollView>
 
       {loading ? (
-        <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.doctorPrimary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
@@ -532,11 +538,11 @@ export default function DoctorJournalScreen() {
             />
           )}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.doctorPrimary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.doctorPrimary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="book-outline" size={32} color={COLORS.doctorPrimary} />
+                <Ionicons name="book-outline" size={32} color={C.doctorPrimary} />
               </View>
               <Text style={styles.emptyTitle}>
                 {search || filterStatus !== 'ALL' ? 'No matching records' : 'No journal entries yet'}
@@ -560,37 +566,37 @@ export default function DoctorJournalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder,
+    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
-  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  pageSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
   newBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.doctorPrimary,
+    width: 44, height: 44, borderRadius: 22, backgroundColor: C.doctorPrimary,
     justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowGreen,
   },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.inputBgAlt, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: C.border,
     marginHorizontal: SPACING.lg, marginTop: SPACING.md,
     paddingHorizontal: SPACING.md, height: 44,
   },
-  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm },
+  searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
   filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm, maxHeight: 44 },
   filterChip: {
     paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt,
+    borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt,
   },
-  filterChipText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
+  filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
   list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
     backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: RADIUS.lg,
-    marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder2,
+    marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2,
     borderLeftWidth: 4, overflow: 'hidden',
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md },
@@ -602,100 +608,100 @@ const styles = StyleSheet.create({
   linkedDot: {
     position: 'absolute', bottom: -2, right: -2,
     width: 14, height: 14, borderRadius: 7,
-    backgroundColor: COLORS.success, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1.5, borderColor: COLORS.bg,
+    backgroundColor: C.success, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5, borderColor: C.bg,
   },
   cardInfo: { flex: 1 },
-  patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  metaText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  metaText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
   statusPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.full },
   statusPillText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
   diagRow: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: SPACING.md, paddingBottom: SPACING.sm, gap: 4 },
-  diagText: { flex: 1, fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-  expanded: { borderTopWidth: 1, borderTopColor: COLORS.cardInnerBorder2, padding: SPACING.md },
+  diagText: { flex: 1, fontSize: FONT_SIZES.sm, color: C.textSecondary },
+  expanded: { borderTopWidth: 1, borderTopColor: C.cardInnerBorder2, padding: SPACING.md },
   expandSection: { marginBottom: SPACING.sm },
-  expandLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  expandLabel: { fontSize: 11, fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
   rxViewCard: { backgroundColor: 'rgba(78,154,241,0.08)', borderRadius: RADIUS.sm, padding: SPACING.sm, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(78,154,241,0.15)' },
-  rxMed: { fontSize: FONT_SIZES.sm, fontWeight: '700', color: COLORS.textPrimary },
-  rxDetail: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  notesText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20 },
+  rxMed: { fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary },
+  rxDetail: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
+  notesText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, lineHeight: 20 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
-  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.bgElevated, paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
-  metaPillText: { fontSize: 11, color: COLORS.textSecondary },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACING.sm, paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.cardInnerBorder },
-  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15` },
-  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15` },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.bgElevated, paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
+  metaPillText: { fontSize: 11, color: C.textSecondary },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACING.sm, paddingTop: SPACING.sm, borderTopWidth: 1, borderTopColor: C.cardInnerBorder },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${C.primary}15` },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${C.error}15` },
   actionBtnText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${COLORS.doctorPrimary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
-  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  emptyText: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginTop: 4, textAlign: 'center' },
+  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${C.doctorPrimary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
+  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  emptyText: { fontSize: FONT_SIZES.sm, color: C.textMuted, marginTop: 4, textAlign: 'center' },
 
   // ── Modal ────────────────────────────────────────────────────────────────────
-  modalOverlay: { flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
   modalSheet: {
-    backgroundColor: COLORS.modalBg, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl,
-    maxHeight: '92%', borderTopWidth: 1, borderColor: COLORS.cardInnerBorder,
+    backgroundColor: C.modalBg, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl,
+    maxHeight: '92%', borderTopWidth: 1, borderColor: C.cardInnerBorder,
   },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
-    borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder2,
+    borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder2,
   },
   modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  modalIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.doctorPrimary, justifyContent: 'center', alignItems: 'center' },
-  modalTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary },
-  modalSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary },
-  closeBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.bgElevated, justifyContent: 'center', alignItems: 'center' },
+  modalIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.doctorPrimary, justifyContent: 'center', alignItems: 'center' },
+  modalTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary },
+  modalSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
+  closeBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.bgElevated, justifyContent: 'center', alignItems: 'center' },
   modalBody: { padding: SPACING.lg },
   errorBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: `${COLORS.error}15`,
+    flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: `${C.error}15`,
     borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.md,
-    borderLeftWidth: 3, borderLeftColor: COLORS.error,
+    borderLeftWidth: 3, borderLeftColor: C.error,
   },
-  errorBannerText: { flex: 1, color: COLORS.error, fontSize: FONT_SIZES.xs },
-  sectionLabel: { fontSize: 12, fontWeight: '800', color: COLORS.doctorPrimary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm },
-  fieldLabel: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 6, marginTop: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
+  errorBannerText: { flex: 1, color: C.error, fontSize: FONT_SIZES.xs },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: C.doctorPrimary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm },
+  fieldLabel: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, marginTop: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputField: {
-    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
     borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md,
-    color: COLORS.textPrimary, fontSize: FONT_SIZES.base, marginBottom: 2,
+    color: C.textPrimary, fontSize: FONT_SIZES.base, marginBottom: 2,
   },
   textArea: {
-    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary,
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
+    borderRadius: RADIUS.md, padding: SPACING.md, color: C.textPrimary,
     fontSize: FONT_SIZES.base, minHeight: 90, marginBottom: 2,
   },
   twoCol: { flexDirection: 'row' },
   picker: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
     borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, height: 48,
     marginBottom: 2,
   },
-  pickerText: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm },
+  pickerText: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
   dropdownList: {
     backgroundColor: '#0D1525', borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, marginBottom: SPACING.sm, overflow: 'hidden',
+    borderColor: C.border, marginBottom: SPACING.sm, overflow: 'hidden',
   },
-  dropdownItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder },
-  dropdownItemActive: { backgroundColor: `${COLORS.doctorPrimary}15` },
-  dropdownItemText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
+  dropdownItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
+  dropdownItemActive: { backgroundColor: `${C.doctorPrimary}15` },
+  dropdownItemText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
-  statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt },
-  statusChipText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
+  statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt },
+  statusChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
   rxHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md, marginBottom: SPACING.sm },
-  addRxBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15`, borderWidth: 1, borderColor: `${COLORS.primary}33` },
-  addRxText: { fontSize: FONT_SIZES.xs, color: COLORS.primary, fontWeight: '700' },
-  rxCard: { backgroundColor: 'rgba(26,34,53,0.6)', borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder2 },
+  addRxBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.md, backgroundColor: `${C.primary}15`, borderWidth: 1, borderColor: `${C.primary}33` },
+  addRxText: { fontSize: FONT_SIZES.xs, color: C.primary, fontWeight: '700' },
+  rxCard: { backgroundColor: 'rgba(26,34,53,0.6)', borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2 },
   rxHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  rxLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted },
-  rxInput: { backgroundColor: 'rgba(8,12,24,0.5)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, height: 38, paddingHorizontal: SPACING.sm, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm, marginBottom: 4 },
+  rxLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted },
+  rxInput: { backgroundColor: 'rgba(8,12,24,0.5)', borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.sm, height: 38, paddingHorizontal: SPACING.sm, color: C.textPrimary, fontSize: FONT_SIZES.sm, marginBottom: 4 },
   rxRow: { flexDirection: 'row' },
   saveBtn: {
-    backgroundColor: COLORS.doctorPrimary, borderRadius: RADIUS.md, height: 52,
+    backgroundColor: C.doctorPrimary, borderRadius: RADIUS.md, height: 52,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
     marginTop: SPACING.md, ...SHADOWS.glowGreen,
   },
-  saveBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
+  saveBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
 });

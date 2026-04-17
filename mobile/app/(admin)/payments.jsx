@@ -36,7 +36,7 @@ export default function AdminPaymentsScreen() {
   };
 
   const cardBg = isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard;
-  const cardBorder = isDark ? 'rgba(255,255,255,0.05)' : C.border;
+  const cardBorder = isDark ? C.cardInnerBorder : C.border;
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>

@@ -3,13 +3,14 @@
 // Doctor view appointments & update status
 
 import { useEffect, useState, useCallback } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 // Types removed
 
@@ -22,6 +23,7 @@ const VALID_TRANSITIONS = {
 };
 
 export default function DoctorAppointmentsScreen() {
+  const styles = useStyles(getStyles);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,7 +110,7 @@ export default function DoctorAppointmentsScreen() {
             style={styles.viewSymptomBtn}
             onPress={() => setExpandedId(isExpanded ? null : item._id)}
           >
-            <Ionicons name={isExpanded ? 'chevron-up' : 'document-text-outline'} size={14} color={COLORS.doctorPrimary} />
+            <Ionicons name={isExpanded ? 'chevron-up' : 'document-text-outline'} size={14} color={C.doctorPrimary} />
             <Text style={styles.viewSymptomText}>
               {isExpanded ? 'Hide Symptoms' : 'View Symptoms'}
               {hasImages ? ` · ${item.symptomImages.length} image(s)` : ''}
@@ -214,32 +216,32 @@ export default function DoctorAppointmentsScreen() {
           })}
         </ScrollView>
         <View style={styles.dateFilterContainer}>
-          <Ionicons name="calendar" size={16} color={COLORS.textSecondary} />
+          <Ionicons name="calendar" size={16} color={C.textSecondary} />
           <TextInput
             style={styles.dateInput}
             placeholder="Filter by Date (YYYY-MM-DD)"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={C.textMuted}
             value={selectedDateFilter}
             onChangeText={setSelectedDateFilter}
           />
           {selectedDateFilter ? (
             <TouchableOpacity onPress={() => setSelectedDateFilter('')}>
-              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+              <Ionicons name="close-circle" size={18} color={C.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
       </View>
 
-      {loading ? <ActivityIndicator color={COLORS.doctorPrimary} style={{ marginTop: 40 }} /> : (
+      {loading ? <ActivityIndicator color={C.doctorPrimary} style={{ marginTop: 40 }} /> : (
         <FlatList
           data={displayList}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.doctorPrimary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.doctorPrimary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="calendar-outline" size={40} color={COLORS.textMuted} />
+              <Ionicons name="calendar-outline" size={40} color={C.textMuted} />
               <Text style={styles.emptyText}>No {filter !== 'ALL' ? filter.toLowerCase() : ''} appointments</Text>
             </View>
           }
@@ -250,7 +252,7 @@ export default function DoctorAppointmentsScreen() {
       <Modal visible={!!selectedImage} transparent animationType="fade" onRequestClose={() => setSelectedImage(null)}>
         <View style={styles.lightboxOverlay}>
           <TouchableOpacity style={styles.lightboxClose} onPress={() => setSelectedImage(null)}>
-            <Ionicons name="close" size={32} color={COLORS.white} />
+            <Ionicons name="close" size={32} color={C.white} />
           </TouchableOpacity>
           {selectedImage && (
             <Image source={{ uri: selectedImage }} style={styles.lightboxImage} resizeMode="contain" />
@@ -262,65 +264,65 @@ export default function DoctorAppointmentsScreen() {
 }
 
 function statusColor(s) {
-  return { ACCEPTED: COLORS.success, PENDING: COLORS.warning, CANCELLED: COLORS.error, COMPLETED: COLORS.info, REJECTED: COLORS.error }[s] ?? COLORS.textSecondary;
+  return { ACCEPTED: C.success, PENDING: C.warning, CANCELLED: C.error, COMPLETED: C.info, REJECTED: C.error }[s] ?? C.textSecondary;
 }
 
 function actionBgColor(s) {
-  return { ACCEPTED: COLORS.success, REJECTED: COLORS.error, CANCELLED: COLORS.error, COMPLETED: COLORS.info }[s] ?? COLORS.primary;
+  return { ACCEPTED: C.success, REJECTED: C.error, CANCELLED: C.error, COMPLETED: C.info }[s] ?? C.primary;
 }
 
 function actionLabel(s) {
   return { ACCEPTED: '✓ Accept', REJECTED: '✕ Reject', CANCELLED: '✕ Cancel', COMPLETED: '✔ Complete' }[s] ?? s;
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary },
-  filterContainer: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary },
+  subtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary },
+  filterContainer: { borderBottomWidth: 1, borderBottomColor: C.border },
   filterRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm },
   filterTab: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: SPACING.md, paddingVertical: 8,
-    borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.full, backgroundColor: C.bgCard,
+    borderWidth: 1, borderColor: C.border,
   },
-  filterTabActive: { backgroundColor: COLORS.doctorPrimary, borderColor: COLORS.doctorPrimary },
-  filterText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '700' },
-  filterTextActive: { color: COLORS.textInverse },
+  filterTabActive: { backgroundColor: C.doctorPrimary, borderColor: C.doctorPrimary },
+  filterText: { fontSize: 11, color: C.textSecondary, fontWeight: '700' },
+  filterTextActive: { color: C.textInverse },
   badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full },
-  badgeInactive: { backgroundColor: COLORS.bgElevated },
+  badgeInactive: { backgroundColor: C.bgElevated },
   badgeActive: { backgroundColor: 'rgba(0,0,0,0.15)' },
-  badgeText: { fontSize: 10, fontWeight: '800', color: COLORS.textSecondary },
-  badgeTextActive: { color: COLORS.textInverse },
+  badgeText: { fontSize: 10, fontWeight: '800', color: C.textSecondary },
+  badgeTextActive: { color: C.textInverse },
   dateFilterContainer: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, gap: SPACING.sm
   },
   dateInput: {
-    flex: 1, height: 40, backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
-    color: COLORS.textPrimary, fontSize: FONT_SIZES.sm, borderWidth: 1, borderColor: COLORS.border
+    flex: 1, height: 40, backgroundColor: C.bgElevated, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
+    color: C.textPrimary, fontSize: FONT_SIZES.sm, borderWidth: 1, borderColor: C.border
   },
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+    backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
+    marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start' },
   patientAvatar: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: COLORS.bgElevated,
+    width: 46, height: 46, borderRadius: 23, backgroundColor: C.bgElevated,
     justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
   },
   patientInfo: { flex: 1 },
-  patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  patientContact: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  aptDate: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 4 },
+  patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  patientContact: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
+  aptDate: { fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 },
   statusBadge: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
   statusText: { fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize' },
-  notes: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: SPACING.sm, fontStyle: 'italic' },
+  notes: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: SPACING.sm, fontStyle: 'italic' },
   actionsRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   actionBtn: {
     flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.md,
@@ -328,42 +330,42 @@ const styles = StyleSheet.create({
   },
   actionBtnText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md },
+  emptyText: { color: C.textMuted, marginTop: SPACING.md },
 
   // Symptom panel
   viewSymptomBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: SPACING.sm, paddingVertical: 6, paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md, backgroundColor: `${COLORS.doctorPrimary}12`,
-    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}25`, alignSelf: 'flex-start',
+    borderRadius: RADIUS.md, backgroundColor: `${C.doctorPrimary}12`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}25`, alignSelf: 'flex-start',
   },
-  viewSymptomText: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.doctorPrimary },
+  viewSymptomText: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.doctorPrimary },
   symptomPanel: {
     marginTop: SPACING.sm, padding: SPACING.md,
     backgroundColor: 'rgba(34, 201, 160, 0.05)', borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}20`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}20`,
   },
   symptomSection: { marginBottom: SPACING.sm },
   symptomLabel: {
-    fontSize: 10, fontWeight: '800', color: COLORS.doctorPrimary,
+    fontSize: 10, fontWeight: '800', color: C.doctorPrimary,
     textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4,
   },
   symptomText: {
-    fontSize: FONT_SIZES.sm, color: COLORS.textSecondary,
-    backgroundColor: COLORS.subtleBg, padding: SPACING.sm,
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder,
+    fontSize: FONT_SIZES.sm, color: C.textSecondary,
+    backgroundColor: C.subtleBg, padding: SPACING.sm,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: C.cardInnerBorder,
     lineHeight: 20,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     paddingHorizontal: SPACING.sm, paddingVertical: 3,
-    borderRadius: RADIUS.full, backgroundColor: `${COLORS.doctorPrimary}18`,
-    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
+    borderRadius: RADIUS.full, backgroundColor: `${C.doctorPrimary}18`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}30`,
   },
-  tagText: { fontSize: FONT_SIZES.xs, color: COLORS.doctorPrimary, fontWeight: '700' },
+  tagText: { fontSize: FONT_SIZES.xs, color: C.doctorPrimary, fontWeight: '700' },
   symptomImage: {
     width: 80, height: 80, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: `${COLORS.doctorPrimary}30`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}30`,
   },
   lightboxOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',

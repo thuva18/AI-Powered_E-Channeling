@@ -47,7 +47,7 @@ export default function AdminHomeScreen() {
   ];
 
   const cardBg = isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard;
-  const cardBorder = isDark ? 'rgba(255,255,255,0.05)' : C.border;
+  const cardBorder = isDark ? C.cardInnerBorder : C.border;
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
@@ -114,7 +114,7 @@ export default function AdminHomeScreen() {
                 flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm,
                 borderWidth: 1, borderColor: `${C.adminPrimary}33`, ...S.sm,
               }} activeOpacity={0.8} onPress={() => router.push('/(admin)/doctors')}>
-                <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : C.bgElevated, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md }}>
+                <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: isDark ? C.cardInnerBorder : C.bgElevated, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md }}>
                   <Text style={{ fontSize: 20 }}>👨‍⚕️</Text>
                 </View>
                 <View style={{ flex: 1 }}>

@@ -2,6 +2,7 @@
 // Doctor Profile & Availability — matches web DoctorProfile.jsx feature-for-feature
 
 import { useState, useEffect, useCallback } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   ActivityIndicator, Alert, Switch, KeyboardAvoidingView, Platform,
@@ -9,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
@@ -25,6 +26,7 @@ const slotDurationHours = (start, end) => {
 
 // ─── Field Component ─────────────────────────────────────────────────────────
 function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note, rightIcon }) {
+  const styles = useStyles(getStyles);
   return (
     <View style={fStyles.wrap}>
       <Text style={fStyles.label}>{label}</Text>
@@ -34,7 +36,7 @@ function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note
           value={value}
           onChangeText={readOnly ? undefined : onChange}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={C.textMuted}
           editable={!readOnly}
           {...extra}
         />
@@ -42,7 +44,7 @@ function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note
       </View>
       {!!note && (
         <View style={fStyles.noteRow}>
-          <Ionicons name="alert-circle-outline" size={11} color={COLORS.warning} />
+          <Ionicons name="alert-circle-outline" size={11} color={C.warning} />
           <Text style={fStyles.note}>{note}</Text>
         </View>
       )}
@@ -51,35 +53,37 @@ function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note
 }
 const fStyles = StyleSheet.create({
   wrap: { marginBottom: SPACING.sm },
-  label: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+  label: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
   row: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.inputBgAlt, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: COLORS.border, paddingHorizontal: SPACING.md, height: 50,
+    backgroundColor: C.inputBgAlt, borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: C.border, paddingHorizontal: SPACING.md, height: 50,
   },
   readOnly: { backgroundColor: 'rgba(10,15,30,0.6)', opacity: 0.6 },
-  input: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
+  input: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  note: { flex: 1, fontSize: FONT_SIZES.xs, color: COLORS.textMuted },
+  note: { flex: 1, fontSize: FONT_SIZES.xs, color: C.textMuted },
 });
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
 function Toast({ msg, type }) {
+  const styles = useStyles(getStyles);
   if (!msg) return null;
-  const bg = type === 'success' ? COLORS.success : COLORS.error;
+  const bg = type === 'success' ? C.success : C.error;
   return (
     <View style={[toastStyles.box, { backgroundColor: bg }]}>
-      <Ionicons name={type === 'success' ? 'checkmark-circle' : 'alert-circle'} size={16} color={COLORS.white} />
+      <Ionicons name={type === 'success' ? 'checkmark-circle' : 'alert-circle'} size={16} color={C.white} />
       <Text style={toastStyles.text}>{msg}</Text>
     </View>
   );
 }
 const toastStyles = StyleSheet.create({
   box: { position: 'absolute', top: 60, left: SPACING.lg, right: SPACING.lg, zIndex: 99, flexDirection: 'row', alignItems: 'center', gap: 8, padding: SPACING.md, borderRadius: RADIUS.md, ...SHADOWS.lg },
-  text: { flex: 1, color: COLORS.white, fontSize: FONT_SIZES.sm, fontWeight: '600' },
+  text: { flex: 1, color: C.white, fontSize: FONT_SIZES.sm, fontWeight: '600' },
 });
 
 export default function DoctorProfileScreen() {
+  const styles = useStyles(getStyles);
   const { updateUser, clearUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -228,8 +232,8 @@ export default function DoctorProfileScreen() {
   };
 
   if (loading) return (
-    <View style={{ flex: 1, backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator color={COLORS.doctorPrimary} size="large" />
+    <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }}>
+      <ActivityIndicator color={C.doctorPrimary} size="large" />
     </View>
   );
 
@@ -255,7 +259,7 @@ export default function DoctorProfileScreen() {
             onPress={() => setTab(t.key)}
             activeOpacity={0.8}
           >
-            <Ionicons name={t.icon} size={16} color={tab === t.key ? COLORS.doctorPrimary : COLORS.textMuted} />
+            <Ionicons name={t.icon} size={16} color={tab === t.key ? C.doctorPrimary : C.textMuted} />
             <Text style={[styles.tabLabel, tab === t.key && styles.tabLabelActive]}>{t.label}</Text>
           </TouchableOpacity>
         ))}
@@ -267,8 +271,8 @@ export default function DoctorProfileScreen() {
           <View style={styles.section}>
             {/* Personal Info */}
             <View style={styles.sectionHeader}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${COLORS.primary}20` }]}>
-                <Ionicons name="person" size={18} color={COLORS.primary} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${C.primary}20` }]}>
+                <Ionicons name="person" size={18} color={C.primary} />
               </View>
               <View>
                 <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -303,7 +307,7 @@ export default function DoctorProfileScreen() {
 
               <View style={fStyles.wrap}>
                 <Text style={fStyles.label}>Phone Number</Text>
-                <View style={[fStyles.row, phoneError && { borderColor: COLORS.error }]}>
+                <View style={[fStyles.row, phoneError && { borderColor: C.error }]}>
                   <TextInput
                     style={fStyles.input}
                     value={form.phone}
@@ -313,18 +317,18 @@ export default function DoctorProfileScreen() {
                       else setPhoneError('');
                     }}
                     placeholder="07XXXXXXXX or +94XXXXXXXXX"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={C.textMuted}
                     keyboardType="phone-pad"
                   />
                   {form.phone.trim() && (
                     <Ionicons
                       name={phoneValid ? 'checkmark-circle' : 'alert-circle'}
                       size={18}
-                      color={phoneValid ? COLORS.success : COLORS.error}
+                      color={phoneValid ? C.success : C.error}
                     />
                   )}
                 </View>
-                {phoneError ? <Text style={{ fontSize: 11, color: COLORS.error, marginTop: 3 }}>{phoneError}</Text> : null}
+                {phoneError ? <Text style={{ fontSize: 11, color: C.error, marginTop: 3 }}>{phoneError}</Text> : null}
               </View>
 
               <Field
@@ -338,8 +342,8 @@ export default function DoctorProfileScreen() {
 
             {/* Professional Details */}
             <View style={[styles.sectionHeader, { marginTop: SPACING.md }]}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${COLORS.doctorPrimary}20` }]}>
-                <Ionicons name="book-outline" size={18} color={COLORS.doctorPrimary} />
+              <View style={[styles.sectionIcon, { backgroundColor: `${C.doctorPrimary}20` }]}>
+                <Ionicons name="book-outline" size={18} color={C.doctorPrimary} />
               </View>
               <View>
                 <Text style={styles.sectionTitle}>Professional Details</Text>
@@ -352,7 +356,7 @@ export default function DoctorProfileScreen() {
               <TextInput
                 style={styles.textArea}
                 placeholder="Write a short professional bio..."
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={form.profileDetails.bio}
                 onChangeText={(v) => setDetail('bio', v)}
                 multiline numberOfLines={4} textAlignVertical="top"
@@ -362,7 +366,7 @@ export default function DoctorProfileScreen() {
               <TextInput
                 style={styles.textArea}
                 placeholder="MBBS, MD Cardiology, ..."
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={form.profileDetails.qualifications}
                 onChangeText={(v) => setDetail('qualifications', v)}
                 multiline numberOfLines={2} textAlignVertical="top"
@@ -374,9 +378,9 @@ export default function DoctorProfileScreen() {
               style={[styles.saveBtn, saving && { opacity: 0.65 }]}
               onPress={handleSaveProfile} disabled={saving} activeOpacity={0.85}
             >
-              {saving ? <ActivityIndicator color={COLORS.white} /> : (
+              {saving ? <ActivityIndicator color={C.white} /> : (
                 <>
-                  <Ionicons name="save-outline" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
+                  <Ionicons name="save-outline" size={18} color={C.white} style={{ marginRight: 8 }} />
                   <Text style={styles.saveBtnText}>Save Profile</Text>
                 </>
               )}
@@ -385,15 +389,15 @@ export default function DoctorProfileScreen() {
             {/* Danger Zone */}
             <View style={styles.dangerCard}>
               <View style={styles.dangerHeader}>
-                <Ionicons name="warning" size={18} color={COLORS.error} />
+                <Ionicons name="warning" size={18} color={C.error} />
                 <Text style={styles.dangerTitle}>Danger Zone</Text>
               </View>
               <Text style={styles.dangerText}>
                 Permanently delete your doctor account. Open appointments will be cancelled.{' '}
-                <Text style={{ color: COLORS.error, fontWeight: '700' }}>This cannot be undone.</Text>
+                <Text style={{ color: C.error, fontWeight: '700' }}>This cannot be undone.</Text>
               </Text>
               <TouchableOpacity style={styles.deleteAccBtn} onPress={() => { setShowDeleteConfirm(true); setDeleteText(''); }}>
-                <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+                <Ionicons name="trash-outline" size={15} color={C.error} />
                 <Text style={styles.deleteAccBtnText}>Delete My Profile</Text>
               </TouchableOpacity>
             </View>
@@ -419,11 +423,11 @@ export default function DoctorProfileScreen() {
                         <Switch
                           value={active}
                           onValueChange={() => toggleDay(day)}
-                          trackColor={{ false: COLORS.border, true: `${COLORS.doctorPrimary}55` }}
-                          thumbColor={active ? COLORS.doctorPrimary : COLORS.textMuted}
-                          ios_backgroundColor={COLORS.border}
+                          trackColor={{ false: C.border, true: `${C.doctorPrimary}55` }}
+                          thumbColor={active ? C.doctorPrimary : C.textMuted}
+                          ios_backgroundColor={C.border}
                         />
-                        <Text style={[styles.dayName, active && { color: COLORS.textPrimary }]}>
+                        <Text style={[styles.dayName, active && { color: C.textPrimary }]}>
                           {day.charAt(0) + day.slice(1).toLowerCase()}
                         </Text>
                       </View>
@@ -442,21 +446,21 @@ export default function DoctorProfileScreen() {
                           <View style={{ flex: 1 }}>
                             <Text style={styles.slotLabel}>Start Time</Text>
                             <TextInput
-                              style={[styles.timeInput, slotErrors[day] && { borderColor: COLORS.error }]}
+                              style={[styles.timeInput, slotErrors[day] && { borderColor: C.error }]}
                               value={slot.startTime}
                               onChangeText={(v) => updateSlot(day, 'startTime', v)}
                               placeholder="09:00"
-                              placeholderTextColor={COLORS.textMuted}
+                              placeholderTextColor={C.textMuted}
                             />
                           </View>
                           <View style={{ flex: 1, marginLeft: SPACING.sm }}>
                             <Text style={styles.slotLabel}>End Time</Text>
                             <TextInput
-                              style={[styles.timeInput, slotErrors[day] && { borderColor: COLORS.error }]}
+                              style={[styles.timeInput, slotErrors[day] && { borderColor: C.error }]}
                               value={slot.endTime}
                               onChangeText={(v) => updateSlot(day, 'endTime', v)}
                               placeholder="17:00"
-                              placeholderTextColor={COLORS.textMuted}
+                              placeholderTextColor={C.textMuted}
                             />
                           </View>
                         </View>
@@ -465,7 +469,7 @@ export default function DoctorProfileScreen() {
                           <Text style={styles.slotError}>{slotErrors[day]}</Text>
                         ) : (
                           <Text style={styles.slotDuration}>
-                            <Ionicons name="checkmark-circle" size={11} color={COLORS.success} /> {' '}
+                            <Ionicons name="checkmark-circle" size={11} color={C.success} /> {' '}
                             Duration: {dur.toFixed(1)}h / max {MAX_SLOT_HOURS}h
                           </Text>
                         )}
@@ -511,12 +515,12 @@ export default function DoctorProfileScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: COLORS.doctorPrimary, ...SHADOWS.glowGreen }, saving && { opacity: 0.65 }]}
+              style={[styles.saveBtn, { backgroundColor: C.doctorPrimary, ...SHADOWS.glowGreen }, saving && { opacity: 0.65 }]}
               onPress={handleSaveAvailability} disabled={saving} activeOpacity={0.85}
             >
-              {saving ? <ActivityIndicator color={COLORS.white} /> : (
+              {saving ? <ActivityIndicator color={C.white} /> : (
                 <>
-                  <Ionicons name="save-outline" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
+                  <Ionicons name="save-outline" size={18} color={C.white} style={{ marginRight: 8 }} />
                   <Text style={styles.saveBtnText}>Save Availability</Text>
                 </>
               )}
@@ -530,22 +534,22 @@ export default function DoctorProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.deleteModal}>
             <View style={styles.deleteModalIcon}>
-              <Ionicons name="trash" size={28} color={COLORS.error} />
+              <Ionicons name="trash" size={28} color={C.error} />
             </View>
             <Text style={styles.deleteModalTitle}>Delete Your Doctor Profile?</Text>
             <Text style={styles.deleteModalText}>
               This will permanently delete your account and remove your access. Open appointments will be cancelled.{' '}
-              <Text style={{ fontWeight: '700', color: COLORS.error }}>Cannot be undone.</Text>
+              <Text style={{ fontWeight: '700', color: C.error }}>Cannot be undone.</Text>
             </Text>
             <Text style={styles.deleteModalPrompt}>
-              Type <Text style={{ fontFamily: 'monospace', color: COLORS.error, fontWeight: '700' }}>DELETE</Text> to confirm:
+              Type <Text style={{ fontFamily: 'monospace', color: C.error, fontWeight: '700' }}>DELETE</Text> to confirm:
             </Text>
             <TextInput
               style={styles.deleteModalInput}
               value={deleteText}
               onChangeText={setDeleteText}
               placeholder="Type DELETE here"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={C.textMuted}
               autoCapitalize="characters"
             />
             <View style={styles.deleteModalActions}>
@@ -557,7 +561,7 @@ export default function DoctorProfileScreen() {
                 onPress={handleDelete}
                 disabled={deleteText !== 'DELETE' || deleting}
               >
-                {deleting ? <ActivityIndicator color={COLORS.white} size="small" /> : (
+                {deleting ? <ActivityIndicator color={C.white} size="small" /> : (
                   <Text style={styles.confirmDeleteBtnText}>Delete Profile</Text>
                 )}
               </TouchableOpacity>
@@ -569,92 +573,92 @@ export default function DoctorProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder,
+    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
-  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  pageSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
 
   tabBar: { flexDirection: 'row', backgroundColor: 'rgba(26,34,53,0.5)', margin: SPACING.lg, borderRadius: RADIUS.lg, padding: 4, gap: 4 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: RADIUS.md },
-  tabActive: { backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.cardInnerBorder },
-  tabLabel: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontWeight: '600' },
-  tabLabelActive: { color: COLORS.doctorPrimary, fontWeight: '800' },
+  tabActive: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.cardInnerBorder },
+  tabLabel: { fontSize: FONT_SIZES.sm, color: C.textMuted, fontWeight: '600' },
+  tabLabelActive: { color: C.doctorPrimary, fontWeight: '800' },
 
   section: { paddingHorizontal: SPACING.lg, paddingBottom: 100 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
   sectionIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  sectionTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary },
-  sectionSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary },
+  sectionTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary },
+  sectionSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
 
   card: {
     backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: RADIUS.xl, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.cardInnerBorder2, marginBottom: SPACING.md,
-    borderTopWidth: 3, borderTopColor: COLORS.doctorPrimary,
+    borderWidth: 1, borderColor: C.cardInnerBorder2, marginBottom: SPACING.md,
+    borderTopWidth: 3, borderTopColor: C.doctorPrimary,
   },
   twoCol: { flexDirection: 'row', gap: SPACING.sm },
   textArea: {
-    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary,
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
+    borderRadius: RADIUS.md, padding: SPACING.md, color: C.textPrimary,
     fontSize: FONT_SIZES.base, minHeight: 80, textAlignVertical: 'top', marginBottom: 2,
   },
 
   saveBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 54,
+    backgroundColor: C.primary, borderRadius: RADIUS.md, height: 54,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
     marginBottom: SPACING.md, ...SHADOWS.glowBlue,
   },
-  saveBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
+  saveBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
 
   dangerCard: {
     borderRadius: RADIUS.xl, padding: SPACING.lg, borderWidth: 1,
-    borderColor: `${COLORS.error}33`, backgroundColor: `${COLORS.error}08`, marginBottom: SPACING.md,
+    borderColor: `${C.error}33`, backgroundColor: `${C.error}08`, marginBottom: SPACING.md,
   },
   dangerHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
-  dangerTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.error },
-  dangerText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20, marginBottom: SPACING.md },
-  deleteAccBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15`, borderWidth: 1, borderColor: `${COLORS.error}33` },
-  deleteAccBtnText: { fontSize: FONT_SIZES.sm, color: COLORS.error, fontWeight: '700' },
+  dangerTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.error },
+  dangerText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, lineHeight: 20, marginBottom: SPACING.md },
+  deleteAccBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.md, backgroundColor: `${C.error}15`, borderWidth: 1, borderColor: `${C.error}33` },
+  deleteAccBtnText: { fontSize: FONT_SIZES.sm, color: C.error, fontWeight: '700' },
 
   // Availability
-  availTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
-  availSubtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginBottom: SPACING.md },
-  dayCard: { borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder, backgroundColor: 'rgba(26,34,53,0.4)' },
-  dayCardActive: { borderColor: `${COLORS.doctorPrimary}44`, backgroundColor: `${COLORS.doctorPrimary}08` },
+  availTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, marginBottom: 4 },
+  availSubtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginBottom: SPACING.md },
+  dayCard: { borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder, backgroundColor: 'rgba(26,34,53,0.4)' },
+  dayCardActive: { borderColor: `${C.doctorPrimary}44`, backgroundColor: `${C.doctorPrimary}08` },
   dayToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   dayToggleSide: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  dayName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textMuted },
-  activeBadge: { backgroundColor: `${COLORS.doctorPrimary}20`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full },
-  activeBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.doctorPrimary },
-  slotConfig: { marginTop: SPACING.md, paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.cardInnerBorder },
-  slotLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  dayName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textMuted },
+  activeBadge: { backgroundColor: `${C.doctorPrimary}20`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full },
+  activeBadgeText: { fontSize: 10, fontWeight: '800', color: C.doctorPrimary },
+  slotConfig: { marginTop: SPACING.md, paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: C.cardInnerBorder },
+  slotLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
   timeInput: {
-    backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
     borderRadius: RADIUS.sm, height: 44, paddingHorizontal: SPACING.sm,
-    color: COLORS.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '600', textAlign: 'center',
+    color: C.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '600', textAlign: 'center',
   },
-  slotError: { fontSize: 11, color: COLORS.error, marginTop: 4 },
-  slotDuration: { fontSize: 11, color: COLORS.success, marginTop: 4 },
+  slotError: { fontSize: 11, color: C.error, marginTop: 4 },
+  slotDuration: { fontSize: 11, color: C.success, marginTop: 4 },
   stepperRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  stepperBtn: { width: 38, height: 38, borderRadius: RADIUS.sm, backgroundColor: COLORS.bgElevated, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
-  stepperBtnText: { fontSize: 20, color: COLORS.textPrimary, fontWeight: '700', lineHeight: 24 },
-  stepperInput: { flex: 1, height: 38, backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, color: COLORS.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '700' },
-  stepperMax: { fontSize: 11, color: COLORS.textMuted },
+  stepperBtn: { width: 38, height: 38, borderRadius: RADIUS.sm, backgroundColor: C.bgElevated, borderWidth: 1, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
+  stepperBtnText: { fontSize: 20, color: C.textPrimary, fontWeight: '700', lineHeight: 24 },
+  stepperInput: { flex: 1, height: 38, backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.sm, color: C.textPrimary, fontSize: FONT_SIZES.base, fontWeight: '700' },
+  stepperMax: { fontSize: 11, color: C.textMuted },
 
   // Delete modal
-  modalOverlay: { position: 'absolute', inset: 0, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: COLORS.overlay, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, zIndex: 999 },
-  deleteModal: { backgroundColor: COLORS.modalBg, borderRadius: RADIUS.xl, padding: SPACING.xl, width: '100%', borderWidth: 1, borderColor: COLORS.cardInnerBorder },
-  deleteModalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${COLORS.error}15`, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: SPACING.md },
-  deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
-  deleteModalText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
-  deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginBottom: SPACING.sm },
-  deleteModalInput: { backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
+  modalOverlay: { position: 'absolute', inset: 0, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: C.overlay, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, zIndex: 999 },
+  deleteModal: { backgroundColor: C.modalBg, borderRadius: RADIUS.xl, padding: SPACING.xl, width: '100%', borderWidth: 1, borderColor: C.cardInnerBorder },
+  deleteModalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${C.error}15`, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: SPACING.md },
+  deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
+  deleteModalText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
+  deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: SPACING.sm },
+  deleteModalInput: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
   deleteModalActions: { flexDirection: 'row', gap: SPACING.sm },
-  cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
-  cancelBtnText: { fontSize: FONT_SIZES.base, color: COLORS.textSecondary, fontWeight: '600' },
-  confirmDeleteBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center' },
-  confirmDeleteBtnText: { fontSize: FONT_SIZES.base, color: COLORS.white, fontWeight: '800' },
+  cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
+  cancelBtnText: { fontSize: FONT_SIZES.base, color: C.textSecondary, fontWeight: '600' },
+  confirmDeleteBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, backgroundColor: C.error, justifyContent: 'center', alignItems: 'center' },
+  confirmDeleteBtnText: { fontSize: FONT_SIZES.base, color: C.white, fontWeight: '800' },
 });

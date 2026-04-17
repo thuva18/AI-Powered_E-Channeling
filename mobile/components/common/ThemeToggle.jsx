@@ -2,11 +2,14 @@
 // Animated dark/light mode toggle button for use in headers
 
 import { TouchableOpacity, StyleSheet, Animated, View } from 'react-native';
+import useStyles from '../../hooks/useStyles';
+
 import { useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../../hooks/useTheme';
 
 export default function ThemeToggle({ size = 40 }) {
+  const styles = useStyles(getStyles);
   const { C, isDark, toggleTheme } = useTheme();
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -51,7 +54,7 @@ export default function ThemeToggle({ size = 40 }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (C, isDark) => StyleSheet.create({
   btn: {
     justifyContent: 'center',
     alignItems: 'center',

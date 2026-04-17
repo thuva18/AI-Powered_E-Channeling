@@ -1,10 +1,13 @@
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
+import useStyles from '../hooks/useStyles';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import useAuthStore from '../store/authStore';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 
 export default function IndexScreen() {
+  const styles = useStyles(getStyles);
   const { isLoading, isAuthenticated } = useAuthStore();
 
   if (isLoading) return null;
@@ -23,10 +26,10 @@ export default function IndexScreen() {
           <View style={styles.content}>
             <View style={styles.logoContainer}>
               <LinearGradient
-                colors={[COLORS.primary, COLORS.primaryDark]}
+                colors={[C.primary, C.primaryDark]}
                 style={styles.logoCircle}
               >
-                <Ionicons name="medkit" size={50} color={COLORS.white} />
+                <Ionicons name="medkit" size={50} color={C.white} />
               </LinearGradient>
               <Text style={styles.appName}>Medicare</Text>
               <Text style={styles.appNameSub}>E-Channeling</Text>
@@ -44,10 +47,10 @@ export default function IndexScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (C, isDark) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: C.bg,
   },
   bgImage: {
     flex: 1,
@@ -79,14 +82,14 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 42,
     fontWeight: '900',
-    color: COLORS.white,
+    color: C.white,
     letterSpacing: -1,
     lineHeight: 42,
   },
   appNameSub: {
     fontSize: FONT_SIZES.xl,
     fontWeight: '300',
-    color: COLORS.primaryLight,
+    color: C.primaryLight,
     textTransform: 'uppercase',
     letterSpacing: 4,
     marginTop: 4,
@@ -94,13 +97,13 @@ const styles = StyleSheet.create({
   divider: {
     width: 40,
     height: 3,
-    backgroundColor: COLORS.primary,
+    backgroundColor: C.primary,
     borderRadius: 2,
     marginVertical: SPACING.lg,
   },
   tagline: {
     fontSize: FONT_SIZES.md,
-    color: COLORS.textSecondary,
+    color: C.textSecondary,
     textAlign: 'center',
     maxWidth: '80%',
     lineHeight: 22,
@@ -112,7 +115,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.textMuted,
+    color: C.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },

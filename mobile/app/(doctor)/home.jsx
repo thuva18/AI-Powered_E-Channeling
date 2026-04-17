@@ -89,7 +89,7 @@ export default function DoctorHomeScreen() {
       <View style={{
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
         paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md,
-        backgroundColor: isDark ? 'rgba(17, 24, 39, 0.98)' : C.bgCard,
+        backgroundColor: isDark ? C.bgCard : C.bgCard,
         borderBottomWidth: 1, borderBottomColor: cardBorder,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
@@ -146,7 +146,7 @@ export default function DoctorHomeScreen() {
         {/* Stats */}
         {loading ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg }}>
-            {[0, 1, 2, 3].map(i => <View key={i} style={{ flex: 1, minWidth: '45%', height: 100, borderRadius: RADIUS.lg, backgroundColor: isDark ? 'rgba(30, 40, 64, 0.8)' : C.bgElevated }} />)}
+            {[0, 1, 2, 3].map(i => <View key={i} style={{ flex: 1, minWidth: '45%', height: 100, borderRadius: RADIUS.lg, backgroundColor: isDark ? C.bgElevated : C.bgElevated }} />)}
           </View>
         ) : (
           <Animated.View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg, opacity: fadeAnim }}>

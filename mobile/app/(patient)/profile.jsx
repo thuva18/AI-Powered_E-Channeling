@@ -2,6 +2,7 @@
 // Premium Patient profile view & edit
 
 import { useEffect, useState } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, Modal
@@ -10,9 +11,41 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export default function PatientProfileScreen() {
+  const styles = useStyles(getStyles);
+
+  function renderField(
+    _icon,
+    label,
+    value,
+    onChange,
+    editable = false,
+    readonly = false,
+    keyboardType = 'default',
+  ) {
+    return (
+      <View key={label} style={styles.fieldRow}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        {readonly || !editable ? (
+          <Text style={[styles.fieldValue, readonly && styles.fieldValueLocked]}>
+            {value || '—'}
+            {readonly && <Text style={{ color: C.textMuted }}> 🔒</Text>}
+          </Text>
+        ) : (
+          <TextInput
+            style={styles.fieldInput}
+            value={value ?? ''}
+            onChangeText={onChange}
+            placeholderTextColor={C.textMuted}
+            keyboardType={keyboardType}
+          />
+        )}
+      </View>
+    );
+  }
+
   const { user, updateUser, clearUser } = useAuthStore();
   const router = useRouter();
   const [profile, setProfile] = useState(null);
@@ -74,14 +107,14 @@ export default function PatientProfileScreen() {
     }
   };
 
-  if (loading) return <ActivityIndicator color={COLORS.patientPrimary} style={{ flex: 1, backgroundColor: COLORS.bg }} />;
+  if (loading) return <ActivityIndicator color={C.patientPrimary} style={{ flex: 1, backgroundColor: C.bg }} />;
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>My Profile</Text>
         <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(!editing)}>
-          <Ionicons name={editing ? 'close' : 'pencil'} size={18} color={COLORS.patientPrimary} />
+          <Ionicons name={editing ? 'close' : 'pencil'} size={18} color={C.patientPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -98,21 +131,21 @@ export default function PatientProfileScreen() {
 
         {/* Links */}
         <TouchableOpacity style={styles.historyBtn} activeOpacity={0.8} onPress={() => router.push('/(patient)/journal')}>
-            <View style={styles.hIcon}><Ionicons name="book" size={24} color={COLORS.patientPrimary} /></View>
+            <View style={styles.hIcon}><Ionicons name="book" size={24} color={C.patientPrimary} /></View>
             <View style={{flex: 1}}>
                 <Text style={styles.historyBtnTitle}>Health Journal</Text>
                 <Text style={styles.historyBtnSub}>Track daily mood, pain, and symptoms</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+            <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.historyBtn} activeOpacity={0.8} onPress={() => router.push('/(patient)/medical-history')}>
-            <View style={styles.hIcon}><Ionicons name="medical" size={24} color={COLORS.patientPrimary} /></View>
+            <View style={styles.hIcon}><Ionicons name="medical" size={24} color={C.patientPrimary} /></View>
             <View style={{flex: 1}}>
                 <Text style={styles.historyBtnTitle}>Medical History</Text>
                 <Text style={styles.historyBtnSub}>View past diagnoses & AI triage results</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+            <Ionicons name="chevron-forward" size={20} color={C.textMuted} />
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Personal Details</Text>
@@ -141,14 +174,14 @@ export default function PatientProfileScreen() {
         {/* Danger Zone */}
         <View style={styles.dangerCard}>
           <View style={styles.dangerHeader}>
-            <Ionicons name="warning" size={18} color={COLORS.error} />
+            <Ionicons name="warning" size={18} color={C.error} />
             <Text style={styles.dangerTitle}>Danger Zone</Text>
           </View>
           <Text style={styles.dangerText}>
-            Permanently delete your patient account. <Text style={{ color: COLORS.error, fontWeight: '700' }}>This cannot be undone.</Text>
+            Permanently delete your patient account. <Text style={{ color: C.error, fontWeight: '700' }}>This cannot be undone.</Text>
           </Text>
           <TouchableOpacity style={styles.deleteAccBtn} onPress={() => { setShowDeleteConfirm(true); setDeleteText(''); }}>
-            <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+            <Ionicons name="trash-outline" size={15} color={C.error} />
             <Text style={styles.deleteAccBtnText}>Delete My Profile</Text>
           </TouchableOpacity>
         </View>
@@ -162,7 +195,7 @@ export default function PatientProfileScreen() {
             ]);
           }}
         >
-          <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+          <Ionicons name="log-out-outline" size={20} color={C.error} />
           <Text style={styles.logoutText}>  Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -173,21 +206,21 @@ export default function PatientProfileScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.deleteModal}>
               <View style={styles.deleteModalIcon}>
-                <Ionicons name="trash" size={28} color={COLORS.error} />
+                <Ionicons name="trash" size={28} color={C.error} />
               </View>
               <Text style={styles.deleteModalTitle}>Delete Your Patient Profile?</Text>
               <Text style={styles.deleteModalText}>
-                This will permanently delete your account and remove your access. <Text style={{ fontWeight: '700', color: COLORS.error }}>Cannot be undone.</Text>
+                This will permanently delete your account and remove your access. <Text style={{ fontWeight: '700', color: C.error }}>Cannot be undone.</Text>
               </Text>
               <Text style={styles.deleteModalPrompt}>
-                Type <Text style={{ fontFamily: 'monospace', color: COLORS.error, fontWeight: '700' }}>DELETE</Text> to confirm:
+                Type <Text style={{ fontFamily: 'monospace', color: C.error, fontWeight: '700' }}>DELETE</Text> to confirm:
               </Text>
               <TextInput
                 style={styles.deleteModalInput}
                 value={deleteText}
                 onChangeText={setDeleteText}
                 placeholder="Type DELETE here"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 autoCapitalize="characters"
               />
               <View style={styles.deleteModalActions}>
@@ -199,7 +232,7 @@ export default function PatientProfileScreen() {
                   onPress={handleDelete}
                   disabled={deleteText !== 'DELETE' || deleting}
                 >
-                  {deleting ? <ActivityIndicator color={COLORS.white} size="small" /> : (
+                  {deleting ? <ActivityIndicator color={C.white} size="small" /> : (
                     <Text style={styles.confirmDeleteBtnText}>Delete Profile</Text>
                   )}
                 </TouchableOpacity>
@@ -212,44 +245,16 @@ export default function PatientProfileScreen() {
   );
 }
 
-function renderField(
-  _icon,
-  label,
-  value,
-  onChange,
-  editable = false,
-  readonly = false,
-  keyboardType = 'default',
-) {
-  return (
-    <View key={label} style={styles.fieldRow}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {readonly || !editable ? (
-        <Text style={[styles.fieldValue, readonly && styles.fieldValueLocked]}>
-          {value || '—'}
-          {readonly && <Text style={{ color: COLORS.textMuted }}> 🔒</Text>}
-        </Text>
-      ) : (
-        <TextInput
-          style={styles.fieldInput}
-          value={value ?? ''}
-          onChangeText={onChange}
-          placeholderTextColor={COLORS.textMuted}
-          keyboardType={keyboardType}
-        />
-      )}
-    </View>
-  );
-}
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.headerBg, borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder,
+    backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   editBtn: {
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center',
@@ -257,36 +262,36 @@ const styles = StyleSheet.create({
   content: { padding: SPACING.lg, paddingBottom: 100 },
   avatarSection: { alignItems: 'center', marginBottom: SPACING.lg },
   avatar: {
-    width: 100, height: 100, borderRadius: 50, backgroundColor: COLORS.cardBgTranslucent,
+    width: 100, height: 100, borderRadius: 50, backgroundColor: C.cardBgTranslucent,
     justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
-    borderWidth: 2, borderColor: COLORS.patientPrimary, ...SHADOWS.lg,
+    borderWidth: 2, borderColor: C.patientPrimary, ...SHADOWS.lg,
   },
-  name: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  email: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 4 },
+  name: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  email: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 4 },
   roleBadge: {
     marginTop: SPACING.sm, paddingHorizontal: 16, paddingVertical: 6,
     backgroundColor: 'rgba(78, 154, 241, 0.2)', borderRadius: RADIUS.full,
   },
-  roleText: { color: COLORS.patientPrimary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
-  historyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.cardInnerBorder, ...SHADOWS.sm },
+  roleText: { color: C.patientPrimary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
+  historyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl, borderWidth: 1, borderColor: C.cardInnerBorder, ...SHADOWS.sm },
   hIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md },
-  historyBtnTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
-  historyBtnSub: { fontSize: 12, color: COLORS.textSecondary },
-  sectionTitle: { fontSize: FONT_SIZES.sm, textTransform: 'uppercase', letterSpacing: 1, color: COLORS.textSecondary, fontWeight: '800', marginBottom: SPACING.md, marginLeft: 4 },
+  historyBtnTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: C.textPrimary, marginBottom: 2 },
+  historyBtnSub: { fontSize: 12, color: C.textSecondary },
+  sectionTitle: { fontSize: FONT_SIZES.sm, textTransform: 'uppercase', letterSpacing: 1, color: C.textSecondary, fontWeight: '800', marginBottom: SPACING.md, marginLeft: 4 },
   card: {
-    backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.cardInnerBorder, overflow: 'hidden', ...SHADOWS.sm,
+    backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: C.cardInnerBorder, overflow: 'hidden', ...SHADOWS.sm,
   },
-  fieldRow: { padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder },
-  fieldLabel: { fontSize: 11, color: COLORS.textSecondary, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
-  fieldValue: { fontSize: FONT_SIZES.base, fontWeight: '600', color: COLORS.textPrimary },
-  fieldValueLocked: { color: COLORS.textMuted },
+  fieldRow: { padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
+  fieldLabel: { fontSize: 11, color: C.textSecondary, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
+  fieldValue: { fontSize: FONT_SIZES.base, fontWeight: '600', color: C.textPrimary },
+  fieldValueLocked: { color: C.textMuted },
   fieldInput: {
-    fontSize: FONT_SIZES.base, color: COLORS.textPrimary, fontWeight: '600',
-    borderBottomWidth: 1, borderBottomColor: COLORS.patientPrimary, paddingVertical: 4,
+    fontSize: FONT_SIZES.base, color: C.textPrimary, fontWeight: '600',
+    borderBottomWidth: 1, borderBottomColor: C.patientPrimary, paddingVertical: 4,
   },
   saveBtn: {
-    backgroundColor: COLORS.patientPrimary, borderRadius: RADIUS.lg, height: 56,
+    backgroundColor: C.patientPrimary, borderRadius: RADIUS.lg, height: 56,
     justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.lg,
   },
   btnDisabled: { opacity: 0.7 },
@@ -296,26 +301,26 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md, backgroundColor: 'rgba(232, 69, 69, 0.1)',
     borderRadius: RADIUS.lg, height: 56, borderWidth: 1, borderColor: 'rgba(232, 69, 69, 0.2)',
   },
-  logoutText: { color: COLORS.error, fontWeight: '800', fontSize: FONT_SIZES.base },
+  logoutText: { color: C.error, fontWeight: '800', fontSize: FONT_SIZES.base },
   dangerCard: {
     borderRadius: RADIUS.xl, padding: SPACING.lg, borderWidth: 1,
-    borderColor: `${COLORS.error}33`, backgroundColor: `${COLORS.error}08`, marginTop: SPACING.xl,
+    borderColor: `${C.error}33`, backgroundColor: `${C.error}08`, marginTop: SPACING.xl,
   },
   dangerHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
-  dangerTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.error },
-  dangerText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, lineHeight: 20, marginBottom: SPACING.md },
-  deleteAccBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15`, borderWidth: 1, borderColor: `${COLORS.error}33` },
-  deleteAccBtnText: { fontSize: FONT_SIZES.sm, color: COLORS.error, fontWeight: '700' },
-  modalOverlay: { position: 'absolute', inset: 0, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: COLORS.overlay, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, zIndex: 999 },
-  deleteModal: { backgroundColor: COLORS.modalBg, borderRadius: RADIUS.xl, padding: SPACING.xl, width: '100%', borderWidth: 1, borderColor: COLORS.cardInnerBorder },
-  deleteModalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${COLORS.error}15`, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: SPACING.md },
-  deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
-  deleteModalText: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
-  deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginBottom: SPACING.sm },
-  deleteModalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
+  dangerTitle: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.error },
+  dangerText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, lineHeight: 20, marginBottom: SPACING.md },
+  deleteAccBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 8, borderRadius: RADIUS.md, backgroundColor: `${C.error}15`, borderWidth: 1, borderColor: `${C.error}33` },
+  deleteAccBtnText: { fontSize: FONT_SIZES.sm, color: C.error, fontWeight: '700' },
+  modalOverlay: { position: 'absolute', inset: 0, top: 0, bottom: 0, left: 0, right: 0, backgroundColor: C.overlay, justifyContent: 'center', alignItems: 'center', padding: SPACING.lg, zIndex: 999 },
+  deleteModal: { backgroundColor: C.modalBg, borderRadius: RADIUS.xl, padding: SPACING.xl, width: '100%', borderWidth: 1, borderColor: C.cardInnerBorder },
+  deleteModalIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: `${C.error}15`, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: SPACING.md },
+  deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
+  deleteModalText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
+  deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: SPACING.sm },
+  deleteModalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
   deleteModalActions: { flexDirection: 'row', gap: SPACING.sm },
-  cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
-  cancelBtnText: { fontSize: FONT_SIZES.base, color: COLORS.textSecondary, fontWeight: '600' },
-  confirmDeleteBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.error, justifyContent: 'center', alignItems: 'center' },
-  confirmDeleteBtnText: { fontSize: FONT_SIZES.base, color: COLORS.white, fontWeight: '800' },
+  cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
+  cancelBtnText: { fontSize: FONT_SIZES.base, color: C.textSecondary, fontWeight: '600' },
+  confirmDeleteBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, backgroundColor: C.error, justifyContent: 'center', alignItems: 'center' },
+  confirmDeleteBtnText: { fontSize: FONT_SIZES.base, color: C.white, fontWeight: '800' },
 });

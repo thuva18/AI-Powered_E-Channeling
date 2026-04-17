@@ -1,11 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import useStyles from '../hooks/useStyles';
+
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
 import useTheme from '../hooks/useTheme';
 
 const NotificationsScreen = () => {
+  const styles = useStyles(getStyles);
   const { C, isDark } = useTheme();
   const router = useRouter();
   const [notifications, setNotifications] = useState([]);
@@ -70,7 +73,7 @@ const NotificationsScreen = () => {
     <TouchableOpacity
       style={[
         styles.card,
-        { backgroundColor: isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard, borderColor: isDark ? 'rgba(255,255,255,0.05)' : C.border },
+        { backgroundColor: isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard, borderColor: isDark ? C.cardInnerBorder : C.border },
         !item.isRead && { borderLeftWidth: 4, borderLeftColor: C.primary }
       ]}
       onPress={() => handleRead(item._id, item.link)}
@@ -91,7 +94,7 @@ const NotificationsScreen = () => {
 
   return (
     <View style={[styles.root, { backgroundColor: C.bg }]}>
-      <View style={[styles.header, { backgroundColor: isDark ? 'rgba(19, 25, 41, 0.95)' : C.bgCard, borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : C.border }]}>
+      <View style={[styles.header, { backgroundColor: isDark ? 'rgba(19, 25, 41, 0.95)' : C.bgCard, borderBottomColor: isDark ? C.cardInnerBorder : C.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={C.textPrimary} />
         </TouchableOpacity>
@@ -122,7 +125,7 @@ const NotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (C, isDark) => StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 60, paddingBottom: 16, borderBottomWidth: 1 },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },

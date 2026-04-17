@@ -2,6 +2,7 @@
 // Premium Patient Health Journal (Matches Web Feature-for-Feature)
 
 import { useState, useEffect, useCallback } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
   Modal, ScrollView, Alert, ActivityIndicator, RefreshControl,
@@ -9,29 +10,32 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const MOOD_STATUSES = ['Improving', 'Stable', 'Worsening'];
 
 const MOOD_CONFIG = {
-  Improving: { color: COLORS.success, icon: 'happy' },
-  Stable: { color: COLORS.warning, icon: 'meh' },
-  Worsening: { color: COLORS.error, icon: 'sad' },
+  Improving: { color: C.success, icon: 'happy' },
+  Stable: { color: C.warning, icon: 'meh' },
+  Worsening: { color: C.error, icon: 'sad' },
 };
 
 const PAIN_COLOR = (level) => {
-  if (level <= 3) return COLORS.success;
-  if (level <= 6) return COLORS.warning;
-  return COLORS.error;
+  const styles = useStyles(getStyles);
+  if (level <= 3) return C.success;
+  if (level <= 6) return C.warning;
+  return C.error;
 };
 
 const PAIN_LABEL = (level) => {
+  const styles = useStyles(getStyles);
   if (level <= 3) return 'Mild';
   if (level <= 6) return 'Moderate';
   return 'Severe';
 };
 
 export default function PatientJournalScreen() {
+  const styles = useStyles(getStyles);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,23 +92,23 @@ export default function PatientJournalScreen() {
           <Text style={styles.pageSubtitle}>Track your daily health</Text>
         </View>
         <TouchableOpacity style={styles.newBtn} onPress={() => setModal('new')} activeOpacity={0.85}>
-          <Ionicons name="add" size={22} color={COLORS.white} />
+          <Ionicons name="add" size={22} color={C.white} />
         </TouchableOpacity>
       </View>
 
       {/* Search & Filter */}
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={16} color={COLORS.textMuted} style={{ marginRight: 8 }} />
+        <Ionicons name="search-outline" size={16} color={C.textMuted} style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search by title or symptom..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={C.textMuted}
           value={search}
           onChangeText={setSearch}
         />
         {!!search && (
           <TouchableOpacity onPress={() => setSearch('')}>
-            <Ionicons name="close-circle" size={16} color={COLORS.textMuted} />
+            <Ionicons name="close-circle" size={16} color={C.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -113,14 +117,14 @@ export default function PatientJournalScreen() {
         {['ALL', ...MOOD_STATUSES].map(s => {
           const count = s === 'ALL' ? entries.length : entries.filter(e => e.moodStatus === s).length;
           const isActive = filterMood === s;
-          const color = s === 'ALL' ? COLORS.primary : MOOD_CONFIG[s].color;
+          const color = s === 'ALL' ? C.primary : MOOD_CONFIG[s].color;
           return (
             <TouchableOpacity
               key={s}
               style={[styles.filterChip, isActive && { backgroundColor: color, borderColor: color }]}
               onPress={() => setFilterMood(s)}
             >
-              <Text style={[styles.filterChipText, isActive && { color: COLORS.white }]}>
+              <Text style={[styles.filterChipText, isActive && { color: C.white }]}>
                 {s} ({count})
               </Text>
             </TouchableOpacity>
@@ -130,20 +134,20 @@ export default function PatientJournalScreen() {
 
       {/* List */}
       {loading ? (
-        <ActivityIndicator color={COLORS.patientPrimary} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.patientPrimary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={item => item._id}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.patientPrimary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.patientPrimary} />}
           renderItem={({ item }) => (
             <JournalCard entry={item} onEdit={setModal} onDelete={handleDelete} />
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <Ionicons name="book-outline" size={32} color={COLORS.patientPrimary} />
+                <Ionicons name="book-outline" size={32} color={C.patientPrimary} />
               </View>
               <Text style={styles.emptyTitle}>
                 {search || filterMood !== 'ALL' ? 'No matching records' : 'No entries yet'}
@@ -170,6 +174,7 @@ export default function PatientJournalScreen() {
 
 // ─── Journal Entry Card Component ──────────────────────────────────────────────
 function JournalCard({ entry, onEdit, onDelete }) {
+  const styles = useStyles(getStyles);
   const [expanded, setExpanded] = useState(false);
   const moodCfg = MOOD_CONFIG[entry.moodStatus] || MOOD_CONFIG.Stable;
   const formattedDate = new Date(entry.entryDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -192,7 +197,7 @@ function JournalCard({ entry, onEdit, onDelete }) {
             <Text style={styles.metaText}>{entry.visibility === 'PRIVATE' ? '🔒 Private' : '🌐 Shared'}</Text>
           </View>
         </View>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={COLORS.textMuted} />
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={C.textMuted} />
       </TouchableOpacity>
 
       {expanded && (
@@ -226,12 +231,12 @@ function JournalCard({ entry, onEdit, onDelete }) {
           
           <View style={styles.actions}>
             <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(entry)}>
-              <Ionicons name="pencil-outline" size={15} color={COLORS.primary} />
-              <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>Edit</Text>
+              <Ionicons name="pencil-outline" size={15} color={C.primary} />
+              <Text style={[styles.actionBtnText, { color: C.primary }]}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(entry._id)}>
-              <Ionicons name="trash-outline" size={15} color={COLORS.error} />
-              <Text style={[styles.actionBtnText, { color: COLORS.error }]}>Delete</Text>
+              <Ionicons name="trash-outline" size={15} color={C.error} />
+              <Text style={[styles.actionBtnText, { color: C.error }]}>Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -242,6 +247,7 @@ function JournalCard({ entry, onEdit, onDelete }) {
 
 // ─── Modal Component ─────────────────────────────────────────────────────────
 function JournalModal({ visible, entry, onClose, onSave }) {
+  const styles = useStyles(getStyles);
   const isEdit = !!entry?._id;
   
   const [form, setForm] = useState({
@@ -300,22 +306,22 @@ function JournalModal({ visible, entry, onClose, onSave }) {
         <View style={styles.modalSheet}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{isEdit ? 'Edit Entry' : 'New Journal Entry'}</Text>
-            <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={COLORS.textMuted} /></TouchableOpacity>
+            <TouchableOpacity onPress={onClose}><Ionicons name="close" size={24} color={C.textMuted} /></TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalBody}>
             <Text style={styles.label}>Title *</Text>
-            <TextInput style={styles.inputField} placeholder="e.g. Morning Health Check" placeholderTextColor={COLORS.textMuted} value={form.title} onChangeText={setF('title')} />
+            <TextInput style={styles.inputField} placeholder="e.g. Morning Health Check" placeholderTextColor={C.textMuted} value={form.title} onChangeText={setF('title')} />
             
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Date *</Text>
-                <TextInput style={styles.inputField} placeholder="YYYY-MM-DD" placeholderTextColor={COLORS.textMuted} value={form.entryDate} onChangeText={setF('entryDate')} />
+                <TextInput style={styles.inputField} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} value={form.entryDate} onChangeText={setF('entryDate')} />
               </View>
               <View style={{ flex: 1, marginLeft: SPACING.md }}>
                 <Text style={styles.label}>Visibility</Text>
                 <TouchableOpacity style={styles.inputField} onPress={() => setF('visibility')(form.visibility === 'PRIVATE' ? 'SHARED' : 'PRIVATE')}>
-                  <Text style={{ color: COLORS.textPrimary, marginTop: 12 }}>
+                  <Text style={{ color: C.textPrimary, marginTop: 12 }}>
                     {form.visibility === 'PRIVATE' ? '🔒 Private' : '🌐 Shared'}
                   </Text>
                 </TouchableOpacity>
@@ -344,16 +350,16 @@ function JournalModal({ visible, entry, onClose, onSave }) {
             </View>
             
             <Text style={styles.label}>Symptoms</Text>
-            <TextInput style={styles.textArea} placeholder="Describe any symptoms..." placeholderTextColor={COLORS.textMuted} value={form.symptoms} onChangeText={setF('symptoms')} multiline />
+            <TextInput style={styles.textArea} placeholder="Describe any symptoms..." placeholderTextColor={C.textMuted} value={form.symptoms} onChangeText={setF('symptoms')} multiline />
             
             <Text style={styles.label}>Medications</Text>
-            <TextInput style={styles.textArea} placeholder="List medications taken..." placeholderTextColor={COLORS.textMuted} value={form.medications} onChangeText={setF('medications')} multiline />
+            <TextInput style={styles.textArea} placeholder="List medications taken..." placeholderTextColor={C.textMuted} value={form.medications} onChangeText={setF('medications')} multiline />
             
             <Text style={styles.label}>Notes</Text>
-            <TextInput style={styles.textArea} placeholder="Additional notes..." placeholderTextColor={COLORS.textMuted} value={form.notes} onChangeText={setF('notes')} multiline />
+            <TextInput style={styles.textArea} placeholder="Additional notes..." placeholderTextColor={C.textMuted} value={form.notes} onChangeText={setF('notes')} multiline />
 
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
-              {saving ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.saveBtnText}>{isEdit ? 'Update Entry' : 'Save Entry'}</Text>}
+              {saving ? <ActivityIndicator color={C.white} /> : <Text style={styles.saveBtnText}>{isEdit ? 'Update Entry' : 'Save Entry'}</Text>}
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -362,63 +368,63 @@ function JournalModal({ visible, entry, onClose, onSave }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: COLORS.headerBg, borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder },
-  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary },
-  pageSubtitle: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  newBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.patientPrimary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowBlue },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder },
+  pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
+  newBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.patientPrimary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowBlue },
   
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.cardInnerBorder, marginHorizontal: SPACING.lg, marginTop: SPACING.md, paddingHorizontal: SPACING.md, height: 44 },
-  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.sm },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.cardInnerBorder, marginHorizontal: SPACING.lg, marginTop: SPACING.md, paddingHorizontal: SPACING.md, height: 44 },
+  searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
   filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm, maxHeight: 44 },
-  filterChip: { paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bgElevated },
-  filterChipText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
+  filterChip: { paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full, borderWidth: 1, borderColor: C.border, backgroundColor: C.bgElevated },
+  filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
   
   list: { padding: SPACING.lg, paddingBottom: 100 },
-  card: { backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.lg, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder2, overflow: 'hidden' },
+  card: { backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md },
   moodDot: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1, marginRight: SPACING.md },
   cardInfo: { flex: 1 },
-  cardTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
+  cardTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
   cardMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  metaText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary },
+  metaText: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
   painBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, color: '#fff', fontSize: 9, fontWeight: '800' },
   
-  expanded: { borderTopWidth: 1, borderTopColor: COLORS.cardInnerBorder2, padding: SPACING.md, backgroundColor: COLORS.subtleBg },
+  expanded: { borderTopWidth: 1, borderTopColor: C.cardInnerBorder2, padding: SPACING.md, backgroundColor: C.subtleBg },
   expandSection: { marginBottom: SPACING.sm },
-  expandLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  textBlock: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, backgroundColor: COLORS.subtleBg, padding: SPACING.sm, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.cardInnerBorder },
+  expandLabel: { fontSize: 11, fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  textBlock: { fontSize: FONT_SIZES.sm, color: C.textSecondary, backgroundColor: C.subtleBg, padding: SPACING.sm, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: C.cardInnerBorder },
   painBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' },
   painBarFill: { height: '100%', borderRadius: 3 },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACING.sm, paddingTop: SPACING.sm, marginTop: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.cardInnerBorder },
-  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15` },
-  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${COLORS.error}15` },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SPACING.sm, paddingTop: SPACING.sm, marginTop: SPACING.sm, borderTopWidth: 1, borderTopColor: C.cardInnerBorder },
+  editBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${C.primary}15` },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.md, backgroundColor: `${C.error}15` },
   actionBtnText: { fontSize: FONT_SIZES.xs, fontWeight: '700' },
   
   empty: { alignItems: 'center', paddingVertical: 60 },
   emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
-  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  emptyText: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginTop: 4, textAlign: 'center' },
+  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  emptyText: { fontSize: FONT_SIZES.sm, color: C.textMuted, marginTop: 4, textAlign: 'center' },
 
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: COLORS.overlay, justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: COLORS.modalBg, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, maxHeight: '90%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: COLORS.cardInnerBorder },
-  modalTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: COLORS.textPrimary },
+  modalOverlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: C.modalBg, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, maxHeight: '90%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: SPACING.lg, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
+  modalTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: C.textPrimary },
   modalScroll: { padding: SPACING.lg },
   modalBody: { paddingBottom: 60 },
-  label: { fontSize: 12, fontWeight: '800', color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginTop: SPACING.sm },
-  inputField: { backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
+  label: { fontSize: 12, fontWeight: '800', color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginTop: SPACING.sm },
+  inputField: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base },
   row: { flexDirection: 'row' },
   moodRow: { flexDirection: 'row', gap: SPACING.sm },
-  moodBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt, paddingVertical: 10, borderRadius: RADIUS.md, alignItems: 'center' },
-  moodBtnText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '700' },
+  moodBtn: { flex: 1, borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt, paddingVertical: 10, borderRadius: RADIUS.md, alignItems: 'center' },
+  moodBtnText: { color: C.textSecondary, fontSize: 11, fontWeight: '700' },
   painRow: { flexDirection: 'row', gap: SPACING.sm },
-  painBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.inputBgAlt, paddingVertical: 10, borderRadius: RADIUS.md, alignItems: 'center' },
-  painBtnActive: { borderColor: COLORS.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
-  painBtnText: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600' },
-  textArea: { backgroundColor: COLORS.inputBgAlt, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.textPrimary, fontSize: FONT_SIZES.base, minHeight: 80, textAlignVertical: 'top' },
-  saveBtn: { backgroundColor: COLORS.patientPrimary, borderRadius: RADIUS.md, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.glowBlue },
+  painBtn: { flex: 1, borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt, paddingVertical: 10, borderRadius: RADIUS.md, alignItems: 'center' },
+  painBtnActive: { borderColor: C.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
+  painBtnText: { color: C.textSecondary, fontSize: 11, fontWeight: '600' },
+  textArea: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, minHeight: 80, textAlignVertical: 'top' },
+  saveBtn: { backgroundColor: C.patientPrimary, borderRadius: RADIUS.md, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.glowBlue },
   saveBtnText: { color: '#000', fontSize: FONT_SIZES.base, fontWeight: '800' }
 });

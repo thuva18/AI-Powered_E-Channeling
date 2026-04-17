@@ -122,7 +122,7 @@ AI_PID=""
   # Set Android environment variables
   export ANDROID_HOME="/Users/thuva/Library/Android/sdk"
   export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator"
-  # Start expo without tunnel to avoid ngrok rate limit/outage issues
+  # Start expo on LAN to allow physical devices over Wi-Fi
   npx expo start --clear
 ) &
 MOBILE_PID=$!

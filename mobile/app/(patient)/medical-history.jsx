@@ -3,13 +3,16 @@
 
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import useStyles from '../../hooks/useStyles';
+
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export default function PatientMedicalHistoryScreen() {
+  const styles = useStyles(getStyles);
   const { user } = useAuthStore();
   const router = useRouter();
   const [history, setHistory] = useState([]);
@@ -37,24 +40,24 @@ export default function PatientMedicalHistoryScreen() {
     <View style={styles.root}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+            <Ionicons name="arrow-back" size={24} color={C.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Medical History</Text>
       </View>
 
       <ScrollView 
         style={styles.scroll} contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.patientPrimary}/>}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.patientPrimary}/>}
       >
         <View style={styles.infoBanner}>
-            <Ionicons name="information-circle" size={24} color={COLORS.patientPrimary} />
+            <Ionicons name="information-circle" size={24} color={C.patientPrimary} />
             <Text style={styles.infoText}>This section contains past diagnoses, AI triage results, and completed specialist visits.</Text>
         </View>
 
-        {loading ? <ActivityIndicator color={COLORS.patientPrimary} style={{marginTop: 40}} /> : (
+        {loading ? <ActivityIndicator color={C.patientPrimary} style={{marginTop: 40}} /> : (
             history.length === 0 ? (
                 <View style={styles.emptyWrap}>
-                    <Ionicons name="folder-open-outline" size={64} color={COLORS.textMuted} />
+                    <Ionicons name="folder-open-outline" size={64} color={C.textMuted} />
                     <Text style={styles.emptyText}>No medical records found.</Text>
                 </View>
             ) : (
@@ -77,7 +80,7 @@ export default function PatientMedicalHistoryScreen() {
 
                         {item.doctor && (
                             <View style={styles.docBox}>
-                                <Ionicons name="medical" size={16} color={COLORS.doctorPrimary} />
+                                <Ionicons name="medical" size={16} color={C.doctorPrimary} />
                                 <Text style={styles.docName}>Dr. {item.doctor.name}</Text>
                             </View>
                         )}
@@ -93,27 +96,27 @@ export default function PatientMedicalHistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md, backgroundColor: COLORS.headerBg, borderBottomWidth: 1, borderBottomColor: COLORS.headerBorder},
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md, backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder},
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
-  headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary },
+  headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary },
   scroll: { flex: 1 },
   content: { padding: SPACING.lg, paddingBottom: 100 },
   infoBanner: { flexDirection: 'row', backgroundColor: 'rgba(78, 154, 241, 0.1)', padding: SPACING.md, borderRadius: RADIUS.md, alignItems: 'center', marginBottom: SPACING.xl, borderWidth: 1, borderColor: 'rgba(78, 154, 241, 0.2)' },
-  infoText: { flex: 1, marginLeft: SPACING.sm, color: COLORS.patientPrimary, fontSize: 13, lineHeight: 18, fontWeight: '600' },
+  infoText: { flex: 1, marginLeft: SPACING.sm, color: C.patientPrimary, fontSize: 13, lineHeight: 18, fontWeight: '600' },
   emptyWrap: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md, fontWeight: '600', fontSize: FONT_SIZES.md },
-  recordCard: { backgroundColor: COLORS.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.cardInnerBorder, ...SHADOWS.sm },
+  emptyText: { color: C.textMuted, marginTop: SPACING.md, fontWeight: '600', fontSize: FONT_SIZES.md },
+  recordCard: { backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, borderWidth: 1, borderColor: C.cardInnerBorder, ...SHADOWS.sm },
   rDateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
-  rDate: { fontSize: FONT_SIZES.base, fontWeight: '800', color: COLORS.textPrimary },
+  rDate: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary },
   completedBadge: { backgroundColor: 'rgba(46, 184, 114, 0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  completedText: { color: COLORS.success, fontSize: 10, fontWeight: '800' },
-  aiBox: { backgroundColor: COLORS.subtleBg, padding: SPACING.md, borderRadius: RADIUS.md, marginBottom: SPACING.sm, borderLeftWidth: 3, borderLeftColor: COLORS.patientPrimary },
-  aiLabel: { fontSize: 11, color: COLORS.textSecondary, textTransform: 'uppercase', fontWeight: '800', marginBottom: 4 },
-  aiValue: { fontSize: FONT_SIZES.md, color: COLORS.textPrimary, fontWeight: '700' },
-  aiConf: { fontSize: 12, color: COLORS.patientPrimary, marginTop: 4, fontWeight: '600' },
+  completedText: { color: C.success, fontSize: 10, fontWeight: '800' },
+  aiBox: { backgroundColor: C.subtleBg, padding: SPACING.md, borderRadius: RADIUS.md, marginBottom: SPACING.sm, borderLeftWidth: 3, borderLeftColor: C.patientPrimary },
+  aiLabel: { fontSize: 11, color: C.textSecondary, textTransform: 'uppercase', fontWeight: '800', marginBottom: 4 },
+  aiValue: { fontSize: FONT_SIZES.md, color: C.textPrimary, fontWeight: '700' },
+  aiConf: { fontSize: 12, color: C.patientPrimary, marginTop: 4, fontWeight: '600' },
   docBox: { flexDirection: 'row', alignItems: 'center', marginTop: SPACING.xs, paddingVertical: SPACING.xs },
-  docName: { marginLeft: 6, fontSize: FONT_SIZES.sm, color: COLORS.textPrimary, fontWeight: '600' },
-  rNotes: { marginTop: SPACING.md, color: COLORS.textSecondary, fontSize: 13, lineHeight: 20, backgroundColor: COLORS.subtleBg, padding: SPACING.sm, borderRadius: RADIUS.sm }
+  docName: { marginLeft: 6, fontSize: FONT_SIZES.sm, color: C.textPrimary, fontWeight: '600' },
+  rNotes: { marginTop: SPACING.md, color: C.textSecondary, fontSize: 13, lineHeight: 20, backgroundColor: C.subtleBg, padding: SPACING.sm, borderRadius: RADIUS.sm }
 });

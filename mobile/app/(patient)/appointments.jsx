@@ -2,23 +2,25 @@
 // Patient My Appointments screen – list & cancel
 
 import { useEffect, useState, useCallback } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 // Types removed
 const STATUS_COLORS = {
-  confirmed: COLORS.success,
-  pending: COLORS.warning,
-  cancelled: COLORS.error,
-  completed: COLORS.info,
+  confirmed: C.success,
+  pending: C.warning,
+  cancelled: C.error,
+  completed: C.info,
 };
 
 export default function PatientAppointmentsScreen() {
+  const styles = useStyles(getStyles);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -81,8 +83,8 @@ export default function PatientAppointmentsScreen() {
             </Text>
           )}
         </View>
-        <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[item.status] ?? COLORS.textMuted) + '22' }]}>
-          <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status] ?? COLORS.textMuted }]}>
+        <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[item.status] ?? C.textMuted) + '22' }]}>
+          <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status] ?? C.textMuted }]}>
             {item.status}
           </Text>
         </View>
@@ -97,8 +99,8 @@ export default function PatientAppointmentsScreen() {
           disabled={cancellingId === item._id}
         >
           {cancellingId === item._id
-            ? <ActivityIndicator size="small" color={COLORS.error} />
-            : <><Ionicons name="close-circle-outline" size={16} color={COLORS.error} /><Text style={styles.cancelText}>  Cancel Appointment</Text></>
+            ? <ActivityIndicator size="small" color={C.error} />
+            : <><Ionicons name="close-circle-outline" size={16} color={C.error} /><Text style={styles.cancelText}>  Cancel Appointment</Text></>
           }
         </TouchableOpacity>
       )}
@@ -127,17 +129,17 @@ export default function PatientAppointmentsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={C.primary} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={displayList}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="calendar-outline" size={40} color={COLORS.textMuted} />
+              <Ionicons name="calendar-outline" size={40} color={C.textMuted} />
               <Text style={styles.emptyText}>No {filter !== 'all' ? filter : ''} appointments</Text>
             </View>
           }
@@ -147,49 +149,49 @@ export default function PatientAppointmentsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: COLORS.textPrimary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary },
   filterScroll: { flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm },
   filterTab: {
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full, backgroundColor: COLORS.bgCard,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.full, backgroundColor: C.bgCard,
+    borderWidth: 1, borderColor: C.border,
   },
-  filterTabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: '600' },
-  filterTextActive: { color: COLORS.white },
+  filterTabActive: { backgroundColor: C.primary, borderColor: C.primary },
+  filterText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
+  filterTextActive: { color: C.white },
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
-    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+    backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
+    marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
   },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start' },
   avatar: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: COLORS.bgElevated,
+    width: 46, height: 46, borderRadius: 23, backgroundColor: C.bgElevated,
     justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
   },
   info: { flex: 1 },
-  docName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: COLORS.textPrimary },
-  docSpec: { fontSize: FONT_SIZES.sm, color: COLORS.primary, marginTop: 2 },
-  date: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, marginTop: 4 },
+  docName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  docSpec: { fontSize: FONT_SIZES.sm, color: C.primary, marginTop: 2 },
+  date: { fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 },
   badge: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
   badgeText: { fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize' },
   notes: {
-    fontSize: FONT_SIZES.sm, color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm, color: C.textSecondary,
     marginTop: SPACING.sm, fontStyle: 'italic',
   },
   cancelBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     marginTop: SPACING.md, paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.error + '44',
-    backgroundColor: `${COLORS.error}11`,
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.error + '44',
+    backgroundColor: `${C.error}11`,
   },
-  cancelText: { color: COLORS.error, fontSize: FONT_SIZES.sm, fontWeight: '600' },
+  cancelText: { color: C.error, fontSize: FONT_SIZES.sm, fontWeight: '600' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: COLORS.textMuted, marginTop: SPACING.md, fontSize: FONT_SIZES.base },
+  emptyText: { color: C.textMuted, marginTop: SPACING.md, fontSize: FONT_SIZES.base },
 });

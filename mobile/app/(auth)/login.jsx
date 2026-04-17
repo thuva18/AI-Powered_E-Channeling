@@ -2,6 +2,7 @@
 // Premium Login Screen
 
 import { useState, useRef } from 'react';
+import useStyles from '../../hooks/useStyles';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
@@ -12,9 +13,10 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ThemeToggle from '../../components/common/ThemeToggle';
-import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 export default function LoginScreen() {
+  const styles = useStyles(getStyles);
   const router = useRouter();
   const { setUser } = useAuthStore();
 
@@ -91,7 +93,7 @@ export default function LoginScreen() {
         <View style={styles.hero}>
           <View style={styles.logoOuter}>
             <View style={styles.logoInner}>
-              <Ionicons name="medkit" size={36} color={COLORS.primary} />
+              <Ionicons name="medkit" size={36} color={C.primary} />
             </View>
           </View>
           <Text style={styles.appName}>Medicare E-Channeling</Text>
@@ -106,7 +108,7 @@ export default function LoginScreen() {
           {/* Server Error */}
           {errors.server && (
             <View style={styles.serverError}>
-              <Ionicons name="alert-circle" size={16} color={COLORS.error} />
+              <Ionicons name="alert-circle" size={16} color={C.error} />
               <Text style={styles.serverErrorText}>{errors.server}</Text>
             </View>
           )}
@@ -115,11 +117,11 @@ export default function LoginScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email Address</Text>
             <View style={[styles.inputRow, errors.email && styles.inputError]}>
-              <Ionicons name="mail-outline" size={18} color={errors.email ? COLORS.error : COLORS.textSecondary} style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={18} color={errors.email ? C.error : C.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="doctor@hospital.com"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={email}
                 onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: undefined, server: undefined })); }}
                 keyboardType="email-address"
@@ -128,7 +130,7 @@ export default function LoginScreen() {
                 returnKeyType="next"
               />
               {email.length > 0 && !errors.email && /^\S+@\S+\.\S+$/.test(email) && (
-                <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                <Ionicons name="checkmark-circle" size={18} color={C.success} />
               )}
             </View>
             {errors.email && <Text style={styles.errorText}><Ionicons name="alert-circle-outline" size={11} /> {errors.email}</Text>}
@@ -138,11 +140,11 @@ export default function LoginScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={[styles.inputRow, errors.password && styles.inputError]}>
-              <Ionicons name="lock-closed-outline" size={18} color={errors.password ? COLORS.error : COLORS.textSecondary} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={18} color={errors.password ? C.error : C.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.textMuted}
                 value={password}
                 onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined, server: undefined })); }}
                 secureTextEntry={!showPassword}
@@ -150,7 +152,7 @@ export default function LoginScreen() {
                 onSubmitEditing={handleLogin}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={18} color={COLORS.textSecondary} />
+                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={18} color={C.textSecondary} />
               </TouchableOpacity>
             </View>
             {errors.password && <Text style={styles.errorText}><Ionicons name="alert-circle-outline" size={11} /> {errors.password}</Text>}
@@ -165,11 +167,11 @@ export default function LoginScreen() {
               activeOpacity={0.9}
             >
               {loading ? (
-                <ActivityIndicator color={COLORS.white} />
+                <ActivityIndicator color={C.white} />
               ) : (
                 <>
                   <Text style={styles.loginBtnText}>Sign In</Text>
-                  <Ionicons name="arrow-forward" size={18} color={COLORS.white} style={{ marginLeft: 8 }} />
+                  <Ionicons name="arrow-forward" size={18} color={C.white} style={{ marginLeft: 8 }} />
                 </>
               )}
             </TouchableOpacity>
@@ -186,7 +188,7 @@ export default function LoginScreen() {
 
         {/* Info hint */}
         <View style={styles.hintBox}>
-          <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
+          <Ionicons name="information-circle-outline" size={14} color={C.textMuted} />
           <Text style={styles.hintText}>  Doctors & Admins are registered by system administrators.</Text>
         </View>
 
@@ -195,8 +197,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+const getStyles = (C, isDark) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.bg },
   container: { flexGrow: 1, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
   hero: { alignItems: 'center', paddingTop: 80, paddingBottom: SPACING.xl },
   logoOuter: {
@@ -214,53 +216,53 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(78, 154, 241, 0.4)',
   },
   logoEmoji: { fontSize: 36 },
-  appName: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
-  tagline: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginTop: 4 },
+  appName: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary, letterSpacing: -0.5 },
+  tagline: { fontSize: FONT_SIZES.sm, color: C.textMuted, marginTop: 4 },
   card: {
-    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+    backgroundColor: C.cardBgTranslucent || 'rgba(17, 24, 39, 0.95)',
     borderRadius: RADIUS.xl, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.cardInnerBorder,
+    borderWidth: 1, borderColor: C.cardInnerBorder,
     ...SHADOWS.lg,
   },
-  cardTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: COLORS.textPrimary },
-  cardSubtitle: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 2, marginBottom: SPACING.md },
+  cardTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary },
+  cardSubtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 2, marginBottom: SPACING.md },
   serverError: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: `${COLORS.error}15`, borderWidth: 1, borderColor: `${COLORS.error}33`,
+    backgroundColor: `${C.error}15`, borderWidth: 1, borderColor: `${C.error}33`,
     borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.md,
   },
-  serverErrorText: { color: COLORS.error, fontSize: FONT_SIZES.sm, flex: 1 },
+  serverErrorText: { color: C.error, fontSize: FONT_SIZES.sm, flex: 1 },
   fieldGroup: { marginBottom: SPACING.sm },
   label: {
-    fontSize: FONT_SIZES.xs, fontWeight: '700', color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary,
     marginBottom: SPACING.sm, textTransform: 'uppercase', letterSpacing: 0.8,
   },
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(26, 34, 53, 0.8)',
-    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: C.inputBgAlt || 'rgba(26, 34, 53, 0.8)',
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border,
     paddingHorizontal: SPACING.md, height: 54,
   },
-  inputError: { borderColor: COLORS.error, backgroundColor: `${COLORS.error}08` },
+  inputError: { borderColor: C.error, backgroundColor: `${C.error}08` },
   inputIcon: { marginRight: SPACING.sm },
-  input: { flex: 1, color: COLORS.textPrimary, fontSize: FONT_SIZES.base },
+  input: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
   eyeBtn: { padding: SPACING.xs },
-  errorText: { color: COLORS.error, fontSize: FONT_SIZES.xs, marginTop: 4, marginLeft: 2 },
+  errorText: { color: C.error, fontSize: FONT_SIZES.xs, marginTop: 4, marginLeft: 2 },
   loginBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 54,
+    backgroundColor: C.primary, borderRadius: RADIUS.md, height: 54,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
     ...SHADOWS.glowBlue,
   },
   loginBtnDisabled: { opacity: 0.65 },
-  loginBtnText: { color: COLORS.white, fontSize: FONT_SIZES.base, fontWeight: '800', letterSpacing: 0.3 },
+  loginBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800', letterSpacing: 0.3 },
   registerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: SPACING.md },
-  registerText: { color: COLORS.textSecondary, fontSize: FONT_SIZES.sm },
-  registerLink: { color: COLORS.primary, fontSize: FONT_SIZES.sm, fontWeight: '700' },
+  registerText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
+  registerLink: { color: C.primary, fontSize: FONT_SIZES.sm, fontWeight: '700' },
   hintBox: {
     flexDirection: 'row', alignItems: 'flex-start',
     marginTop: SPACING.lg, backgroundColor: 'rgba(26, 34, 53, 0.6)',
     padding: SPACING.md, borderRadius: RADIUS.md,
-    borderLeftWidth: 2, borderLeftColor: COLORS.border,
+    borderLeftWidth: 2, borderLeftColor: C.border,
   },
-  hintText: { flex: 1, color: COLORS.textMuted, fontSize: FONT_SIZES.xs, lineHeight: 18 },
+  hintText: { flex: 1, color: C.textMuted, fontSize: FONT_SIZES.xs, lineHeight: 18 },
 });
