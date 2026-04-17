@@ -119,7 +119,9 @@ AI_PID=""
 
 (
   cd "$MOBILE_DIR"
-  npm start
+  # Install ngrok and start via tunnel to bypass all firewall/LAN issues
+  npm install @expo/ngrok > /dev/null 2>&1 || true
+  npx expo start --tunnel --clear
 ) &
 MOBILE_PID=$!
 
