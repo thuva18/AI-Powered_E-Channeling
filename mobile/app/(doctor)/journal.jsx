@@ -610,7 +610,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: C.headerBorder,
+    backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
   pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
@@ -634,7 +634,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
   list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
-    backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: RADIUS.lg,
+    backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg,
     marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2,
     borderLeftWidth: 4, overflow: 'hidden',
   },
@@ -720,7 +720,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   },
   pickerText: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
   dropdownList: {
-    backgroundColor: '#0D1525', borderRadius: RADIUS.md, borderWidth: 1,
+    backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
     borderColor: C.border, marginBottom: SPACING.sm, overflow: 'hidden',
   },
   dropdownItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
@@ -732,10 +732,10 @@ const getStyles = (C, isDark) => StyleSheet.create({
   rxHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md, marginBottom: SPACING.sm },
   addRxBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.md, backgroundColor: `${C.primary}15`, borderWidth: 1, borderColor: `${C.primary}33` },
   addRxText: { fontSize: FONT_SIZES.xs, color: C.primary, fontWeight: '700' },
-  rxCard: { backgroundColor: 'rgba(26,34,53,0.6)', borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2 },
+  rxCard: { backgroundColor: isDark ? 'rgba(26,34,53,0.6)' : 'rgba(78,154,241,0.05)', borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder2 },
   rxHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   rxLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted },
-  rxInput: { backgroundColor: 'rgba(8,12,24,0.5)', borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.sm, height: 38, paddingHorizontal: SPACING.sm, color: C.textPrimary, fontSize: FONT_SIZES.sm, marginBottom: 4 },
+  rxInput: { backgroundColor: isDark ? 'rgba(8,12,24,0.5)' : C.bg, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.sm, height: 38, paddingHorizontal: SPACING.sm, color: C.textPrimary, fontSize: FONT_SIZES.sm, marginBottom: 4 },
   rxRow: { flexDirection: 'row' },
   saveBtn: {
     backgroundColor: C.doctorPrimary, borderRadius: RADIUS.md, height: 52,

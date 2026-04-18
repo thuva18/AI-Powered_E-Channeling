@@ -21,13 +21,16 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "aiechannel",
     "extra": {
       "eas": {
-        "projectId": "your-eas-project-id-here"
-      }
-    }
+        "projectId": "51e17cc9-63bf-47a8-9fb8-e74867e0c5e9"
+      },
+      "router": {}
+    },
+    "owner": "thuva18"
   }
 }

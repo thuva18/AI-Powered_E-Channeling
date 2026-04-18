@@ -587,12 +587,12 @@ const getStyles = (C, isDark) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: 'rgba(17,24,39,0.98)', borderBottomWidth: 1, borderBottomColor: C.headerBorder,
+    backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
   pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
 
-  tabBar: { flexDirection: 'row', backgroundColor: 'rgba(26,34,53,0.5)', margin: SPACING.lg, borderRadius: RADIUS.lg, padding: 4, gap: 4 },
+  tabBar: { flexDirection: 'row', backgroundColor: isDark ? 'rgba(26,34,53,0.5)' : C.border, margin: SPACING.lg, borderRadius: RADIUS.lg, padding: 4, gap: 4 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: RADIUS.md },
   tabActive: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.cardInnerBorder },
   tabLabel: { fontSize: FONT_SIZES.sm, color: C.textMuted, fontWeight: '600' },
@@ -605,7 +605,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   sectionSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
 
   card: {
-    backgroundColor: 'rgba(17,24,39,0.9)', borderRadius: RADIUS.xl, padding: SPACING.lg,
+    backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.xl, padding: SPACING.lg,
     borderWidth: 1, borderColor: C.cardInnerBorder2, marginBottom: SPACING.md,
     borderTopWidth: 3, borderTopColor: C.doctorPrimary,
   },
@@ -636,7 +636,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   // Availability
   availTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, marginBottom: 4 },
   availSubtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginBottom: SPACING.md },
-  dayCard: { borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder, backgroundColor: 'rgba(26,34,53,0.4)' },
+  dayCard: { borderRadius: RADIUS.md, padding: SPACING.md, marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.cardInnerBorder, backgroundColor: isDark ? 'rgba(26,34,53,0.4)' : C.bgElevated },
   dayCardActive: { borderColor: `${C.doctorPrimary}44`, backgroundColor: `${C.doctorPrimary}08` },
   dayToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   dayToggleSide: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },

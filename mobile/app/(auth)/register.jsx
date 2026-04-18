@@ -370,7 +370,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   approvalNoteText: { flex: 1, fontSize: FONT_SIZES.xs, color: C.doctorPrimary, lineHeight: 18 },
 
   card: {
-    backgroundColor: C.cardBgTranslucent || 'rgba(17, 24, 39, 0.95)', borderRadius: RADIUS.xl,
+    backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.xl,
     padding: SPACING.lg, borderWidth: 1, borderColor: C.cardInnerBorder,
     borderTopWidth: 3, ...SHADOWS.lg,
   },
@@ -381,7 +381,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.inputBgAlt || 'rgba(26, 34, 53, 0.8)',
+    backgroundColor: C.inputBgAlt,
     borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border,
     paddingHorizontal: SPACING.md, height: 50, marginBottom: 2,
   },
@@ -394,7 +394,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   genderRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: 2 },
   genderBtn: {
     flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: C.border, backgroundColor: C.inputBgAlt || 'rgba(26, 34, 53, 0.8)', alignItems: 'center',
+    borderColor: C.border, backgroundColor: C.inputBgAlt, alignItems: 'center',
   },
   genderBtnActive: { borderColor: C.primary, backgroundColor: `${C.primary}22` },
   genderBtnText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },

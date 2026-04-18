@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../services/api';
 import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
@@ -299,6 +300,25 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const [receiptMode, setReceiptMode] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [fetchingSlots, setFetchingSlots] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [dateObj, setDateObj] = useState(new Date());
+
+  const handleDateChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+    }
+    if (event.type === 'dismissed') {
+      setShowPicker(false);
+      return;
+    }
+    if (selectedDate) {
+      setDateObj(selectedDate);
+      const y = selectedDate.getFullYear();
+      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const d = String(selectedDate.getDate()).padStart(2, '0');
+      setDate(`${y}-${m}-${d}`);
+    }
+  };
 
   useEffect(() => {
     if (visible) {
@@ -383,14 +403,30 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const renderStep1 = () => (
     <>
       <Text style={styles.modalStepTitle}>Select Date & Time</Text>
-      <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-      <TextInput
-        style={styles.modalInput}
-        placeholder="e.g. 2026-05-15"
-        placeholderTextColor={C.textMuted}
-        value={date}
-        onChangeText={setDate}
-      />
+      <Text style={styles.label}>Date</Text>
+      <TouchableOpacity
+        style={[styles.modalInput, { justifyContent: 'center' }]}
+        onPress={() => setShowPicker(true)}
+      >
+        <Text style={{ color: date ? C.textPrimary : C.textMuted }}>
+          {date ? date : 'Select Date'}
+        </Text>
+      </TouchableOpacity>
+      
+      {showPicker && (
+        <DateTimePicker
+          value={dateObj}
+          mode="date"
+          display="default"
+          minimumDate={new Date()}
+          onChange={handleDateChange}
+        />
+      )}
+      {Platform.OS === 'ios' && showPicker && (
+        <TouchableOpacity style={{ alignSelf: 'flex-end', paddingVertical: 10 }} onPress={() => setShowPicker(false)}>
+           <Text style={{ color: C.patientPrimary, fontWeight: 'bold' }}>Done</Text>
+        </TouchableOpacity>
+      )}
 
       <Text style={styles.label}>Time Slot</Text>
       {fetchingSlots ? (
