@@ -204,15 +204,54 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
 
   const handleSave = async () => {
     if (!form.patientName.trim()) { setError('Patient name is required'); return; }
+    if (form.patientName.trim().length < 2) { setError('Patient name must be at least 2 characters'); return; }
+    
+    if (form.patientAge !== '') {
+      const ageNum = Number(form.patientAge);
+      if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) {
+        setError('Please enter a valid age between 0 and 150');
+        return;
+      }
+    }
+
+    if (form.contactNumber.trim()) {
+      const phoneRegex = /^(07\d{8}|\+94\d{9})$/;
+      if (!phoneRegex.test(form.contactNumber.trim())) {
+        setError('Contact number must be a valid Sri Lankan number (e.g., 07XXXXXXXX or +94XXXXXXXXX)');
+        return;
+      }
+    }
+
     if (!form.visitDate) { setError('Visit date is required'); return; }
+    
+    if (form.followUpDate) {
+      const visitD = new Date(form.visitDate);
+      const followD = new Date(form.followUpDate);
+      if (isNaN(followD.getTime())) {
+        setError('Invalid follow-up date format');
+        return;
+      }
+      if (followD < visitD) {
+        setError('Follow-up date cannot be earlier than the visit date');
+        return;
+      }
+    }
+
     if (!form.diagnosis.trim()) { setError('Diagnosis is required'); return; }
+    
+    const hasIncompleteRx = form.prescription.some(r => 
+      (!r.medication.trim() && (r.dosage.trim() || r.frequency.trim() || r.duration.trim()))
+    );
+    if (hasIncompleteRx) {
+      setError('Medication name is required for filled prescription details'); 
+      return;
+    }
+
     const pres = form.prescription.map(r => ({
       medication: r.medication.trim(), dosage: r.dosage.trim(),
       frequency: r.frequency.trim(), duration: r.duration.trim(),
-    })).filter(r => r.medication);
-    if (form.prescription.some(r => r.medication && !r.medication.trim())) {
-      setError('Medication name required for each prescription row'); return;
-    }
+    })).filter(r => r.medication.trim() !== '');
+
     setSaving(true); setError('');
     const payload = {
       patientId: form.patientId || null,

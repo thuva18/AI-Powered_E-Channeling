@@ -359,28 +359,22 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
         symptomImages: images.map(i => i.uri || i.name || '').filter(Boolean),
       };
 
-      await api.post('/payments/initiate', payload);
+      const resInit = await api.post('/payments/initiate', payload);
+      const transactionId = resInit.data?.transactionId;
 
       // Submit the payment reference immediately for non-PayHere methods
-      if (paymentMethod !== 'PAYHERE') {
-        // We'd need transactionId from the response - for now record the ref
+      if (paymentMethod !== 'PAYHERE' && transactionId) {
+        await api.post(`/payments/${transactionId}/dummy-submit`, {
+          paymentReference: paymentRef,
+          paymentNote: '',
+        });
+      } else if (paymentMethod === 'PAYHERE' && transactionId) {
+        // Fallback for mobile PayHere to check if status gets mocked on dev environment
+        await api.get(`/payments/${transactionId}/status`).catch(() => {});
       }
       setReceiptMode(true);
     } catch (e) {
-      // Fallback: direct appointment booking without payment flow
-      try {
-        await api.post('/patients/appointments', {
-          doctorId: doctor._id,
-          appointmentDate: date,
-          timeSlot: slot,
-          symptomDescription,
-          symptoms: symptomsArray,
-          symptomImages: images.map(i => i.uri || i.name || '').filter(Boolean),
-        });
-        setReceiptMode(true);
-      } catch (err) {
-        Alert.alert('Booking Error', err.response?.data?.message || 'Failed to book appointment.');
-      }
+      Alert.alert('Booking Error', e.response?.data?.message || 'Failed to complete payment and booking.');
     } finally {
       setSubmitting(false);
     }

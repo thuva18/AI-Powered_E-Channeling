@@ -138,6 +138,16 @@ export default function DoctorProfileScreen() {
 
   // ── Profile save ──────────────────────────────────────────────────────────
   const handleSaveProfile = async () => {
+    if (!form.firstName.trim()) { showToast('First name is required', 'error'); return; }
+    if (!form.lastName.trim()) { showToast('Last name is required', 'error'); return; }
+    
+    if (form.consultationFee && isNaN(Number(form.consultationFee))) { showToast('Consultation fee must be a valid number', 'error'); return; }
+    if (form.consultationFee && Number(form.consultationFee) < 0) { showToast('Consultation fee cannot be negative', 'error'); return; }
+    
+    if (form.profileDetails.experienceYears && isNaN(Number(form.profileDetails.experienceYears))) { showToast('Experience years must be a valid number', 'error'); return; }
+    if (form.profileDetails.experienceYears && Number(form.profileDetails.experienceYears) < 0) { showToast('Experience years cannot be negative', 'error'); return; }
+    if (form.profileDetails.experienceYears && Number(form.profileDetails.experienceYears) > 100) { showToast('Experience years is unrealistic', 'error'); return; }
+
     if (form.phone && !PHONE_REGEX.test(form.phone.trim())) {
       setPhoneError('Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX');
       return;

@@ -47,17 +47,28 @@ export default function RegisterScreen() {
   const validate = () => {
     const e = {};
     if (!form.firstName.trim()) e.firstName = 'First name is required';
+    else if (form.firstName.trim().length < 2) e.firstName = 'First name must be at least 2 characters';
+    else if (!/^[a-zA-Z\s]*$/.test(form.firstName.trim())) e.firstName = 'First name can only contain letters';
+
     if (!form.lastName.trim()) e.lastName = 'Last name is required';
+    else if (form.lastName.trim().length < 2) e.lastName = 'Last name must be at least 2 characters';
+    else if (!/^[a-zA-Z\s]*$/.test(form.lastName.trim())) e.lastName = 'Last name can only contain letters';
+
     if (!form.email.trim()) e.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Invalid email format';
+
     if (!form.password) e.password = 'Password is required';
     else if (form.password.length < 6) e.password = 'Min 6 characters';
     else if (!/\d/.test(form.password)) e.password = 'Must contain at least 1 number';
+    else if (!/[a-zA-Z]/.test(form.password)) e.password = 'Must contain at least 1 letter';
+
     if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
+
     if (!form.nic.trim()) e.nic = 'NIC is required';
     else if (!/^(\d{9}[VvXx]|\d{12})$/.test(form.nic.trim())) e.nic = 'Invalid NIC (e.g. 123456789V or 200012345678)';
+
     if (!form.phone.trim()) e.phone = 'Phone number is required';
-    else if (!/^07[0-9]{8}$/.test(form.phone.trim())) e.phone = 'Invalid SL phone (e.g. 0712345678)';
+    else if (!/^(07\d{8}|\+94\d{9})$/.test(form.phone.trim())) e.phone = 'Invalid SL phone (e.g. 07XXXXXXXX or +94XXXXXXXXX)';
 
     if (role === 'patient') {
       if (!form.gender) e.gender = 'Gender is required';
@@ -70,6 +81,8 @@ export default function RegisterScreen() {
 
     if (role === 'doctor') {
       if (!form.slmcNumber.trim()) e.slmcNumber = 'SLMC number is required';
+      else if (!/^[0-9A-Za-z]{4,10}$/.test(form.slmcNumber.trim())) e.slmcNumber = 'Invalid SLMC number (4-10 alphanumeric characters)';
+
       if (!form.specialization) e.specialization = 'Specialization is required';
     }
 
