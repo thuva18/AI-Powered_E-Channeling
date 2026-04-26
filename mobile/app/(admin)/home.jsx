@@ -40,10 +40,10 @@ export default function AdminHomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
-    { label: 'Total Doctors', value: analytics?.totalDoctors ?? 0, icon: 'medical', color: C.adminPrimary },
-    { label: 'Total Patients', value: analytics?.totalPatients ?? 0, icon: 'people', color: C.primary },
-    { label: 'Appointments', value: analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.accent },
-    { label: 'Pending', value: analytics?.pendingDoctors ?? pendingDoctors.length, icon: 'time-outline', color: C.warning },
+    { label: 'Total Doctors', value: analytics?.users?.totalDoctors ?? analytics?.totalDoctors ?? 0, icon: 'medical', color: C.adminPrimary },
+    { label: 'Total Patients', value: analytics?.users?.totalPatients ?? analytics?.totalPatients ?? 0, icon: 'people', color: C.primary },
+    { label: 'Appointments', value: analytics?.appointments?.total ?? analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.accent },
+    { label: 'Pending', value: analytics?.doctors?.pending ?? pendingDoctors.length, icon: 'time-outline', color: C.warning },
   ];
 
   const cardBg = isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard;
@@ -118,7 +118,9 @@ export default function AdminHomeScreen() {
                   <Text style={{ fontSize: 20 }}>👨‍⚕️</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary, marginBottom: 2 }}>Dr. {doc.name}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary, marginBottom: 2 }}>
+                    Dr. {`${doc.firstName || ''} ${doc.lastName || ''}`.trim() || 'Unknown'}
+                  </Text>
                   <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary }}>{doc.specialization}</Text>
                 </View>
                 <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: `${C.adminPrimary}15`, justifyContent: 'center', alignItems: 'center' }}>

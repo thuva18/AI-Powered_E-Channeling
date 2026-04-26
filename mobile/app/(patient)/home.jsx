@@ -178,25 +178,34 @@ export default function PatientHomeScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          recentAppointments.map((apt, i) => (
-            <View key={apt._id ?? i} style={{
-              backgroundColor: cardBg, borderRadius: RADIUS.lg, padding: SPACING.md,
-              flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-              marginBottom: SPACING.sm, borderWidth: 1, borderColor: cardBorder,
-            }}>
-              <View style={{ flex: 1, borderLeftWidth: 3, borderLeftColor: statusColor(apt.status), paddingLeft: SPACING.sm }}>
-                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>Dr. {apt.doctor?.name ?? 'Unknown'}</Text>
-                <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 1 }}>{apt.doctor?.specialization ?? ''}</Text>
-                <Text style={{ fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 }}>
-                  {apt.appointmentDate ? new Date(apt.appointmentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}
-                </Text>
+          recentAppointments.map((apt, i) => {
+            // Backend may populate as apt.doctorId (object) or apt.doctor (object)
+            const doc = apt.doctorId || apt.doctor || {};
+            const docName = doc.name
+              || `${doc.firstName || ''} ${doc.lastName || ''}`.trim()
+              || 'Unknown Doctor';
+            const docSpec = doc.specialization || apt.specialization || '';
+            return (
+              <View key={apt._id ?? i} style={{
+                backgroundColor: cardBg, borderRadius: RADIUS.lg, padding: SPACING.md,
+                flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+                marginBottom: SPACING.sm, borderWidth: 1, borderColor: cardBorder,
+              }}>
+                <View style={{ flex: 1, borderLeftWidth: 3, borderLeftColor: statusColor(apt.status), paddingLeft: SPACING.sm }}>
+                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>Dr. {docName}</Text>
+                  {docSpec ? <Text style={{ fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 1 }}>{docSpec}</Text> : null}
+                  <Text style={{ fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 }}>
+                    {apt.appointmentDate ? new Date(apt.appointmentDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}
+                  </Text>
+                </View>
+                <View style={{ paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full, marginLeft: SPACING.sm, backgroundColor: statusColor(apt.status) + '22' }}>
+                  <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize', color: statusColor(apt.status) }}>{apt.status ?? 'Pending'}</Text>
+                </View>
               </View>
-              <View style={{ paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full, marginLeft: SPACING.sm, backgroundColor: statusColor(apt.status) + '22' }}>
-                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize', color: statusColor(apt.status) }}>{apt.status ?? 'Pending'}</Text>
-              </View>
-            </View>
-          ))
+            );
+          })
         )}
+
 
         {/* Quick Actions */}
         <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '800', color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: SPACING.md, marginBottom: SPACING.sm }}>Quick Actions</Text>

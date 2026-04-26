@@ -53,11 +53,15 @@ export default function LoginScreen() {
       const res = await api.post('/auth/login', { email: email.trim().toLowerCase(), password });
       const data = res.data;
       const rawRole = (data.role || data.user?.role || '').toLowerCase();
+      // Build a reliable display name from all possible backend shapes
+      const firstName = data.firstName || data.user?.firstName || '';
+      const lastName  = data.lastName  || data.user?.lastName  || '';
+      const fullName  = data.name || data.user?.name || `${firstName} ${lastName}`.trim() || 'User';
       const user = {
         _id: data._id || data.user?._id,
-        name: data.name || data.user?.name || data.firstName ? `${data.firstName} ${data.lastName}`.trim() : '',
-        firstName: data.firstName,
-        lastName: data.lastName,
+        name: fullName,
+        firstName,
+        lastName,
         email: data.email || data.user?.email,
         role: rawRole,
         token: data.token,
