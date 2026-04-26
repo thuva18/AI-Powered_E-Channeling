@@ -40,10 +40,10 @@ export default function AdminHomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
-    { label: 'Total Doctors', value: analytics?.users?.totalDoctors ?? analytics?.totalDoctors ?? 0, icon: 'medical', color: C.adminPrimary },
-    { label: 'Total Patients', value: analytics?.users?.totalPatients ?? analytics?.totalPatients ?? 0, icon: 'people', color: C.primary },
-    { label: 'Appointments', value: analytics?.appointments?.total ?? analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.accent },
-    { label: 'Pending', value: analytics?.doctors?.pending ?? pendingDoctors.length, icon: 'time-outline', color: C.warning },
+    { label: 'Total Doctors',  value: analytics?.users?.totalDoctors   ?? analytics?.totalDoctors   ?? 0, icon: 'medical',      color: C.adminPrimary, route: '/(admin)/doctors' },
+    { label: 'Total Patients', value: analytics?.users?.totalPatients  ?? analytics?.totalPatients  ?? 0, icon: 'people',       color: C.primary,      route: '/(admin)/patients' },
+    { label: 'Appointments',   value: analytics?.appointments?.total   ?? analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.accent,       route: '/(admin)/reports' },
+    { label: 'Pending',        value: analytics?.doctors?.pending      ?? pendingDoctors.length,          icon: 'time-outline', color: C.warning,      route: '/(admin)/doctors' },
   ];
 
   const cardBg = isDark ? 'rgba(28, 36, 56, 0.6)' : C.bgCard;
@@ -87,7 +87,7 @@ export default function AdminHomeScreen() {
         {loading ? <ActivityIndicator color={C.adminPrimary} style={{ marginTop: 20 }} /> : (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, marginBottom: SPACING.xl }}>
             {statCards.map((s) => (
-              <View key={s.label} style={{
+              <TouchableOpacity key={s.label} activeOpacity={0.75} onPress={() => router.push(s.route)} style={{
                 flex: 1, minWidth: '45%', backgroundColor: cardBg,
                 borderRadius: RADIUS.lg, padding: SPACING.lg, alignItems: 'center',
                 borderWidth: 1, borderColor: cardBorder, borderBottomWidth: 3, borderBottomColor: s.color, ...S.sm,
@@ -97,7 +97,7 @@ export default function AdminHomeScreen() {
                 </View>
                 <Text style={{ fontSize: FONT_SIZES.xxl, fontWeight: '900', marginTop: 4, color: s.color }}>{s.value}</Text>
                 <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 4, textAlign: 'center', fontWeight: '600', textTransform: 'uppercase' }}>{s.label}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}

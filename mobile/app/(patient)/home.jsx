@@ -59,10 +59,10 @@ export default function PatientHomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
-    { label: 'Total', value: analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.primary },
-    { label: 'Upcoming', value: analytics?.upcomingAppointments ?? 0, icon: 'time-outline', color: C.warning },
-    { label: 'Completed', value: analytics?.completedAppointments ?? 0, icon: 'checkmark-circle', color: C.success },
-    { label: 'Cancelled', value: analytics?.cancelledAppointments ?? 0, icon: 'close-circle', color: C.error },
+    { label: 'Total',     value: analytics?.totalAppointments     ?? 0, icon: 'calendar',         color: C.primary, route: '/(patient)/appointments' },
+    { label: 'Upcoming',  value: analytics?.upcomingAppointments  ?? 0, icon: 'time-outline',     color: C.warning, route: '/(patient)/appointments' },
+    { label: 'Completed', value: analytics?.completedAppointments ?? 0, icon: 'checkmark-circle', color: C.success, route: '/(patient)/appointments' },
+    { label: 'Cancelled', value: analytics?.cancelledAppointments ?? 0, icon: 'close-circle',     color: C.error,   route: '/(patient)/appointments' },
   ];
 
   const quickActions = [
@@ -140,7 +140,7 @@ export default function PatientHomeScreen() {
         ) : (
           <Animated.View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg, opacity: fadeAnim }}>
             {statCards.map((s) => (
-              <View key={s.label} style={{
+              <TouchableOpacity key={s.label} activeOpacity={0.75} onPress={() => router.push(s.route)} style={{
                 flex: 1, minWidth: '45%', backgroundColor: cardBg,
                 borderRadius: RADIUS.lg, padding: SPACING.md, alignItems: 'center',
                 borderWidth: 1, borderColor: cardBorder, borderTopWidth: 3, borderTopColor: s.color, ...S.md,
@@ -150,7 +150,7 @@ export default function PatientHomeScreen() {
                 </View>
                 <Text style={{ fontSize: FONT_SIZES.xxl, fontWeight: '900', color: s.color }}>{s.value}</Text>
                 <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2, fontWeight: '600', textTransform: 'uppercase' }}>{s.label}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </Animated.View>
         )}

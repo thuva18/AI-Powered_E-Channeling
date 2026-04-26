@@ -64,12 +64,12 @@ export default function DoctorHomeScreen() {
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
-    { label: 'Today', value: todayAppointments.length, icon: 'today-outline', color: C.doctorPrimary },
-    { label: 'Total', value: analytics?.totalAppointments ?? 0, icon: 'calendar', color: C.primary },
-    { label: 'Pending', value: analytics?.pendingAppointments ?? 0, icon: 'time-outline', color: C.warning },
-    { label: 'Patients', value: analytics?.totalPatients ?? 0, icon: 'people', color: '#9B59F5' },
-    { label: 'Completed', value: analytics?.completedAppointments ?? 0, icon: 'checkmark-circle', color: C.success },
-    { label: 'Revenue', value: `Rs.${(analytics?.totalRevenue ?? 0).toLocaleString()}`, icon: 'cash-outline', color: C.info ?? '#38BDF8' },
+    { label: 'Today',     value: todayAppointments.length,               icon: 'today-outline',    color: C.doctorPrimary, route: '/(doctor)/appointments' },
+    { label: 'Total',     value: analytics?.totalAppointments ?? 0,       icon: 'calendar',         color: C.primary,       route: '/(doctor)/appointments' },
+    { label: 'Pending',   value: analytics?.pendingAppointments ?? 0,     icon: 'time-outline',     color: C.warning,       route: '/(doctor)/appointments' },
+    { label: 'Patients',  value: analytics?.totalPatients ?? 0,           icon: 'people',           color: '#9B59F5',       route: '/(doctor)/patients' },
+    { label: 'Completed', value: analytics?.completedAppointments ?? 0,   icon: 'checkmark-circle', color: C.success,       route: '/(doctor)/appointments' },
+    { label: 'Revenue',   value: `Rs.${(analytics?.totalRevenue ?? 0).toLocaleString()}`, icon: 'cash-outline', color: C.info ?? '#38BDF8', route: '/(doctor)/profile' },
   ];
 
   const quickActions = [
@@ -151,17 +151,22 @@ export default function DoctorHomeScreen() {
         ) : (
           <Animated.View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg, opacity: fadeAnim }}>
             {statCards.map((s) => (
-              <View key={s.label} style={{
-                flex: 1, minWidth: '45%', backgroundColor: cardBg,
-                borderRadius: RADIUS.lg, padding: SPACING.md, alignItems: 'center',
-                borderWidth: 1, borderColor: cardBorder, borderTopWidth: 3, borderTopColor: s.color, ...S.md,
-              }}>
+              <TouchableOpacity
+                key={s.label}
+                activeOpacity={0.75}
+                onPress={() => router.push(s.route)}
+                style={{
+                  flex: 1, minWidth: '45%', backgroundColor: cardBg,
+                  borderRadius: RADIUS.lg, padding: SPACING.md, alignItems: 'center',
+                  borderWidth: 1, borderColor: cardBorder, borderTopWidth: 3, borderTopColor: s.color, ...S.md,
+                }}
+              >
                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: `${s.color}18`, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.xs }}>
                   <Ionicons name={s.icon} size={20} color={s.color} />
                 </View>
                 <Text style={{ fontSize: FONT_SIZES.xxl, fontWeight: '900', color: s.color }}>{s.value}</Text>
                 <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2, fontWeight: '600', textTransform: 'uppercase' }}>{s.label}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </Animated.View>
         )}
