@@ -12,6 +12,20 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
+// ─── Password Strength Helper ────────────────────────────────────────────────
+const getPasswordStrength = (password) => {
+  if (!password) return null;
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { label: 'Weak', color: '#EF4444', width: '25%' };
+  if (score <= 3) return { label: 'Medium', color: '#F59E0B', width: '60%' };
+  return { label: 'Strong', color: '#10B981', width: '100%' };
+};
+
 const SPECIALIZATIONS = [
   'General Physician', 'Cardiologist', 'Neurologist', 'Dermatologist',
   'Orthopedic', 'Pediatrician', 'Gynecologist', 'Psychiatrist',
@@ -257,15 +271,27 @@ export default function RegisterScreen() {
 
               {showSpecPicker && (
                 <View style={styles.specDropdown}>
-                  {SPECIALIZATIONS.map((s) => (
-                    <TouchableOpacity
-                      key={s}
-                      style={[styles.specItem, form.specialization === s && styles.specItemActive]}
-                      onPress={() => { setField('specialization', s); setShowSpecPicker(false); }}
-                    >
-                      <Text style={[styles.specItemText, form.specialization === s && { color: C.doctorPrimary, fontWeight: '700' }]}>{s}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  <ScrollView
+                    nestedScrollEnabled={true}
+                    style={{ maxHeight: 240 }}
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {SPECIALIZATIONS.map((s) => (
+                      <TouchableOpacity
+                        key={s}
+                        style={[styles.specItem, form.specialization === s && styles.specItemActive]}
+                        onPress={() => { setField('specialization', s); setShowSpecPicker(false); }}
+                      >
+                        <Ionicons
+                          name={form.specialization === s ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={16} color={form.specialization === s ? C.doctorPrimary : C.textMuted}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Text style={[styles.specItemText, form.specialization === s && { color: C.doctorPrimary, fontWeight: '700' }]}>{s}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
               )}
             </>
@@ -277,7 +303,7 @@ export default function RegisterScreen() {
             <Ionicons name="lock-closed-outline" size={18} color={C.textSecondary} style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Min 6 chars, at least 1 number"
+              placeholder="Min 6 chars, letter + number"
               placeholderTextColor={C.textMuted}
               value={form.password}
               onChangeText={(v) => setField('password', v)}
@@ -288,6 +314,21 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+          {/* Real-time password strength meter */}
+          {form.password.length > 0 && (() => {
+            const strength = getPasswordStrength(form.password);
+            return (
+              <View style={{ marginBottom: SPACING.sm, marginTop: 4 }}>
+                <View style={{ height: 4, backgroundColor: C.border, borderRadius: 4, overflow: 'hidden' }}>
+                  <View style={{ height: 4, width: strength.width, backgroundColor: strength.color, borderRadius: 4 }} />
+                </View>
+                <Text style={{ fontSize: FONT_SIZES.xs, color: strength.color, fontWeight: '700', marginTop: 4 }}>
+                  {strength.label} Password
+                </Text>
+              </View>
+            );
+          })()}
 
           <Field icon="lock-closed-outline" label="Confirm Password" value={form.confirmPassword}
             onChange={(v) => setField('confirmPassword', v)} error={errors.confirmPassword}
@@ -401,11 +442,15 @@ const getStyles = (C, isDark) => StyleSheet.create({
 
   specDropdown: {
     backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: C.border, marginBottom: SPACING.sm, maxHeight: 220, overflow: 'hidden',
+    borderColor: C.border, marginBottom: SPACING.sm,
   },
-  specItem: { paddingHorizontal: SPACING.md, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
+  specItem: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: 13,
+    borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder,
+  },
   specItemActive: { backgroundColor: `${C.doctorPrimary}15` },
-  specItemText: { color: C.textSecondary, fontSize: FONT_SIZES.sm },
+  specItemText: { color: C.textSecondary, fontSize: FONT_SIZES.sm, flex: 1 },
 
   submitBtn: {
     borderRadius: RADIUS.md, height: 54, flexDirection: 'row',
