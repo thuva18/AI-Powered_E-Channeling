@@ -30,17 +30,20 @@ The **AI-Powered E-Channeling System** aims to bridge the gap between patient sy
 
 ### 📱 **Premium Mobile Experience**
 *   Built with **React Native & Expo**, offering a native feel on both iOS and Android.
-*   **Dynamic Theming:** Smooth system-wide Light and Dark mode transitions.
-*   **Real-time Updates:** Reactive UI powered by a custom `useStyles` hook and Zustand state management.
+*   **Dynamic Theming:** Smooth system-wide Light and Dark mode transitions using reactive color tokens.
+*   **Real-time Interaction:** Fast, responsive UI powered by **Zustand** state management and optimized `useStyles` hooks.
+*   **Native Navigation:** Utilizing **Expo Router** for seamless file-based routing and deep-linking capabilities.
 
-### 💻 **Feature-Rich Web Dashboard**
-*   High-performance **Vite + React** frontend.
-*   **Role-Based Dashboards:** Specialized views for Admins, Doctors, and Patients.
-*   **Secure Medical Journals:** Doctors can maintain detailed clinical notes and prescriptions.
+### 💻 **Professional Web Dashboard**
+*   High-performance **Vite + React 18** frontend with **Tailwind CSS v4** for modern styling.
+*   **Data Visualization:** Interactive analytics dashboards for doctors and admins using **Recharts**.
+*   **Medical Reporting:** Integrated **JSPDF** support for generating professional medical journals and appointment reports.
+*   **Role-Based Access Control (RBAC):** Specialized, secure interfaces for Admins, Doctors, and Patients.
+*   **Responsive Architecture:** Fully optimized for desktops, tablets, and mobile browsers.
 
-### 🔔 **Real-Time Notification System**
-*   Intelligent polling-based notification engine.
-*   Badge counts and unread state management for appointment status changes and admin alerts.
+### 🔔 **Unified Notification System**
+*   Cross-platform synchronization for appointment updates and medical alerts.
+*   Intelligent polling engine with badge counts and real-time state management.
 
 ---
 
@@ -70,14 +73,14 @@ graph TD
 
 ## 🛠️ Technology Stack
 
-| Component | Technology |
-| :--- | :--- |
-| **Mobile App** | React Native, Expo Router, Zustand, Axios |
-| **Web App** | React 18, Vite, Tailwind CSS, Zustand |
-| **Backend API** | Node.js, Express, Mongoose, JWT |
-| **AI Service** | Python 3.10, Flask, Scikit-Learn, LightGBM, TensorFlow |
-| **Database** | MongoDB Atlas |
-| **Cloud Hosting** | Render (IaC via `render.yaml`) |
+| Component | Technology | Key Libraries |
+| :--- | :--- | :--- |
+| **Mobile App** | React Native (Expo) | Expo Router, Zustand, Axios, React Native Paper |
+| **Web App** | React 18 (Vite) | Tailwind CSS v4, Recharts, JSPDF, Lucide React |
+| **Backend API** | Node.js (Express) | Mongoose, JWT, Bcrypt, Dotenv |
+| **AI Service** | Python 3.10 (Flask) | Scikit-Learn, LightGBM, TensorFlow, Joblib |
+| **Database** | MongoDB Atlas | NoSQL Cluster |
+| **Cloud Hosting** | Render | IaC via `render.yaml` |
 
 ---
 
