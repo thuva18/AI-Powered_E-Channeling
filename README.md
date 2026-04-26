@@ -84,6 +84,18 @@ graph TD
 
 ---
 
+## 📁 Project Structure
+
+To help you navigate the codebase, here is where each service is located:
+
+*   **`/web`** — **React Web Application** (Vite, Tailwind CSS v4)
+*   **`/backend`** — **Express.js API** (Node.js, MongoDB)
+*   **`/ai-service`** — **AI & ML Services** (Python, Flask, Scikit-Learn)
+*   **`/mobile`** — **Mobile Application** (React Native, Expo)
+*   **`/shared`** — Shared configuration and API utilities used across platforms.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
