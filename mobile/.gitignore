@@ -13,3 +13,6 @@ web-build/
 .expo-shared/
 .env
 .env.local
+
+ios/
+android/
