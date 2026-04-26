@@ -404,28 +404,58 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
     <>
       <Text style={styles.modalStepTitle}>Select Date & Time</Text>
       <Text style={styles.label}>Date</Text>
+
+      {/* Tappable date field — opens picker on both iOS and Android */}
       <TouchableOpacity
-        style={[styles.modalInput, { justifyContent: 'center' }]}
+        style={[styles.datePickerRow, date && styles.datePickerRowFilled]}
         onPress={() => setShowPicker(true)}
+        activeOpacity={0.7}
       >
-        <Text style={{ color: date ? C.textPrimary : C.textMuted }}>
-          {date ? date : 'Select Date'}
+        <Ionicons name="calendar-outline" size={18} color={date ? C.patientPrimary : C.textMuted} style={{ marginRight: 10 }} />
+        <Text style={{ flex: 1, color: date ? C.textPrimary : C.textMuted, fontSize: FONT_SIZES.base }}>
+          {date
+            ? new Date(dateObj).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+            : 'Tap to select date'}
         </Text>
+        <Ionicons name="chevron-down" size={16} color={C.textMuted} />
       </TouchableOpacity>
-      
-      {showPicker && (
-        <DateTimePicker
-          value={dateObj}
-          mode="date"
-          display="default"
-          minimumDate={new Date()}
-          onChange={handleDateChange}
-        />
-      )}
-      {Platform.OS === 'ios' && showPicker && (
-        <TouchableOpacity style={{ alignSelf: 'flex-end', paddingVertical: 10 }} onPress={() => setShowPicker(false)}>
-           <Text style={{ color: C.patientPrimary, fontWeight: 'bold' }}>Done</Text>
-        </TouchableOpacity>
+
+      {/* iOS: show picker inside a Modal so it doesn't render inline */}
+      {Platform.OS === 'ios' ? (
+        <Modal visible={showPicker} transparent animationType="slide">
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <View style={{ backgroundColor: C.modalBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                  <Text style={{ color: C.textMuted, fontWeight: '600', fontSize: FONT_SIZES.base }}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={{ color: C.textPrimary, fontWeight: '800', fontSize: FONT_SIZES.base }}>Select Date</Text>
+                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                  <Text style={{ color: C.patientPrimary, fontWeight: '800', fontSize: FONT_SIZES.base }}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={dateObj}
+                mode="date"
+                display="spinner"
+                minimumDate={new Date()}
+                onChange={handleDateChange}
+                style={{ backgroundColor: C.modalBg }}
+              />
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        // Android: native dialog, no wrapper needed
+        showPicker && (
+          <DateTimePicker
+            value={dateObj}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={handleDateChange}
+          />
+        )
       )}
 
       <Text style={styles.label}>Time Slot</Text>
@@ -675,6 +705,13 @@ const getStyles = (C, isDark) => StyleSheet.create({
   modalBody: { padding: SPACING.lg, paddingBottom: 40 },
   modalStepTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, marginBottom: SPACING.md },
   modalInput: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base },
+  datePickerRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border,
+    borderRadius: RADIUS.md, height: 52, paddingHorizontal: SPACING.md,
+    marginBottom: 4,
+  },
+  datePickerRowFilled: { borderColor: C.patientPrimary, backgroundColor: `${C.patientPrimary}10` },
   slotRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
   slotSelectBtn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt, alignItems: 'center' },
   slotSelectBtnActive: { borderColor: C.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
