@@ -177,7 +177,7 @@ const BookingModal = ({ doctor, symptomText = '', selectedImages = [], onClose, 
         }
 
         const payment = {
-            sandbox: true,
+            sandbox: ph.sandbox !== false,
             merchant_id: ph.merchantId,
             return_url: ph.returnUrl,
             cancel_url: ph.cancelUrl,

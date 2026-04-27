@@ -119,6 +119,7 @@ const initiatePayment = async (req, res) => {
             const email = patient?.email || 'patient@example.com';
 
             responseData.payhere = {
+                sandbox: process.env.NODE_ENV !== 'production',
                 merchantId,
                 orderId,
                 amount: transaction.amount.toFixed(2),
