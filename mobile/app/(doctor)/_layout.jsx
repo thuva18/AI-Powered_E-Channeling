@@ -6,24 +6,24 @@ import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../../hooks/useTheme';
 
 export default function DoctorLayout() {
-  const { C } = useTheme();
+  const { C, isDark } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: C.tabBar,
-          borderTopColor: C.tabBarBorder,
+          backgroundColor: isDark ? 'rgba(17, 24, 39, 0.97)' : 'rgba(255,255,255,0.98)',
+          borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
           borderTopWidth: 1,
-          height: 70,
-          paddingBottom: 16,
+          height: 72,
+          paddingBottom: 18,
           paddingTop: 10,
           position: 'absolute',
           elevation: 0,
         },
         tabBarActiveTintColor: C.doctorPrimary,
         tabBarInactiveTintColor: C.textMuted,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 4 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2, letterSpacing: 0.3 },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }} />

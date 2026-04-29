@@ -10,7 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import useTheme from '../../hooks/useTheme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const PHONE_REGEX = /^(07\d{8}|\+94\d{9})$/;
@@ -27,12 +28,17 @@ const slotDurationHours = (start, end) => {
 // ─── Field Component ─────────────────────────────────────────────────────────
 function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note, rightIcon }) {
   const styles = useStyles(getStyles);
+  const { C, isDark } = useTheme();
   return (
-    <View style={fStyles.wrap}>
-      <Text style={fStyles.label}>{label}</Text>
-      <View style={[fStyles.row, readOnly && fStyles.readOnly]}>
+    <View style={{ marginBottom: SPACING.sm }}>
+      <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
+      <View style={[{
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: C.inputBgAlt, borderRadius: RADIUS.md, borderWidth: 1,
+        borderColor: C.border, paddingHorizontal: SPACING.md, height: 50,
+      }, readOnly && { backgroundColor: isDark ? 'rgba(10,15,30,0.6)' : 'rgba(0,0,0,0.04)', opacity: 0.6 }]}>
         <TextInput
-          style={fStyles.input}
+          style={{ flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base }}
           value={value}
           onChangeText={readOnly ? undefined : onChange}
           placeholder={placeholder}
@@ -43,47 +49,35 @@ function Field({ label, value, onChange, placeholder, readOnly, extra = {}, note
         {rightIcon}
       </View>
       {!!note && (
-        <View style={fStyles.noteRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
           <Ionicons name="alert-circle-outline" size={11} color={C.warning} />
-          <Text style={fStyles.note}>{note}</Text>
+          <Text style={{ flex: 1, fontSize: FONT_SIZES.xs, color: C.textMuted }}>{note}</Text>
         </View>
       )}
     </View>
   );
 }
-const fStyles = StyleSheet.create({
-  wrap: { marginBottom: SPACING.sm },
-  label: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.inputBgAlt, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: C.border, paddingHorizontal: SPACING.md, height: 50,
-  },
-  readOnly: { backgroundColor: 'rgba(10,15,30,0.6)', opacity: 0.6 },
-  input: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
-  noteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  note: { flex: 1, fontSize: FONT_SIZES.xs, color: C.textMuted },
-});
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
 function Toast({ msg, type }) {
-  const styles = useStyles(getStyles);
+  const { C, S } = useTheme();
   if (!msg) return null;
   const bg = type === 'success' ? C.success : C.error;
   return (
-    <View style={[toastStyles.box, { backgroundColor: bg }]}>
-      <Ionicons name={type === 'success' ? 'checkmark-circle' : 'alert-circle'} size={16} color={C.white} />
-      <Text style={toastStyles.text}>{msg}</Text>
+    <View style={[{
+      position: 'absolute', top: 60, left: SPACING.lg, right: SPACING.lg, zIndex: 99,
+      flexDirection: 'row', alignItems: 'center', gap: 8, padding: SPACING.md,
+      borderRadius: RADIUS.md, backgroundColor: bg, ...S.lg,
+    }]}>
+      <Ionicons name={type === 'success' ? 'checkmark-circle' : 'alert-circle'} size={16} color="#fff" />
+      <Text style={{ flex: 1, color: '#fff', fontSize: FONT_SIZES.sm, fontWeight: '600' }}>{msg}</Text>
     </View>
   );
 }
-const toastStyles = StyleSheet.create({
-  box: { position: 'absolute', top: 60, left: SPACING.lg, right: SPACING.lg, zIndex: 99, flexDirection: 'row', alignItems: 'center', gap: 8, padding: SPACING.md, borderRadius: RADIUS.md, ...SHADOWS.lg },
-  text: { flex: 1, color: C.white, fontSize: FONT_SIZES.sm, fontWeight: '600' },
-});
 
 export default function DoctorProfileScreen() {
   const styles = useStyles(getStyles);
+  const { C, S, isDark } = useTheme();
   const { updateUser, clearUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -315,11 +309,15 @@ export default function DoctorProfileScreen() {
                 extra={{ keyboardType: 'numeric' }}
               />
 
-              <View style={fStyles.wrap}>
-                <Text style={fStyles.label}>Phone Number</Text>
-                <View style={[fStyles.row, phoneError && { borderColor: C.error }]}>
+              <View style={{ marginBottom: SPACING.sm }}>
+                <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Phone Number</Text>
+                <View style={[{
+                  flexDirection: 'row', alignItems: 'center',
+                  backgroundColor: C.inputBgAlt, borderRadius: RADIUS.md, borderWidth: 1,
+                  borderColor: phoneError ? C.error : C.border, paddingHorizontal: SPACING.md, height: 50,
+                }]}>
                   <TextInput
-                    style={fStyles.input}
+                    style={{ flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base }}
                     value={form.phone}
                     onChangeText={(v) => {
                       setF('phone', v);
@@ -362,7 +360,7 @@ export default function DoctorProfileScreen() {
             </View>
 
             <View style={styles.card}>
-              <Text style={fStyles.label}>Biography</Text>
+              <Text style={{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Biography</Text>
               <TextInput
                 style={styles.textArea}
                 placeholder="Write a short professional bio..."
@@ -372,7 +370,7 @@ export default function DoctorProfileScreen() {
                 multiline numberOfLines={4} textAlignVertical="top"
               />
 
-              <Text style={[fStyles.label, { marginTop: SPACING.sm }]}>Qualifications (comma-separated)</Text>
+              <Text style={[{ fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.textSecondary, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }, { marginTop: SPACING.sm }]}>Qualifications (comma-separated)</Text>
               <TextInput
                 style={styles.textArea}
                 placeholder="MBBS, MD Cardiology, ..."
@@ -525,7 +523,7 @@ export default function DoctorProfileScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: C.doctorPrimary, ...SHADOWS.glowGreen }, saving && { opacity: 0.65 }]}
+              style={[styles.saveBtn, { backgroundColor: C.doctorPrimary, ...S.glowGreen }, saving && { opacity: 0.65 }]}
               onPress={handleSaveAvailability} disabled={saving} activeOpacity={0.85}
             >
               {saving ? <ActivityIndicator color={C.white} /> : (
@@ -583,7 +581,7 @@ export default function DoctorProfileScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
@@ -619,7 +617,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   saveBtn: {
     backgroundColor: C.primary, borderRadius: RADIUS.md, height: 54,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    marginBottom: SPACING.md, ...SHADOWS.glowBlue,
+    marginBottom: SPACING.md, ...S.glowBlue,
   },
   saveBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
 

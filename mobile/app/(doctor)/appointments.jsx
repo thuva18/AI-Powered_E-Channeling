@@ -1,18 +1,17 @@
-// app/(doctor)/appointments.tsx
-// Member 3 – Doctor Appointments Module
-// Doctor view appointments & update status
+// app/(doctor)/appointments.jsx
+// Doctor Appointments Module – view & manage appointment statuses
+// Fully theme-reactive using useStyles hook
 
 import { useEffect, useState, useCallback } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-
-// Types removed
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const VALID_TRANSITIONS = {
   PENDING: ['ACCEPTED', 'REJECTED'],
@@ -24,6 +23,7 @@ const VALID_TRANSITIONS = {
 
 export default function DoctorAppointmentsScreen() {
   const styles = useStyles(getStyles);
+  const { C, isDark } = useTheme();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,6 +32,32 @@ export default function DoctorAppointmentsScreen() {
   const [selectedDateFilter, setSelectedDateFilter] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const statusColor = useCallback((s) => {
+    const map = {
+      ACCEPTED: C.success, PENDING: C.warning, CANCELLED: C.error,
+      COMPLETED: C.info, REJECTED: C.error,
+    };
+    return map[s] ?? C.textSecondary;
+  }, [C]);
+
+  const statusIcon = useCallback((s) => {
+    const map = {
+      ACCEPTED: 'checkmark-circle', PENDING: 'time', CANCELLED: 'close-circle',
+      COMPLETED: 'checkmark-done-circle', REJECTED: 'ban',
+    };
+    return map[s] ?? 'ellipse';
+  }, []);
+
+  const actionBgColor = useCallback((s) => {
+    const map = { ACCEPTED: C.success, REJECTED: C.error, CANCELLED: C.error, COMPLETED: C.info };
+    return map[s] ?? C.primary;
+  }, [C]);
+
+  const actionLabel = useCallback((s) => {
+    const map = { ACCEPTED: '✓ Accept', REJECTED: '✕ Reject', CANCELLED: '✕ Cancel', COMPLETED: '✔ Complete' };
+    return map[s] ?? s;
+  }, []);
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -81,26 +107,36 @@ export default function DoctorAppointmentsScreen() {
     const hasSymptoms = !!(item.symptomDescription || (item.symptoms && item.symptoms.length > 0));
     const hasImages = item.symptomImages && item.symptomImages.length > 0;
     const transitions = VALID_TRANSITIONS[item.status] || [];
+    const sc = statusColor(item.status);
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { borderLeftColor: sc }]}>
         {/* Patient info */}
         <View style={styles.cardHeader}>
-          <View style={styles.patientAvatar}>
-            <Text style={{ fontSize: 20 }}>🧑</Text>
+          <View style={[styles.patientAvatar, { backgroundColor: `${sc}12` }]}>
+            <Ionicons name="person" size={18} color={sc} />
           </View>
           <View style={styles.patientInfo}>
             <Text style={styles.patientName}>{patientName}</Text>
-            {patientProfile.phone && <Text style={styles.patientContact}>📞 {patientProfile.phone}</Text>}
+            {patientProfile.phone && (
+              <View style={styles.contactRow}>
+                <Ionicons name="call-outline" size={11} color={C.textMuted} />
+                <Text style={styles.patientContact}>{patientProfile.phone}</Text>
+              </View>
+            )}
             {item.appointmentDate && (
-              <Text style={styles.aptDate}>
-                📅 {new Date(item.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                {item.timeSlot ? ` · ${item.timeSlot}` : ''}
-              </Text>
+              <View style={styles.contactRow}>
+                <Ionicons name="calendar-outline" size={11} color={C.textMuted} />
+                <Text style={styles.aptDate}>
+                  {new Date(item.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {item.timeSlot ? ` · ${item.timeSlot}` : ''}
+                </Text>
+              </View>
             )}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor(item.status) + '22' }]}>
-            <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{item.status}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: sc + '18' }]}>
+            <Ionicons name={statusIcon(item.status)} size={12} color={sc} />
+            <Text style={[styles.statusText, { color: sc }]}>{item.status}</Text>
           </View>
         </View>
 
@@ -109,6 +145,7 @@ export default function DoctorAppointmentsScreen() {
           <TouchableOpacity
             style={styles.viewSymptomBtn}
             onPress={() => setExpandedId(isExpanded ? null : item._id)}
+            activeOpacity={0.7}
           >
             <Ionicons name={isExpanded ? 'chevron-up' : 'document-text-outline'} size={14} color={C.doctorPrimary} />
             <Text style={styles.viewSymptomText}>
@@ -162,26 +199,35 @@ export default function DoctorAppointmentsScreen() {
           </View>
         )}
 
-        {item.notes && !isExpanded && <Text style={styles.notes}>📝 {item.notes}</Text>}
+        {item.notes && !isExpanded && (
+          <View style={styles.notesRow}>
+            <Ionicons name="document-text-outline" size={12} color={C.textMuted} />
+            <Text style={styles.notes}>{item.notes}</Text>
+          </View>
+        )}
 
         {/* Status action buttons */}
         {transitions.length > 0 && (
           <View style={styles.actionsRow}>
-            {transitions.map((s) => (
-              <TouchableOpacity
-                key={s}
-                style={[styles.actionBtn, { backgroundColor: actionBgColor(s) + '22', borderColor: actionBgColor(s) + '44' }]}
-                onPress={() => updateStatus(item._id, s)}
-                disabled={updatingId === item._id}
-              >
-                {updatingId === item._id
-                  ? <ActivityIndicator size="small" color={actionBgColor(s)} />
-                  : <Text style={[styles.actionBtnText, { color: actionBgColor(s) }]}>
-                      {actionLabel(s)}
-                    </Text>
-                }
-              </TouchableOpacity>
-            ))}
+            {transitions.map((s) => {
+              const ac = actionBgColor(s);
+              return (
+                <TouchableOpacity
+                  key={s}
+                  style={[styles.actionBtn, { backgroundColor: ac + '15', borderColor: ac + '35' }]}
+                  onPress={() => updateStatus(item._id, s)}
+                  disabled={updatingId === item._id}
+                  activeOpacity={0.7}
+                >
+                  {updatingId === item._id
+                    ? <ActivityIndicator size="small" color={ac} />
+                    : <Text style={[styles.actionBtnText, { color: ac }]}>
+                        {actionLabel(s)}
+                      </Text>
+                  }
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
       </View>
@@ -191,8 +237,13 @@ export default function DoctorAppointmentsScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>Appointments</Text>
-        <Text style={styles.subtitle}>{appointments.length} total</Text>
+        <View>
+          <Text style={styles.title}>Appointments</Text>
+          <Text style={styles.subtitle}>{appointments.length} total · {displayList.length} shown</Text>
+        </View>
+        <View style={styles.headerBadge}>
+          <Ionicons name="calendar" size={18} color={C.doctorPrimary} />
+        </View>
       </View>
 
       {/* Filter */}
@@ -200,23 +251,25 @@ export default function DoctorAppointmentsScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
           {['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED'].map((f) => {
             const count = f === 'ALL' ? appointments.length : appointments.filter(a => a.status === f).length;
+            const isActive = filter === f;
             return (
               <TouchableOpacity
-                key={f} style={[styles.filterTab, filter === f && styles.filterTabActive]}
+                key={f} style={[styles.filterTab, isActive && styles.filterTabActive]}
                 onPress={() => setFilter(f)}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
                   {f}
                 </Text>
-                <View style={[styles.badge, filter === f ? styles.badgeActive : styles.badgeInactive]}>
-                  <Text style={[styles.badgeText, filter === f && styles.badgeTextActive]}>{count}</Text>
+                <View style={[styles.badge, isActive ? styles.badgeActive : styles.badgeInactive]}>
+                  <Text style={[styles.badgeText, isActive && styles.badgeTextActive]}>{count}</Text>
                 </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
         <View style={styles.dateFilterContainer}>
-          <Ionicons name="calendar" size={16} color={C.textSecondary} />
+          <Ionicons name="calendar-outline" size={16} color={C.textSecondary} />
           <TextInput
             style={styles.dateInput}
             placeholder="Filter by Date (YYYY-MM-DD)"
@@ -225,7 +278,7 @@ export default function DoctorAppointmentsScreen() {
             onChangeText={setSelectedDateFilter}
           />
           {selectedDateFilter ? (
-            <TouchableOpacity onPress={() => setSelectedDateFilter('')}>
+            <TouchableOpacity onPress={() => setSelectedDateFilter('')} hitSlop={8}>
               <Ionicons name="close-circle" size={18} color={C.textMuted} />
             </TouchableOpacity>
           ) : null}
@@ -241,8 +294,11 @@ export default function DoctorAppointmentsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.doctorPrimary} />}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="calendar-outline" size={40} color={C.textMuted} />
-              <Text style={styles.emptyText}>No {filter !== 'ALL' ? filter.toLowerCase() : ''} appointments</Text>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="calendar-outline" size={32} color={C.doctorPrimary} />
+              </View>
+              <Text style={styles.emptyTitle}>No {filter !== 'ALL' ? filter.toLowerCase() : ''} appointments</Text>
+              <Text style={styles.emptySubtitle}>Pull down to refresh or adjust filters</Text>
             </View>
           }
         />
@@ -252,7 +308,7 @@ export default function DoctorAppointmentsScreen() {
       <Modal visible={!!selectedImage} transparent animationType="fade" onRequestClose={() => setSelectedImage(null)}>
         <View style={styles.lightboxOverlay}>
           <TouchableOpacity style={styles.lightboxClose} onPress={() => setSelectedImage(null)}>
-            <Ionicons name="close" size={32} color={C.white} />
+            <Ionicons name="close" size={32} color="#fff" />
           </TouchableOpacity>
           {selectedImage && (
             <Image source={{ uri: selectedImage }} style={styles.lightboxImage} resizeMode="contain" />
@@ -263,87 +319,99 @@ export default function DoctorAppointmentsScreen() {
   );
 }
 
-function statusColor(s) {
-  return { ACCEPTED: C.success, PENDING: C.warning, CANCELLED: C.error, COMPLETED: C.info, REJECTED: C.error }[s] ?? C.textSecondary;
-}
-
-function actionBgColor(s) {
-  return { ACCEPTED: C.success, REJECTED: C.error, CANCELLED: C.error, COMPLETED: C.info }[s] ?? C.primary;
-}
-
-function actionLabel(s) {
-  return { ACCEPTED: '✓ Accept', REJECTED: '✕ Reject', CANCELLED: '✕ Cancel', COMPLETED: '✔ Complete' }[s] ?? s;
-}
-
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
-    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: SPACING.lg, paddingTop: 58, paddingBottom: SPACING.md,
+    backgroundColor: isDark ? C.bgCard : C.bgCard,
+    borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  subtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
+  headerBadge: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: `${C.doctorPrimary}15`, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: `${C.doctorPrimary}30`,
+  },
   filterContainer: { borderBottomWidth: 1, borderBottomColor: C.border },
   filterRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.sm },
   filterTab: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: SPACING.md, paddingVertical: 8,
-    borderRadius: RADIUS.full, backgroundColor: C.bgCard,
+    borderRadius: RADIUS.full, backgroundColor: isDark ? C.bgElevated : C.bgCard,
     borderWidth: 1, borderColor: C.border,
   },
   filterTabActive: { backgroundColor: C.doctorPrimary, borderColor: C.doctorPrimary },
   filterText: { fontSize: 11, color: C.textSecondary, fontWeight: '700' },
   filterTextActive: { color: C.textInverse },
   badge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full },
-  badgeInactive: { backgroundColor: C.bgElevated },
+  badgeInactive: { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : C.bgElevated },
   badgeActive: { backgroundColor: 'rgba(0,0,0,0.15)' },
   badgeText: { fontSize: 10, fontWeight: '800', color: C.textSecondary },
   badgeTextActive: { color: C.textInverse },
   dateFilterContainer: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, gap: SPACING.sm
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md, gap: SPACING.sm,
   },
   dateInput: {
-    flex: 1, height: 40, backgroundColor: C.bgElevated, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
-    color: C.textPrimary, fontSize: FONT_SIZES.sm, borderWidth: 1, borderColor: C.border
+    flex: 1, height: 42, backgroundColor: isDark ? C.bgElevated : C.bgInput,
+    borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
+    color: C.textPrimary, fontSize: FONT_SIZES.sm, borderWidth: 1, borderColor: C.border,
   },
-  list: { padding: SPACING.lg, paddingBottom: 80 },
+  list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
-    backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
+    backgroundColor: isDark ? 'rgba(17, 24, 39, 0.9)' : C.bgCard,
+    borderRadius: RADIUS.lg, padding: SPACING.md,
+    marginBottom: SPACING.md, borderWidth: 1,
+    borderColor: isDark ? 'rgba(255,255,255,0.06)' : C.border,
+    borderLeftWidth: 4, ...S.sm,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start' },
   patientAvatar: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: C.bgElevated,
+    width: 46, height: 46, borderRadius: 23,
     justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
   },
   patientInfo: { flex: 1 },
   patientName: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
-  patientContact: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
-  aptDate: { fontSize: FONT_SIZES.xs, color: C.textMuted, marginTop: 4 },
-  statusBadge: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
-  statusText: { fontSize: FONT_SIZES.xs, fontWeight: '700', textTransform: 'capitalize' },
-  notes: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: SPACING.sm, fontStyle: 'italic' },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  patientContact: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
+  aptDate: { fontSize: FONT_SIZES.xs, color: C.textMuted },
+  statusBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full,
+  },
+  statusText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
+  notesRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: SPACING.sm },
+  notes: { flex: 1, fontSize: FONT_SIZES.sm, color: C.textSecondary, fontStyle: 'italic' },
   actionsRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   actionBtn: {
-    flex: 1, paddingVertical: SPACING.sm, borderRadius: RADIUS.md,
+    flex: 1, paddingVertical: 10, borderRadius: RADIUS.md,
     alignItems: 'center', borderWidth: 1,
   },
   actionBtnText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: C.textMuted, marginTop: SPACING.md },
+  emptyIconWrap: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: `${C.doctorPrimary}15`, justifyContent: 'center', alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  emptySubtitle: { color: C.textMuted, marginTop: 4, fontSize: FONT_SIZES.sm },
 
   // Symptom panel
   viewSymptomBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginTop: SPACING.sm, paddingVertical: 6, paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md, backgroundColor: `${C.doctorPrimary}12`,
-    borderWidth: 1, borderColor: `${C.doctorPrimary}25`, alignSelf: 'flex-start',
+    marginTop: SPACING.sm, paddingVertical: 7, paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md, backgroundColor: `${C.doctorPrimary}10`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}22`, alignSelf: 'flex-start',
   },
   viewSymptomText: { fontSize: FONT_SIZES.xs, fontWeight: '700', color: C.doctorPrimary },
   symptomPanel: {
     marginTop: SPACING.sm, padding: SPACING.md,
-    backgroundColor: 'rgba(34, 201, 160, 0.05)', borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: `${C.doctorPrimary}20`,
+    backgroundColor: isDark ? 'rgba(34, 201, 160, 0.04)' : 'rgba(15, 168, 123, 0.04)',
+    borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}18`,
   },
   symptomSection: { marginBottom: SPACING.sm },
   symptomLabel: {
@@ -352,15 +420,16 @@ const getStyles = (C, isDark) => StyleSheet.create({
   },
   symptomText: {
     fontSize: FONT_SIZES.sm, color: C.textSecondary,
-    backgroundColor: C.subtleBg, padding: SPACING.sm,
+    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : C.bgInput,
+    padding: SPACING.sm,
     borderRadius: RADIUS.sm, borderWidth: 1, borderColor: C.cardInnerBorder,
     lineHeight: 20,
   },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
-    paddingHorizontal: SPACING.sm, paddingVertical: 3,
-    borderRadius: RADIUS.full, backgroundColor: `${C.doctorPrimary}18`,
-    borderWidth: 1, borderColor: `${C.doctorPrimary}30`,
+    paddingHorizontal: SPACING.sm, paddingVertical: 4,
+    borderRadius: RADIUS.full, backgroundColor: `${C.doctorPrimary}15`,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}28`,
   },
   tagText: { fontSize: FONT_SIZES.xs, color: C.doctorPrimary, fontWeight: '700' },
   symptomImage: {
@@ -372,8 +441,8 @@ const getStyles = (C, isDark) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   lightboxClose: {
-    position: 'absolute', top: 50, right: 20, zIndex: 10,
-    padding: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: RADIUS.full,
+    position: 'absolute', top: 54, right: 20, zIndex: 10,
+    padding: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: RADIUS.full,
   },
   lightboxImage: { flex: 1, width: '100%', height: '100%' },
 });

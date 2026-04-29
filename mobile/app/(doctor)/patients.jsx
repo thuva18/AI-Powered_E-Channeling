@@ -1,20 +1,20 @@
-// app/(doctor)/patients.tsx
-// Doctor's patients list
+// app/(doctor)/patients.jsx
+// Doctor's patients list – fully theme-reactive
 
 import { useEffect, useState, useCallback } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-
-// Types removed
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function DoctorPatientsScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const [patients, setPatients] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,51 +35,92 @@ export default function DoctorPatientsScreen() {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    setFiltered(q ? patients.filter((p) => p.name.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)) : patients);
+    setFiltered(q ? patients.filter((p) => p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)) : patients);
   }, [search, patients]);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.split(' ').filter(Boolean);
+    return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0][0];
+  };
+
+  const AVATAR_COLORS = ['#4E9AF1', '#22C9A0', '#9B59F5', '#F5A623', '#E84545', '#38BDF8'];
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Patients</Text>
-        <Text style={styles.subtitle}>{patients.length} total</Text>
+        <View>
+          <Text style={styles.title}>My Patients</Text>
+          <Text style={styles.subtitle}>{patients.length} total · {filtered.length} shown</Text>
+        </View>
+        <View style={styles.headerBadge}>
+          <Ionicons name="people" size={18} color={C.doctorPrimary} />
+        </View>
       </View>
+
       <View style={styles.searchBox}>
-        <Ionicons name="search" size={18} color={C.textSecondary} style={{ marginRight: SPACING.sm }} />
+        <Ionicons name="search" size={18} color={C.textMuted} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search patients..."
+          placeholder="Search by name or email…"
           placeholderTextColor={C.textMuted}
           value={search}
           onChangeText={setSearch}
         />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        )}
       </View>
+
       {loading ? <ActivityIndicator color={C.doctorPrimary} style={{ marginTop: 40 }} /> : (
         <FlatList
           data={filtered}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.doctorPrimary} />}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.avatar}><Text style={{ fontSize: 20 }}>🧑</Text></View>
-              <View style={styles.info}>
-                <Text style={styles.name}>{item.name}</Text>
-                {item.email && <Text style={styles.detail}>✉️ {item.email}</Text>}
-                {item.phone && <Text style={styles.detail}>📞 {item.phone}</Text>}
-              </View>
-              {item.totalAppointments != null && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeVal}>{item.totalAppointments}</Text>
-                  <Text style={styles.badgeLbl}>visits</Text>
+          renderItem={({ item, index }) => {
+            const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+            const initials = getInitials(item.name).toUpperCase();
+            return (
+              <View style={styles.card}>
+                <View style={[styles.avatar, { backgroundColor: `${color}18` }]}>
+                  <Text style={[styles.avatarText, { color }]}>{initials}</Text>
                 </View>
-              )}
-            </View>
-          )}
+                <View style={styles.info}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  {item.email && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="mail-outline" size={11} color={C.textMuted} />
+                      <Text style={styles.detail}>{item.email}</Text>
+                    </View>
+                  )}
+                  {item.phone && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="call-outline" size={11} color={C.textMuted} />
+                      <Text style={styles.detail}>{item.phone}</Text>
+                    </View>
+                  )}
+                </View>
+                {item.totalAppointments != null && (
+                  <View style={styles.visitBadge}>
+                    <Text style={styles.visitCount}>{item.totalAppointments}</Text>
+                    <Text style={styles.visitLabel}>visits</Text>
+                  </View>
+                )}
+              </View>
+            );
+          }}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="people-outline" size={40} color={C.textMuted} />
-              <Text style={styles.emptyText}>No patients found</Text>
+              <View style={styles.emptyIconWrap}>
+                <Ionicons name="people-outline" size={32} color={C.doctorPrimary} />
+              </View>
+              <Text style={styles.emptyTitle}>No patients found</Text>
+              <Text style={styles.emptySubtitle}>
+                {search ? 'Try a different search term' : 'Your patient list will appear here'}
+              </Text>
             </View>
           }
         />
@@ -88,36 +129,59 @@ export default function DoctorPatientsScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
-    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
-    backgroundColor: C.bgCard, borderBottomWidth: 1, borderBottomColor: C.border,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: SPACING.lg, paddingTop: 58, paddingBottom: SPACING.md,
+    backgroundColor: isDark ? C.bgCard : C.bgCard,
+    borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  title: { fontSize: FONT_SIZES.xl, fontWeight: '700', color: C.textPrimary },
-  subtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary },
+  title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
+  subtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
+  headerBadge: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: `${C.doctorPrimary}15`, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: `${C.doctorPrimary}30`,
+  },
   searchBox: {
-    flexDirection: 'row', alignItems: 'center', margin: SPACING.lg,
-    backgroundColor: C.bgCard, borderRadius: RADIUS.md, borderWidth: 1,
-    borderColor: C.border, paddingHorizontal: SPACING.md, height: 48,
+    flexDirection: 'row', alignItems: 'center', marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    backgroundColor: isDark ? C.bgElevated : C.bgCard,
+    borderRadius: RADIUS.md, borderWidth: 1,
+    borderColor: C.border, paddingHorizontal: SPACING.md, height: 48, gap: SPACING.sm,
   },
   searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
-  list: { paddingHorizontal: SPACING.lg, paddingBottom: 80 },
+  list: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: 100 },
   card: {
-    backgroundColor: C.bgCard, borderRadius: RADIUS.md, padding: SPACING.md,
+    backgroundColor: isDark ? 'rgba(17, 24, 39, 0.9)' : C.bgCard,
+    borderRadius: RADIUS.lg, padding: SPACING.md,
     flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.sm,
-    borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
+    borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : C.border,
+    ...S.sm,
   },
   avatar: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: C.bgElevated,
+    width: 48, height: 48, borderRadius: 24,
     justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md,
   },
+  avatarText: { fontSize: FONT_SIZES.base, fontWeight: '800' },
   info: { flex: 1 },
   name: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
-  detail: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
-  badge: { alignItems: 'center' },
-  badgeVal: { fontSize: FONT_SIZES.lg, fontWeight: '700', color: C.doctorPrimary },
-  badgeLbl: { fontSize: 10, color: C.textMuted },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  detail: { fontSize: FONT_SIZES.xs, color: C.textSecondary },
+  visitBadge: {
+    alignItems: 'center', backgroundColor: `${C.doctorPrimary}12`,
+    paddingHorizontal: SPACING.sm, paddingVertical: 6, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: `${C.doctorPrimary}22`,
+  },
+  visitCount: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.doctorPrimary },
+  visitLabel: { fontSize: 9, color: C.textMuted, fontWeight: '600', textTransform: 'uppercase' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { color: C.textMuted, marginTop: SPACING.md },
+  emptyIconWrap: {
+    width: 64, height: 64, borderRadius: 32,
+    backgroundColor: `${C.doctorPrimary}15`, justifyContent: 'center', alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  emptyTitle: { fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary },
+  emptySubtitle: { fontSize: FONT_SIZES.sm, color: C.textMuted, marginTop: 4 },
 });

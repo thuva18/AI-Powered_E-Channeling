@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
   Modal, ScrollView, Alert, ActivityIndicator, RefreshControl,
@@ -11,18 +12,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const STATUSES = ['Active', 'Recovered', 'Follow-up', 'Referred', 'Chronic'];
 const GENDERS = ['Male', 'Female', 'Other'];
 
-const STATUS_COLOR = {
+const getStatusColor = (C) => ({
   Active: C.primary,
   Recovered: C.success,
   'Follow-up': C.warning,
   Referred: '#9B59F5',
   Chronic: C.error,
-};
+});
 
 const emptyRx = () => ({ medication: '', dosage: '', frequency: '', duration: '' });
 
@@ -36,6 +37,7 @@ const BLANK_FORM = {
 // ─── Prescription Row ────────────────────────────────────────────────────────
 function RxRow({ rx, index, total, onChange, onRemove }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   return (
     <View style={styles.rxCard}>
       <View style={styles.rxHeader}>
@@ -63,7 +65,9 @@ function RxRow({ rx, index, total, onChange, onRemove }) {
 // ─── Journal Entry Card ──────────────────────────────────────────────────────
 function JournalCard({ entry, onEdit, onDelete }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const STATUS_COLOR = getStatusColor(C);
   const sc = STATUS_COLOR[entry.status] || C.textSecondary;
   const initials = (entry.patientName?.[0] || 'P').toUpperCase();
   return (
@@ -160,6 +164,8 @@ function JournalCard({ entry, onEdit, onDelete }) {
 // ─── Journal Modal ───────────────────────────────────────────────────────────
 function JournalModal({ visible, entry, patients, onClose, onSave }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const STATUS_COLOR = getStatusColor(C);
   const isEdit = !!entry?._id;
   const [form, setForm] = useState(BLANK_FORM);
   const [saving, setSaving] = useState(false);
@@ -451,6 +457,7 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
 // ─── Field helper ────────────────────────────────────────────────────────────
 function InputField({ label, value, onChange, placeholder, extra = {} }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   return (
     <>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -469,6 +476,8 @@ function InputField({ label, value, onChange, placeholder, extra = {} }) {
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function DoctorJournalScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const STATUS_COLOR = getStatusColor(C);
   const [entries, setEntries] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -605,7 +614,7 @@ export default function DoctorJournalScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -616,7 +625,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
   newBtn: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: C.doctorPrimary,
-    justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowGreen,
+    justifyContent: 'center', alignItems: 'center', ...S.glowGreen,
   },
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
@@ -660,7 +669,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   expanded: { borderTopWidth: 1, borderTopColor: C.cardInnerBorder2, padding: SPACING.md },
   expandSection: { marginBottom: SPACING.sm },
   expandLabel: { fontSize: 11, fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
-  rxViewCard: { backgroundColor: 'rgba(78,154,241,0.08)', borderRadius: RADIUS.sm, padding: SPACING.sm, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(78,154,241,0.15)' },
+  rxViewCard: { backgroundColor: `${C.primary}10`, borderRadius: RADIUS.sm, padding: SPACING.sm, marginBottom: 4, borderWidth: 1, borderColor: `${C.primary}18` },
   rxMed: { fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary },
   rxDetail: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
   notesText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, lineHeight: 20 },
@@ -740,7 +749,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   saveBtn: {
     backgroundColor: C.doctorPrimary, borderRadius: RADIUS.md, height: 52,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    marginTop: SPACING.md, ...SHADOWS.glowGreen,
+    marginTop: SPACING.md, ...S.glowGreen,
   },
   saveBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800' },
 });
