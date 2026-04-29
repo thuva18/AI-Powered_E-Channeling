@@ -4,12 +4,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity,
+  View, Text, FlatList, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, RefreshControl, ScrollView, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import useTheme from '../../hooks/useTheme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const STATUS_META = {
   SUCCESS: { label: 'Paid', icon: 'checkmark-circle', color: '#10B981' },
@@ -31,6 +32,7 @@ const TAB_LABELS = { ALL: 'All', SUCCESS: 'Paid', APPROVED: 'Approved', PENDING_
 
 // ── Receipt Modal ─────────────────────────────────────────────────────────────
 function ReceiptModal({ transactionId, onClose }) {
+  const { C } = useTheme();
   const [receipt, setReceipt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -174,6 +176,7 @@ function ReceiptModal({ transactionId, onClose }) {
 
 // ── Main Screen ──────────────────────────────────────────────────────────────
 export default function PatientPaymentsScreen() {
+  const { C, S } = useTheme();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -210,7 +213,7 @@ export default function PatientPaymentsScreen() {
     return (
       <View style={{
         backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-        marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
+        marginBottom: SPACING.sm, borderWidth: 1, borderColor: C.border, ...S.sm,
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           <View style={{
@@ -289,7 +292,7 @@ export default function PatientPaymentsScreen() {
         <View style={{
           margin: SPACING.md, flexDirection: 'row', gap: SPACING.sm,
         }}>
-          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#10B98118', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
               <Ionicons name="checkmark-circle" size={18} color="#10B981" />
             </View>
@@ -297,7 +300,7 @@ export default function PatientPaymentsScreen() {
             <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: '#10B981' }}>LKR {totalPaid.toLocaleString()}</Text>
             <Text style={{ fontSize: 10, color: C.textMuted }}>{paidCount} txns</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#F59E0B18', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
               <Ionicons name="time" size={18} color="#F59E0B" />
             </View>
@@ -305,7 +308,7 @@ export default function PatientPaymentsScreen() {
             <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '800', color: '#F59E0B' }}>{pendingCount}</Text>
             <Text style={{ fontSize: 10, color: C.textMuted }}>awaiting</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm }}>
+          <View style={{ flex: 1, backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
             <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${C.primary}18`, justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
               <Ionicons name="bar-chart" size={18} color={C.primary} />
             </View>

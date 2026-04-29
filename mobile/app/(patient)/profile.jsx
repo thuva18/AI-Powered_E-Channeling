@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, Modal
@@ -11,10 +12,11 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function PatientProfileScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
 
   function renderField(
     _icon,
@@ -247,7 +249,7 @@ export default function PatientProfileScreen() {
 
 
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -264,7 +266,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   avatar: {
     width: 100, height: 100, borderRadius: 50, backgroundColor: C.cardBgTranslucent,
     justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
-    borderWidth: 2, borderColor: C.patientPrimary, ...SHADOWS.lg,
+    borderWidth: 2, borderColor: C.patientPrimary, ...S.lg,
   },
   name: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   email: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 4 },
@@ -273,14 +275,14 @@ const getStyles = (C, isDark) => StyleSheet.create({
     backgroundColor: 'rgba(78, 154, 241, 0.2)', borderRadius: RADIUS.full,
   },
   roleText: { color: C.patientPrimary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase' },
-  historyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl, borderWidth: 1, borderColor: C.cardInnerBorder, ...SHADOWS.sm },
+  historyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.xl, borderWidth: 1, borderColor: C.cardInnerBorder, ...S.sm },
   hIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: 'rgba(78, 154, 241, 0.1)', justifyContent: 'center', alignItems: 'center', marginRight: SPACING.md },
   historyBtnTitle: { fontSize: FONT_SIZES.md, fontWeight: '800', color: C.textPrimary, marginBottom: 2 },
   historyBtnSub: { fontSize: 12, color: C.textSecondary },
   sectionTitle: { fontSize: FONT_SIZES.sm, textTransform: 'uppercase', letterSpacing: 1, color: C.textSecondary, fontWeight: '800', marginBottom: SPACING.md, marginLeft: 4 },
   card: {
     backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: C.cardInnerBorder, overflow: 'hidden', ...SHADOWS.sm,
+    borderWidth: 1, borderColor: C.cardInnerBorder, overflow: 'hidden', ...S.sm,
   },
   fieldRow: { padding: SPACING.md, borderBottomWidth: 1, borderBottomColor: C.cardInnerBorder },
   fieldLabel: { fontSize: 11, color: C.textSecondary, textTransform: 'uppercase', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
@@ -292,7 +294,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   },
   saveBtn: {
     backgroundColor: C.patientPrimary, borderRadius: RADIUS.lg, height: 56,
-    justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.lg,
+    justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...S.lg,
   },
   btnDisabled: { opacity: 0.7 },
   saveBtnText: { color: "#131929", fontSize: FONT_SIZES.md, fontWeight: '800' },
@@ -317,7 +319,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   deleteModalTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
   deleteModalText: { fontSize: FONT_SIZES.sm, color: C.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
   deleteModalPrompt: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: SPACING.sm },
-  deleteModalInput: { backgroundColor: 'rgba(26,34,53,0.8)', borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
+  deleteModalInput: { backgroundColor: isDark ? 'rgba(26,34,53,0.8)' : C.bgInput, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, height: 48, paddingHorizontal: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, marginBottom: SPACING.md },
   deleteModalActions: { flexDirection: 'row', gap: SPACING.sm },
   cancelBtn: { flex: 1, height: 48, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.border, justifyContent: 'center', alignItems: 'center' },
   cancelBtnText: { fontSize: FONT_SIZES.base, color: C.textSecondary, fontWeight: '600' },

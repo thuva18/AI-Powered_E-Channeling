@@ -3,6 +3,7 @@
 
 import { useState, useRef } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
@@ -13,10 +14,11 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ThemeToggle from '../../components/common/ThemeToggle';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function LoginScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const router = useRouter();
   const { setUser } = useAuthStore();
 
@@ -201,7 +203,7 @@ export default function LoginScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   container: { flexGrow: 1, paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
   hero: { alignItems: 'center', paddingTop: 80, paddingBottom: SPACING.xl },
@@ -211,7 +213,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: SPACING.md,
     borderWidth: 1, borderColor: 'rgba(78, 154, 241, 0.25)',
-    ...SHADOWS.glowBlue,
+    ...S.glowBlue,
   },
   logoInner: {
     width: 76, height: 76, borderRadius: 38,
@@ -226,7 +228,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
     backgroundColor: C.cardBgTranslucent || 'rgba(17, 24, 39, 0.95)',
     borderRadius: RADIUS.xl, padding: SPACING.lg,
     borderWidth: 1, borderColor: C.cardInnerBorder,
-    ...SHADOWS.lg,
+    ...S.lg,
   },
   cardTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary },
   cardSubtitle: { fontSize: FONT_SIZES.sm, color: C.textSecondary, marginTop: 2, marginBottom: SPACING.md },
@@ -255,7 +257,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   loginBtn: {
     backgroundColor: C.primary, borderRadius: RADIUS.md, height: 54,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    ...SHADOWS.glowBlue,
+    ...S.glowBlue,
   },
   loginBtnDisabled: { opacity: 0.65 },
   loginBtnText: { color: C.white, fontSize: FONT_SIZES.base, fontWeight: '800', letterSpacing: 0.3 },

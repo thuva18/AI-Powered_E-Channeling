@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
   Modal, ScrollView, Alert, ActivityIndicator, RefreshControl,
@@ -10,25 +11,23 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const MOOD_STATUSES = ['Improving', 'Stable', 'Worsening'];
 
-const MOOD_CONFIG = {
+const getMoodConfig = (C) => ({
   Improving: { color: C.success, icon: 'happy' },
   Stable: { color: C.warning, icon: 'meh' },
   Worsening: { color: C.error, icon: 'sad' },
-};
+});
 
-const PAIN_COLOR = (level) => {
-  const styles = useStyles(getStyles);
+const painColor = (level, C) => {
   if (level <= 3) return C.success;
   if (level <= 6) return C.warning;
   return C.error;
 };
 
-const PAIN_LABEL = (level) => {
-  const styles = useStyles(getStyles);
+const painLabel = (level) => {
   if (level <= 3) return 'Mild';
   if (level <= 6) return 'Moderate';
   return 'Severe';
@@ -36,6 +35,8 @@ const PAIN_LABEL = (level) => {
 
 export default function PatientJournalScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const MOOD_CONFIG = getMoodConfig(C);
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -175,6 +176,8 @@ export default function PatientJournalScreen() {
 // ─── Journal Entry Card Component ──────────────────────────────────────────────
 function JournalCard({ entry, onEdit, onDelete }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const MOOD_CONFIG = getMoodConfig(C);
   const [expanded, setExpanded] = useState(false);
   const moodCfg = MOOD_CONFIG[entry.moodStatus] || MOOD_CONFIG.Stable;
   const formattedDate = new Date(entry.entryDate).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -190,7 +193,7 @@ function JournalCard({ entry, onEdit, onDelete }) {
           <View style={styles.cardMeta}>
             <Text style={styles.metaText}><Ionicons name="calendar" size={10} /> {formattedDate}</Text>
             {entry.painLevel && (
-              <Text style={[styles.painBadge, { backgroundColor: PAIN_COLOR(entry.painLevel) }]}>
+              <Text style={[styles.painBadge, { backgroundColor: painColor(entry.painLevel, C) }]}>
                 Pain {entry.painLevel}/10
               </Text>
             )}
@@ -204,9 +207,9 @@ function JournalCard({ entry, onEdit, onDelete }) {
         <View style={styles.expanded}>
           {entry.painLevel ? (
              <View style={styles.expandSection}>
-                <Text style={styles.expandLabel}>Pain Level: {PAIN_LABEL(entry.painLevel)}</Text>
+                <Text style={styles.expandLabel}>Pain Level: {painLabel(entry.painLevel)}</Text>
                 <View style={styles.painBarBg}>
-                   <View style={[styles.painBarFill, { backgroundColor: PAIN_COLOR(entry.painLevel), width: `${(entry.painLevel / 10) * 100}%` }]} />
+                   <View style={[styles.painBarFill, { backgroundColor: painColor(entry.painLevel, C), width: `${(entry.painLevel / 10) * 100}%` }]} />
                 </View>
              </View>
           ) : null}
@@ -248,6 +251,8 @@ function JournalCard({ entry, onEdit, onDelete }) {
 // ─── Modal Component ─────────────────────────────────────────────────────────
 function JournalModal({ visible, entry, onClose, onSave }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const MOOD_CONFIG = getMoodConfig(C);
   const isEdit = !!entry?._id;
   
   const [form, setForm] = useState({
@@ -368,12 +373,12 @@ function JournalModal({ visible, entry, onClose, onSave }) {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md, backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder },
   pageTitle: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   pageSubtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
-  newBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.patientPrimary, justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowBlue },
+  newBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.patientPrimary, justifyContent: 'center', alignItems: 'center', ...S.glowBlue },
   
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.cardInnerBorder, marginHorizontal: SPACING.lg, marginTop: SPACING.md, paddingHorizontal: SPACING.md, height: 44 },
   searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
@@ -425,6 +430,6 @@ const getStyles = (C, isDark) => StyleSheet.create({
   painBtnActive: { borderColor: C.patientPrimary, backgroundColor: 'rgba(78, 154, 241, 0.15)' },
   painBtnText: { color: C.textSecondary, fontSize: 11, fontWeight: '600' },
   textArea: { backgroundColor: C.inputBgAlt, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, color: C.textPrimary, fontSize: FONT_SIZES.base, minHeight: 80, textAlignVertical: 'top' },
-  saveBtn: { backgroundColor: C.patientPrimary, borderRadius: RADIUS.md, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...SHADOWS.glowBlue },
+  saveBtn: { backgroundColor: C.patientPrimary, borderRadius: RADIUS.md, height: 50, justifyContent: 'center', alignItems: 'center', marginTop: SPACING.xl, ...S.glowBlue },
   saveBtnText: { color: '#000', fontSize: FONT_SIZES.base, fontWeight: '800' }
 });

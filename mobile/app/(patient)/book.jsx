@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, Modal, Image,
@@ -11,10 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function BookAppointmentScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState('');
@@ -291,6 +293,7 @@ export default function BookAppointmentScreen() {
 // ─── Booking Modal Component ─────────────────────────────────────────────
 function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const [step, setStep] = useState(1);
   const [date, setDate] = useState('');
   const [slot, setSlot] = useState('');
@@ -591,7 +594,7 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
@@ -605,10 +608,10 @@ const getStyles = (C, isDark) => StyleSheet.create({
   // AI Card
   aiCard: {
     backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.xl, padding: SPACING.lg,
-    borderWidth: 1, borderColor: C.cardInnerBorder, marginBottom: SPACING.xl, ...SHADOWS.md,
+    borderWidth: 1, borderColor: C.cardInnerBorder, marginBottom: SPACING.xl, ...S.md,
   },
   aiHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
-  searchIconBg: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', ...SHADOWS.glowPurple },
+  searchIconBg: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#4F46E5', justifyContent: 'center', alignItems: 'center', ...S.glowPurple },
   aiTitle: { fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary },
   aiSubText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
   
@@ -629,7 +632,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   
   aiPredictBtn: {
     backgroundColor: '#4F46E5', borderRadius: RADIUS.md, height: 50,
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg, ...SHADOWS.glowPurple
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: SPACING.lg, ...S.glowPurple
   },
   aiPredictBtnText: { color: C.white, fontWeight: '800', fontSize: FONT_SIZES.base },
   btnDisabled: { opacity: 0.5 },
@@ -656,7 +659,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   searchRow: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardBgTranslucent,
     borderRadius: RADIUS.md, borderWidth: 1, borderColor: C.cardInnerBorder,
-    paddingHorizontal: SPACING.md, height: 50, marginBottom: SPACING.md, ...SHADOWS.sm
+    paddingHorizontal: SPACING.md, height: 50, marginBottom: SPACING.md, ...S.sm
   },
   searchIcon: { marginRight: SPACING.sm },
   searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.base },
@@ -667,7 +670,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   doctorCardWrapper: { marginBottom: SPACING.sm },
   doctorCard: {
     backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.md,
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.cardInnerBorder, ...SHADOWS.sm
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.cardInnerBorder, ...S.sm
   },
   doctorAvatar: {
     width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(78, 154, 241, 0.1)',
@@ -689,7 +692,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    ...SHADOWS.sm
+    ...S.sm
   },
   findDocsActionText: {
     color: '#000',

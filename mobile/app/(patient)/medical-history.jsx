@@ -4,15 +4,16 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import useStyles from '../../hooks/useStyles';
-
+import useTheme from '../../hooks/useTheme';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function PatientMedicalHistoryScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
   const { user } = useAuthStore();
   const router = useRouter();
   const [history, setHistory] = useState([]);
@@ -96,7 +97,7 @@ export default function PatientMedicalHistoryScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingTop: 60, paddingBottom: SPACING.md, backgroundColor: C.headerBg, borderBottomWidth: 1, borderBottomColor: C.headerBorder},
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-start' },
@@ -107,7 +108,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   infoText: { flex: 1, marginLeft: SPACING.sm, color: C.patientPrimary, fontSize: 13, lineHeight: 18, fontWeight: '600' },
   emptyWrap: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { color: C.textMuted, marginTop: SPACING.md, fontWeight: '600', fontSize: FONT_SIZES.md },
-  recordCard: { backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, borderWidth: 1, borderColor: C.cardInnerBorder, ...SHADOWS.sm },
+  recordCard: { backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, borderWidth: 1, borderColor: C.cardInnerBorder, ...S.sm },
   rDateHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
   rDate: { fontSize: FONT_SIZES.base, fontWeight: '800', color: C.textPrimary },
   completedBadge: { backgroundColor: 'rgba(46, 184, 114, 0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },

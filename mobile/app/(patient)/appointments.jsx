@@ -3,24 +3,22 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
-import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-
-// Types removed
-const STATUS_COLORS = {
-  confirmed: C.success,
-  pending: C.warning,
-  cancelled: C.error,
-  completed: C.info,
-};
+import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function PatientAppointmentsScreen() {
   const styles = useStyles(getStyles);
+  const { C } = useTheme();
+  const STATUS_COLORS = {
+    confirmed: C.success, pending: C.warning,
+    cancelled: C.error, completed: C.info,
+  };
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -149,7 +147,7 @@ export default function PatientAppointmentsScreen() {
   );
 }
 
-const getStyles = (C, isDark) => StyleSheet.create({
+const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
@@ -168,7 +166,7 @@ const getStyles = (C, isDark) => StyleSheet.create({
   list: { padding: SPACING.lg, paddingBottom: 80 },
   card: {
     backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md,
-    marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...SHADOWS.sm,
+    marginBottom: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm,
   },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start' },
   avatar: {
