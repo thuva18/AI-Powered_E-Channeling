@@ -40,6 +40,11 @@ const doctorSchema = new mongoose.Schema(
                 message: 'Phone number must be in the format 07XXXXXXXX or +94XXXXXXXXX',
             },
         },
+        gender: {
+            type: String,
+            enum: ['male', 'female', 'other'],
+            required: [true, 'Gender is required'],
+        },
         specialization: {
             type: String,
             required: true,

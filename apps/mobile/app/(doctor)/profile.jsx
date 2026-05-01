@@ -92,7 +92,7 @@ export default function DoctorProfileScreen() {
 
   const [form, setForm] = useState({
     firstName: '', lastName: '', specialization: '',
-    consultationFee: '', phone: '',
+    consultationFee: '', phone: '', nic: '', gender: '',
     profileDetails: { bio: '', qualifications: '', experienceYears: '', contactNumber: '' },
     availability: [],
   });
@@ -111,6 +111,8 @@ export default function DoctorProfileScreen() {
           specialization: data.specialization || '',
           consultationFee: String(data.consultationFee || ''),
           phone: data.phone || '',
+          nic: data.nic || '',
+          gender: data.gender || '',
           profileDetails: {
             bio: data.profileDetails?.bio || '',
             qualifications: (data.profileDetails?.qualifications || []).join(', '),
@@ -300,6 +302,15 @@ export default function DoctorProfileScreen() {
                 readOnly
                 note="Managed by administrator. Contact admin to change."
               />
+
+              <View style={styles.twoCol}>
+                <View style={{ flex: 1 }}>
+                  <Field label="NIC Number" value={form.nic} readOnly />
+                </View>
+                <View style={{ flex: 1, marginLeft: SPACING.sm }}>
+                  <Field label="Gender" value={form.gender ? form.gender.charAt(0).toUpperCase() + form.gender.slice(1) : ''} readOnly />
+                </View>
+              </View>
 
               <Field
                 label="Consultation Fee (Rs.)"

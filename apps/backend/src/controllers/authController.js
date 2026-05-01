@@ -16,7 +16,7 @@ const sendServerError = (res, error) =>
     res.status(500).json({ message: error?.message || 'Server Error' });
 
 const registerDoctor = async (req, res) => {
-    const { email, password, firstName, lastName, slmcNumber, specialization, phone, nic } = req.body;
+    const { email, password, firstName, lastName, slmcNumber, specialization, phone, nic, gender } = req.body;
     const normalizedEmail = normalizeEmail(email);
     const trimmedPhone = phone?.trim();
     const nicTrimmed = normalizeNic(nic);
@@ -77,6 +77,7 @@ const registerDoctor = async (req, res) => {
                         slmcNumber,
                         nic: nicTrimmed,
                         phone: trimmedPhone,
+                        gender,
                         specialization,
                         approvalStatus: 'PENDING',
                     }],

@@ -84,12 +84,14 @@ export default function RegisterScreen() {
     if (!form.phone.trim()) e.phone = 'Phone number is required';
     else if (!/^(07\d{8}|\+94\d{9})$/.test(form.phone.trim())) e.phone = 'Invalid SL phone (e.g. 07XXXXXXXX or +94XXXXXXXXX)';
 
+    if (!form.gender) e.gender = 'Gender is required';
     if (role === 'patient') {
-      if (!form.gender) e.gender = 'Gender is required';
       if (form.dob) {
         const d = new Date(form.dob);
         if (isNaN(d.getTime())) e.dob = 'Invalid date (use YYYY-MM-DD)';
         else if (d >= new Date()) e.dob = 'Date of birth must be in the past';
+      } else {
+        e.dob = 'Date of birth is required';
       }
     }
 
@@ -133,6 +135,7 @@ export default function RegisterScreen() {
           password: form.password,
           nic: form.nic.trim(),
           phone: form.phone.trim(),
+          gender: form.gender,
           slmcNumber: form.slmcNumber.trim(),
           specialization: form.specialization,
         });
@@ -223,28 +226,29 @@ export default function RegisterScreen() {
             onChange={(v) => setField('phone', v)} error={errors.phone}
             extra={{ keyboardType: 'phone-pad', placeholder: '07XXXXXXXX' }} />
 
+          {/* ── Shared Demographic Fields ─────────────────────────────── */}
+          <Text style={styles.label}>Gender</Text>
+          <View style={styles.genderRow}>
+            {[{ label: '♂ Male', value: 'male' }, { label: '♀ Female', value: 'female' }, { label: '⚧ Other', value: 'other' }].map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.genderBtn, form.gender === opt.value && styles.genderBtnActive]}
+                onPress={() => setField('gender', opt.value)}
+              >
+                <Text style={[styles.genderBtnText, form.gender === opt.value && { color: accentColor, fontWeight: '700' }]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
+
           {/* ── Patient-only Fields ─────────────────────────────────────── */}
           {role === 'patient' && (
             <>
               <Field icon="calendar-outline" label="Date of Birth (YYYY-MM-DD)" value={form.dob}
                 onChange={(v) => setField('dob', v)} error={errors.dob}
                 extra={{ placeholder: '1990-01-15' }} />
-
-              <Text style={styles.label}>Gender</Text>
-              <View style={styles.genderRow}>
-                {[{ label: '♂ Male', value: 'male' }, { label: '♀ Female', value: 'female' }, { label: '⚧ Other', value: 'other' }].map((opt) => (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[styles.genderBtn, form.gender === opt.value && styles.genderBtnActive]}
-                    onPress={() => setField('gender', opt.value)}
-                  >
-                    <Text style={[styles.genderBtnText, form.gender === opt.value && { color: C.primary, fontWeight: '700' }]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              {errors.gender && <Text style={styles.errorText}>{errors.gender}</Text>}
             </>
           )}
 
