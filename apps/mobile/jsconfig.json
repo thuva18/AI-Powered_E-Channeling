@@ -12,7 +12,7 @@
     "jsx": "react-native",
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"],
+      "@shared/*": ["../../packages/shared/*"],
       "@components/*": ["components/*"],
       "@store/*": ["store/*"],
       "@services/*": ["services/*"],

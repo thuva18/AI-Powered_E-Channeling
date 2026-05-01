@@ -2,10 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKEND_DIR="$ROOT_DIR/backend"
-FRONTEND_DIR="$ROOT_DIR/web"
-AI_DIR="$ROOT_DIR/ai-service"
-MOBILE_DIR="$ROOT_DIR/mobile"
+BACKEND_DIR="$ROOT_DIR/apps/backend"
+FRONTEND_DIR="$ROOT_DIR/apps/web"
+AI_DIR="$ROOT_DIR/apps/ai-service"
+MOBILE_DIR="$ROOT_DIR/apps/mobile"
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "Error: npm is not installed. Install Node.js and npm first."
