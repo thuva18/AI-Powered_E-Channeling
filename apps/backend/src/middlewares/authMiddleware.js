@@ -45,7 +45,14 @@ const doctorOnly = async (req, res, next) => {
     }
 
     try {
-        req.doctor = await Doctor.findOne({ userId: req.user._id });
+        const doctor = await Doctor.findOne({ userId: req.user._id });
+        if (!doctor) {
+            return res.status(404).json({ message: 'Doctor profile not found' });
+        }
+        if (doctor.approvalStatus !== 'APPROVED') {
+            return res.status(403).json({ message: 'Doctor account not yet approved by admin' });
+        }
+        req.doctor = doctor;
         return next();
     } catch (error) {
         return res.status(500).json({ message: 'Error checking doctor profile' });

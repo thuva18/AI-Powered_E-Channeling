@@ -125,6 +125,9 @@ const loginUser = async (req, res) => {
             email: user.email,
             role: user.role,
             token: generateToken(user._id, user.role),
+            firstName: user.patientProfile?.firstName || '',
+            lastName: user.patientProfile?.lastName || '',
+            name: `${user.patientProfile?.firstName || ''} ${user.patientProfile?.lastName || ''}`.trim() || 'Administrator'
         };
 
         // If doctor, additionally send doctor info and approval status
@@ -134,8 +137,9 @@ const loginUser = async (req, res) => {
                 Object.assign(responseData, {
                     doctorId: doctor._id,
                     approvalStatus: doctor.approvalStatus,
-                    firstName: doctor.firstName,
+                    firstName: doctor.firstName, // Doctor has its own names
                     lastName: doctor.lastName,
+                    name: `Dr. ${doctor.firstName} ${doctor.lastName}`,
                     phone: doctor.phone,
                 });
             }

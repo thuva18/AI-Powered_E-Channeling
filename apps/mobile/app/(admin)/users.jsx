@@ -242,7 +242,9 @@ export default function AdminUserManagementScreen() {
           <Text style={{ fontSize: 16, fontWeight: '800', color: C.patientPrimary }}>{(item.name?.[0] || 'P').toUpperCase()}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>{item.name || 'N/A'}</Text>
+          <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>
+            {item.name || `${item.patientProfile?.firstName || ''} ${item.patientProfile?.lastName || ''}`.trim() || 'N/A'}
+          </Text>
           <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary }}>{item.email}</Text>
         </View>
         <TouchableOpacity style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: `${C.patientPrimary}15`, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.xs }}

@@ -456,11 +456,20 @@ const getAllPatients = async (req, res) => {
             ];
         }
         const total = await User.countDocuments(filter);
-        const patients = await User.find(filter)
+        const patientsRaw = await User.find(filter)
             .select('-passwordHash')
             .sort({ createdAt: -1 })
             .skip((parsedPage - 1) * parsedLimit)
             .limit(parsedLimit);
+
+        const patients = patientsRaw.map(u => {
+            const userObj = u.toObject();
+            return {
+                ...userObj,
+                name: `${userObj.patientProfile?.firstName || ''} ${userObj.patientProfile?.lastName || ''}`.trim() || 'N/A'
+            };
+        });
+
         res.json({ patients, total, page: parsedPage, pages: Math.ceil(total / parsedLimit) });
     } catch (err) {
         sendServerError(res, err, true);

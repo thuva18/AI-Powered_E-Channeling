@@ -23,8 +23,9 @@ export default function AdminPatientsScreen() {
   const fetchPatients = useCallback(async () => {
     try {
       const res = await api.get('/admin/patients');
-      setPatients(res.data || []);
-      setFiltered(res.data || []);
+      const patientList = res.data.patients || res.data || [];
+      setPatients(patientList);
+      setFiltered(patientList);
     } catch { Alert.alert('Error', 'Failed to load patients'); }
     finally { setLoading(false); setRefreshing(false); }
   }, []);
@@ -69,7 +70,9 @@ export default function AdminPatientsScreen() {
                   <Text style={{ fontSize: 20 }}>🧑</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>{item.name}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '700', color: C.textPrimary }}>
+                    {item.name || `${item.patientProfile?.firstName || ''} ${item.patientProfile?.lastName || ''}`.trim() || 'N/A'}
+                  </Text>
                   {item.email && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>✉️ {item.email}</Text>}
                   {item.nic && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>🪪 {item.nic}</Text>}
                   {item.phone && <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 }}>📞 {item.phone}</Text>}

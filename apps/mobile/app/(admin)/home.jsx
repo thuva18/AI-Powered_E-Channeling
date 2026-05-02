@@ -69,7 +69,9 @@ export default function AdminHomeScreen() {
           </View>
           <View>
             <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700' }}>Admin Portal</Text>
-            <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary }}>{user?.name ?? 'Administrator'}</Text>
+            <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color: C.textPrimary }}>
+              {user?.name && user.name !== 'User' ? user.name : 'Administrator'}
+            </Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
