@@ -6,7 +6,7 @@ import { View, Text, TouchableOpacity, Modal, Platform, StyleSheet } from 'react
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../hooks/useTheme';
-import { FONT_SIZES, SPACING, RADIUS } from '../constants/theme';
+import { FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../constants/theme';
 
 /**
  * DatePickerInput
@@ -116,7 +116,7 @@ export default function DatePickerInput({
               <DateTimePicker
                 value={dateObj}
                 mode="date"
-                display="spinner"
+                display="inline"
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
                 onChange={applyDate}
@@ -164,14 +164,17 @@ const styles = StyleSheet.create({
   },
   iosOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: SPACING.xl,
   },
   iosSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    width: '100%',
+    borderRadius: RADIUS.xl,
     padding: SPACING.md,
-    paddingBottom: 30,
+    paddingBottom: SPACING.md,
+    ...SHADOWS.lg,
   },
   iosToolbar: {
     flexDirection: 'row',

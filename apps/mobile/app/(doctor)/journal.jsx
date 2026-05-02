@@ -651,12 +651,13 @@ const getStyles = (C, isDark, S) => StyleSheet.create({
     paddingHorizontal: SPACING.md, height: 44,
   },
   searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
-  filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm, maxHeight: 44 },
+  filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm },
   filterChip: {
     paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt,
+    alignSelf: 'flex-start', flexShrink: 0,
   },
-  filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '600' },
+  filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '700' },
   list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
     backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg,
