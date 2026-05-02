@@ -574,7 +574,7 @@ export default function DoctorJournalScreen() {
       </View>
 
       {/* Status filter chips */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: SPACING.sm }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: SPACING.lg }}>
         {['ALL', ...STATUSES].map(s => (
           <TouchableOpacity
             key={s}
@@ -651,13 +651,13 @@ const getStyles = (C, isDark, S) => StyleSheet.create({
     paddingHorizontal: SPACING.md, height: 44,
   },
   searchInput: { flex: 1, color: C.textPrimary, fontSize: FONT_SIZES.sm },
-  filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm },
+  filterScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm, height: 40, flexGrow: 0 },
   filterChip: {
-    paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
+    paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: C.border, backgroundColor: C.inputBgAlt,
-    alignSelf: 'flex-start', flexShrink: 0,
+    alignSelf: 'center', flexShrink: 0, marginRight: 8,
   },
-  filterChipText: { fontSize: FONT_SIZES.xs, color: C.textSecondary, fontWeight: '700' },
+  filterChipText: { fontSize: 13, color: C.textSecondary, fontWeight: '700' },
   list: { padding: SPACING.lg, paddingBottom: 100 },
   card: {
     backgroundColor: C.cardBgTranslucent, borderRadius: RADIUS.lg,
