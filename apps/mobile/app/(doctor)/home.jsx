@@ -78,7 +78,13 @@ export default function DoctorHomeScreen() {
     finally { setLoading(false); setRefreshing(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    if (user && user.role === 'doctor') {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [

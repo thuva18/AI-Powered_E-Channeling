@@ -55,7 +55,13 @@ export default function PatientHomeScreen() {
     finally { setLoading(false); setRefreshing(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    if (user && user.role === 'patient') {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const statCards = [
