@@ -9,6 +9,7 @@ import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { DARK_COLORS, LIGHT_COLORS } from '../constants/theme';
+import ThemeTransitionOverlay from '../components/ThemeTransitionOverlay';
 
 function buildPaperTheme(isDark) {
   const C = isDark ? DARK_COLORS : LIGHT_COLORS;
@@ -82,15 +83,36 @@ export default function RootLayout() {
     <PaperProvider theme={paperTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={C.bg} />
       <AuthGuard>
+        {/*
+          KEY REMOVED — previously `key={isDark ? 'dark' : 'light'}` caused the entire
+          Stack (and all mounted screens) to be destroyed and recreated on every theme
+          toggle, resetting state and triggering fresh API calls.
+          The Stack itself does NOT need to be recreated; only the contentStyle color
+          needs to change, which React handles reactively via the prop update below.
+        */}
         <Stack
-          key={isDark ? 'dark' : 'light'}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: C.bg },
+            // Smooth slide animation for all screen pushes
             animation: 'slide_from_right',
+            animationDuration: 280,
+            // iOS-specific: gives a natural back-swipe feel
+            gestureEnabled: true,
+            gestureDirection: 'horizontal',
+            // Adds a subtle fade to the outgoing screen
+            customTransition: {
+              transitionSpec: {
+                open: { animation: 'timing', config: { duration: 280 } },
+                close: { animation: 'timing', config: { duration: 240 } },
+              },
+            },
           }}
         />
       </AuthGuard>
+      {/* Renders above everything – plays a quick flash on theme toggle */}
+      <ThemeTransitionOverlay />
     </PaperProvider>
   );
 }
+
