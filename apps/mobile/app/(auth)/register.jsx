@@ -15,14 +15,19 @@ import DatePickerInput from '../../components/DatePickerInput';
 import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 // ─── Password Strength Helper ────────────────────────────────────────────────
+const getPasswordRequirements = (password) => {
+  return [
+    { label: 'At least 8 characters', met: password.length >= 8 },
+    { label: 'At least one number', met: /\d/.test(password) },
+    { label: 'At least one letter', met: /[a-zA-Z]/.test(password) },
+    { label: 'At least one special character', met: /[^A-Za-z0-9]/.test(password) },
+  ];
+};
+
 const getPasswordStrength = (password) => {
   if (!password) return null;
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
+  const requirements = getPasswordRequirements(password);
+  const score = requirements.filter(r => r.met).length;
   if (score <= 1) return { label: 'Weak', color: '#EF4444', width: '25%' };
   if (score <= 3) return { label: 'Medium', color: '#F59E0B', width: '60%' };
   return { label: 'Strong', color: '#10B981', width: '100%' };
@@ -218,14 +223,17 @@ export default function RegisterScreen() {
 
           <Field icon="mail-outline" label="Email Address" value={form.email}
             onChange={(v) => setField('email', v)} error={errors.email}
+            isValid={/^\S+@\S+\.\S+$/.test(form.email)}
             extra={{ keyboardType: 'email-address', autoCapitalize: 'none' }} />
 
           <Field icon="card-outline" label="NIC Number" value={form.nic}
             onChange={(v) => setField('nic', v)} error={errors.nic}
+            isValid={/^(\d{9}[VvXx]|\d{12})$/.test(form.nic)}
             extra={{ autoCapitalize: 'characters', placeholder: '123456789V or 200012345678' }} />
 
           <Field icon="call-outline" label="Phone Number" value={form.phone}
             onChange={(v) => setField('phone', v)} error={errors.phone}
+            isValid={/^(07\d{8}|\+94\d{9})$/.test(form.phone)}
             extra={{ keyboardType: 'phone-pad', placeholder: '07XXXXXXXX' }} />
 
           {/* ── Shared Demographic Fields ─────────────────────────────── */}
@@ -321,29 +329,52 @@ export default function RegisterScreen() {
               onChangeText={(v) => setField('password', v)}
               secureTextEntry={!showPassword}
             />
+            {getPasswordRequirements(form.password).every(r => r.met) && (
+              <Ionicons name="checkmark-circle" size={18} color="#10B981" style={{ marginRight: 8 }} />
+            )}
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
               <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={18} color={C.textSecondary} />
             </TouchableOpacity>
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-          {/* Real-time password strength meter */}
+          {/* Real-time password strength meter and checklist */}
           {form.password.length > 0 && (() => {
             const strength = getPasswordStrength(form.password);
+            const requirements = getPasswordRequirements(form.password);
             return (
-              <View style={{ marginBottom: SPACING.sm, marginTop: 4 }}>
+              <View style={{ marginBottom: SPACING.md, marginTop: 6 }}>
                 <View style={{ height: 4, backgroundColor: C.border, borderRadius: 4, overflow: 'hidden' }}>
                   <View style={{ height: 4, width: strength.width, backgroundColor: strength.color, borderRadius: 4 }} />
                 </View>
-                <Text style={{ fontSize: FONT_SIZES.xs, color: strength.color, fontWeight: '700', marginTop: 4 }}>
-                  {strength.label} Password
-                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                  <Text style={{ fontSize: FONT_SIZES.xs, color: strength.color, fontWeight: '800' }}>
+                    {strength.label.toUpperCase()} PASSWORD
+                  </Text>
+                  <Text style={{ fontSize: 10, color: C.textMuted }}>{requirements.filter(r => r.met).length}/4 Met</Text>
+                </View>
+                
+                <View style={{ marginTop: 10, gap: 4 }}>
+                  {requirements.map((req, idx) => (
+                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons 
+                        name={req.met ? "checkmark-circle" : "ellipse-outline"} 
+                        size={12} 
+                        color={req.met ? "#10B981" : C.textMuted} 
+                      />
+                      <Text style={{ fontSize: 11, color: req.met ? C.textPrimary : C.textMuted, fontWeight: req.met ? '600' : '400' }}>
+                        {req.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             );
           })()}
 
           <Field icon="lock-closed-outline" label="Confirm Password" value={form.confirmPassword}
             onChange={(v) => setField('confirmPassword', v)} error={errors.confirmPassword}
+            isValid={form.confirmPassword.length > 0 && form.confirmPassword === form.password}
             extra={{ secureTextEntry: true, placeholder: 'Re-enter password' }} />
 
           {/* Submit */}
@@ -379,8 +410,10 @@ export default function RegisterScreen() {
 }
 
 // ─── Reusable Field Component ────────────────────────────────────────────────
-function Field({ icon, label, value, onChange, error, extra = {} }) {
+function Field({ icon, label, value, onChange, error, isValid, extra = {} }) {
   const styles = useStyles(getStyles);
+  const { COLORS: C } = useTheme(); // Access colors from theme for the icon
+  
   return (
     <>
       <Text style={styles.label}>{label}</Text>
@@ -393,6 +426,9 @@ function Field({ icon, label, value, onChange, error, extra = {} }) {
           onChangeText={onChange}
           {...extra}
         />
+        {isValid && !error && (
+          <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+        )}
       </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </>
