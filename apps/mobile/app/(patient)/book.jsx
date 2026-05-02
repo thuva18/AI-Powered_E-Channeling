@@ -10,8 +10,8 @@ import {
   KeyboardAvoidingView, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function BookAppointmentScreen() {
@@ -303,25 +303,7 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const [receiptMode, setReceiptMode] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [fetchingSlots, setFetchingSlots] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [dateObj, setDateObj] = useState(new Date());
 
-  const handleDateChange = (event, selectedDate) => {
-    if (Platform.OS === 'android') {
-      setShowPicker(false);
-    }
-    if (event.type === 'dismissed') {
-      setShowPicker(false);
-      return;
-    }
-    if (selectedDate) {
-      setDateObj(selectedDate);
-      const y = selectedDate.getFullYear();
-      const m = String(selectedDate.getMonth() + 1).padStart(2, '0');
-      const d = String(selectedDate.getDate()).padStart(2, '0');
-      setDate(`${y}-${m}-${d}`);
-    }
-  };
 
   useEffect(() => {
     if (visible) {
@@ -406,60 +388,14 @@ function BookingModal({ visible, doctor, symptomText, images, onClose }) {
   const renderStep1 = () => (
     <>
       <Text style={styles.modalStepTitle}>Select Date & Time</Text>
-      <Text style={styles.label}>Date</Text>
-
-      {/* Tappable date field — opens picker on both iOS and Android */}
-      <TouchableOpacity
-        style={[styles.datePickerRow, date && styles.datePickerRowFilled]}
-        onPress={() => setShowPicker(true)}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="calendar-outline" size={18} color={date ? C.patientPrimary : C.textMuted} style={{ marginRight: 10 }} />
-        <Text style={{ flex: 1, color: date ? C.textPrimary : C.textMuted, fontSize: FONT_SIZES.base }}>
-          {date
-            ? new Date(dateObj).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-            : 'Tap to select date'}
-        </Text>
-        <Ionicons name="chevron-down" size={16} color={C.textMuted} />
-      </TouchableOpacity>
-
-      {/* iOS: show picker inside a Modal so it doesn't render inline */}
-      {Platform.OS === 'ios' ? (
-        <Modal visible={showPicker} transparent animationType="slide">
-          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-            <View style={{ backgroundColor: C.modalBg, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={{ color: C.textMuted, fontWeight: '600', fontSize: FONT_SIZES.base }}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={{ color: C.textPrimary, fontWeight: '800', fontSize: FONT_SIZES.base }}>Select Date</Text>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={{ color: C.patientPrimary, fontWeight: '800', fontSize: FONT_SIZES.base }}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={dateObj}
-                mode="date"
-                display="spinner"
-                minimumDate={new Date()}
-                onChange={handleDateChange}
-                style={{ backgroundColor: C.modalBg }}
-              />
-            </View>
-          </View>
-        </Modal>
-      ) : (
-        // Android: native dialog, no wrapper needed
-        showPicker && (
-          <DateTimePicker
-            value={dateObj}
-            mode="date"
-            display="default"
-            minimumDate={new Date()}
-            onChange={handleDateChange}
-          />
-        )
-      )}
+      <DatePickerInput
+        value={date}
+        onChange={setDate}
+        minimumDate={new Date()}
+        accentColor={C.patientPrimary}
+        placeholder="Tap to select date"
+        style={{ marginBottom: SPACING.md }}
+      />
 
       <Text style={styles.label}>Time Slot</Text>
       {fetchingSlots ? (

@@ -9,6 +9,7 @@ export default function PatientLayout() {
   const { C } = useTheme();
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: C.bg }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {

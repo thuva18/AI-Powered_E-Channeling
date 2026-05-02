@@ -3,6 +3,7 @@ const Transaction = require('../models/Transaction');
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
 const User = require('../models/User');
+const { createNotification } = require('../utils/notificationHelper');
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -178,6 +179,17 @@ const payhereNotify = async (req, res) => {
                 appointment.paymentStatus = 'PAID';
                 // Keep status PENDING so the doctor can Accept/Reject
                 await appointment.save();
+
+                const doctor = await Doctor.findById(appointment.doctorId);
+                if (doctor && doctor.userId) {
+                    await createNotification(
+                        doctor.userId,
+                        'New Appointment Booked',
+                        `A patient has booked a new paid appointment on ${new Date(appointment.appointmentDate).toISOString().split('T')[0]} at ${appointment.timeSlot}.`,
+                        'info',
+                        '/doctor/appointments'
+                    );
+                }
             }
         } else if (PAYHERE_FAILED_STATUS_CODES.includes(status_code)) {
             // CANCELLED / FAILED / CHARGEDBACK
@@ -221,9 +233,22 @@ const submitDummyPayment = async (req, res) => {
         await transaction.save();
 
         // Appointment stays PENDING but paymentStatus = PENDING_APPROVAL
-        await Appointment.findByIdAndUpdate(transaction.appointmentId, {
+        const appointment = await Appointment.findByIdAndUpdate(transaction.appointmentId, {
             paymentStatus: 'PENDING_APPROVAL',
-        });
+        }, { new: true });
+
+        if (appointment) {
+            const doctor = await Doctor.findById(appointment.doctorId);
+            if (doctor && doctor.userId) {
+                await createNotification(
+                    doctor.userId,
+                    'New Appointment Request',
+                    `A patient has requested an appointment on ${new Date(appointment.appointmentDate).toISOString().split('T')[0]} at ${appointment.timeSlot} (Payment Pending Approval).`,
+                    'info',
+                    '/doctor/appointments'
+                );
+            }
+        }
 
         res.json({
             message: 'Payment submitted for admin approval',
@@ -409,6 +434,17 @@ const getTransactionStatus = async (req, res) => {
             if (appointment) {
                 appointment.paymentStatus = 'PAID';
                 await appointment.save();
+
+                const doctor = await Doctor.findById(appointment.doctorId);
+                if (doctor && doctor.userId) {
+                    await createNotification(
+                        doctor.userId,
+                        'New Appointment Booked',
+                        `A patient has booked a new paid appointment on ${new Date(appointment.appointmentDate).toISOString().split('T')[0]} at ${appointment.timeSlot}.`,
+                        'info',
+                        '/doctor/appointments'
+                    );
+                }
             }
         }
 

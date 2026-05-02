@@ -29,7 +29,7 @@ export default function DatePickerInput({
   accentColor,
   style,
 }) {
-  const { C, S } = useTheme();
+  const { C, S, isDark } = useTheme();
   const accent = accentColor || C.primary;
 
   // Internal Date object — keeps picker in sync with string value
@@ -117,6 +117,7 @@ export default function DatePickerInput({
                 value={dateObj}
                 mode="date"
                 display="inline"
+                themeVariant={isDark ? 'dark' : 'light'}
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
                 onChange={applyDate}

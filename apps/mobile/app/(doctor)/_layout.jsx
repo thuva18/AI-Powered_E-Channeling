@@ -18,6 +18,7 @@ export default function DoctorLayout() {
 
   return (
     <Tabs
+      sceneContainerStyle={{ backgroundColor: C.bg }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
