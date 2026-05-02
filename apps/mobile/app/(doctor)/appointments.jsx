@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import DatePickerInput from '../../components/DatePickerInput';
+import ScreenTransition from '../../components/common/ScreenTransition';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const VALID_TRANSITIONS = {
@@ -236,7 +237,7 @@ export default function DoctorAppointmentsScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <ScreenTransition style={styles.root}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Appointments</Text>
@@ -308,7 +309,7 @@ export default function DoctorAppointmentsScreen() {
           )}
         </View>
       </Modal>
-    </View>
+    </ScreenTransition>
   );
 }
 

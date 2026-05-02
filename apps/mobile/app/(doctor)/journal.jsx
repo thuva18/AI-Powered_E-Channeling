@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import DatePickerInput from '../../components/DatePickerInput';
+import ScreenTransition from '../../components/common/ScreenTransition';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const STATUSES = ['Active', 'Recovered', 'Follow-up', 'Referred', 'Chronic'];
@@ -543,7 +544,7 @@ export default function DoctorJournalScreen() {
   const counts = STATUSES.reduce((acc, s) => { acc[s] = entries.filter(e => e.status === s).length; return acc; }, {});
 
   return (
-    <View style={styles.root}>
+    <ScreenTransition style={styles.root}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -625,7 +626,7 @@ export default function DoctorJournalScreen() {
         onClose={() => setModal(null)}
         onSave={() => { setModal(null); load(); }}
       />
-    </View>
+    </ScreenTransition>
   );
 }
 

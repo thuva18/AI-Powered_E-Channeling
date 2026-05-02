@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import useTheme from '../../hooks/useTheme';
+import ScreenTransition from '../../components/common/ScreenTransition';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -246,8 +247,9 @@ export default function DoctorProfileScreen() {
   const phoneValid = !!form.phone.trim() && PHONE_REGEX.test(form.phone.trim());
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      {/* Toast */}
+    <ScreenTransition style={styles.root}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        {/* Toast */}
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
       {/* Header */}
@@ -588,7 +590,8 @@ export default function DoctorProfileScreen() {
           </View>
         </View>
       )}
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ScreenTransition>
   );
 }
 

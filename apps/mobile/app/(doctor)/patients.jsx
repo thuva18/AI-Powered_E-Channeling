@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import ScreenTransition from '../../components/common/ScreenTransition';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function DoctorPatientsScreen() {
@@ -47,7 +48,7 @@ export default function DoctorPatientsScreen() {
   const AVATAR_COLORS = ['#4E9AF1', '#22C9A0', '#9B59F5', '#F5A623', '#E84545', '#38BDF8'];
 
   return (
-    <View style={styles.root}>
+    <ScreenTransition style={styles.root}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>My Patients</Text>
@@ -125,7 +126,7 @@ export default function DoctorPatientsScreen() {
           }
         />
       )}
-    </View>
+    </ScreenTransition>
   );
 }
 
