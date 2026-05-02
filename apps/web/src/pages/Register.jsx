@@ -22,6 +22,7 @@ const NIC_REGEX = /^(\d{9}[Vv]|\d{12})$/;
 const validators = {
     firstName: (v) => !v.trim() ? 'First name is required' : v.trim().length < 2 ? 'Must be at least 2 characters' : /[^a-zA-Z\s'-]/.test(v) ? 'No numbers or special characters allowed' : '',
     lastName: (v) => !v.trim() ? 'Last name is required' : v.trim().length < 2 ? 'Must be at least 2 characters' : /[^a-zA-Z\s'-]/.test(v) ? 'No numbers or special characters allowed' : '',
+    gender: (v) => !v ? 'Gender is required' : '',
     email: (v) => !v.trim() ? 'Email is required' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Enter a valid email address' : '',
     phone: (v) => !v.trim() ? 'Phone number is required' : !PHONE_REGEX.test(v.trim()) ? 'Enter a valid number: 07XXXXXXXX or +94XXXXXXXXX' : '',
     nic: (v) => !v.trim() ? 'NIC number is required' : !NIC_REGEX.test(v.trim()) ? 'Enter a valid SL NIC (e.g. 912345678V or 200012345678)' : '',
@@ -53,7 +54,7 @@ const Register = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
-        firstName: '', lastName: '', email: '', phone: '', nic: '',
+        firstName: '', lastName: '', gender: '', email: '', phone: '', nic: '',
         slmcNumber: '', specialization: '', password: '', confirmPassword: '',
     });
     const [errors, setErrors] = useState({});
@@ -145,7 +146,7 @@ const Register = () => {
     };
 
     const handleNext = () => {
-        if (validateFields(['firstName', 'lastName', 'email', 'phone', 'nic'])) {
+        if (validateFields(['firstName', 'lastName', 'gender', 'email', 'phone', 'nic'])) {
             // Fix #7: block if email/NIC taken OR availability check still pending
             const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
             const nicFormatOkNow = NIC_REGEX.test(formData.nic.trim());
@@ -164,6 +165,7 @@ const Register = () => {
             await api.post('/auth/doctor/register', {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
+                gender: formData.gender,
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
                 nic: formData.nic.trim().toUpperCase(),
@@ -257,6 +259,28 @@ const Register = () => {
                             onBlur={blur('lastName')}
                             error={touched.lastName ? errors.lastName : ''}
                         />
+                    </div>
+
+                    {/* Gender */}
+                    <div className="space-y-1.5">
+                        <label htmlFor="gender" className="block text-sm font-semibold text-slate-700">
+                            Gender *
+                        </label>
+                        <select
+                            id="gender"
+                            value={formData.gender}
+                            onChange={set('gender')}
+                            onBlur={blur('gender')}
+                            className={`input-field bg-white ${touched.gender && errors.gender ? 'border-red-400 focus:border-red-500' : formData.gender ? 'border-emerald-400 focus:border-emerald-500' : ''}`}
+                        >
+                            <option value="" disabled>Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                        {touched.gender && errors.gender && (
+                            <p className="text-xs font-medium text-red-500 flex items-center gap-1"><AlertCircle size={11} /> {errors.gender}</p>
+                        )}
                     </div>
 
                     {/* Fix #5 — email availability check */}
