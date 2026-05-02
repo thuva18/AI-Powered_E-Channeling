@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const STATUSES = ['Active', 'Recovered', 'Follow-up', 'Referred', 'Chronic'];
@@ -380,7 +381,14 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
               </View>
 
               <InputField label="Contact Number" value={form.contactNumber} onChange={(v) => setF('contactNumber', v)} placeholder="07XXXXXXXX" extra={{ keyboardType: 'phone-pad' }} />
-              <InputField label="Visit Date *" value={form.visitDate} onChange={(v) => setF('visitDate', v)} placeholder="YYYY-MM-DD" />
+              <DatePickerInput
+                label="Visit Date *"
+                value={form.visitDate}
+                onChange={(v) => setF('visitDate', v)}
+                maximumDate={new Date()}
+                accentColor={C.doctorPrimary}
+                style={{ marginTop: SPACING.sm }}
+              />
 
               {/* ── Diagnosis ───────────────────────────────── */}
               <Text style={[styles.sectionLabel, { marginTop: SPACING.md }]}>🏥 Diagnosis & Status</Text>
@@ -432,7 +440,14 @@ function JournalModal({ visible, entry, patients, onClose, onSave }) {
                 onChangeText={(v) => setF('notes', v)}
                 multiline numberOfLines={3} textAlignVertical="top"
               />
-              <InputField label="Follow-up Date" value={form.followUpDate} onChange={(v) => setF('followUpDate', v)} placeholder="YYYY-MM-DD (optional)" />
+              <DatePickerInput
+                label="Follow-up Date (optional)"
+                value={form.followUpDate}
+                onChange={(v) => setF('followUpDate', v)}
+                minimumDate={form.visitDate ? new Date(form.visitDate) : new Date()}
+                accentColor={C.doctorPrimary}
+                style={{ marginTop: SPACING.sm }}
+              />
 
               {/* Save */}
               <TouchableOpacity

@@ -7,10 +7,11 @@ import useStyles from '../../hooks/useStyles';
 import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal, TextInput,
+  ActivityIndicator, Alert, RefreshControl, Image, ScrollView, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const VALID_TRANSITIONS = {
@@ -268,21 +269,13 @@ export default function DoctorAppointmentsScreen() {
             );
           })}
         </ScrollView>
-        <View style={styles.dateFilterContainer}>
-          <Ionicons name="calendar-outline" size={16} color={C.textSecondary} />
-          <TextInput
-            style={styles.dateInput}
-            placeholder="Filter by Date (YYYY-MM-DD)"
-            placeholderTextColor={C.textMuted}
-            value={selectedDateFilter}
-            onChangeText={setSelectedDateFilter}
-          />
-          {selectedDateFilter ? (
-            <TouchableOpacity onPress={() => setSelectedDateFilter('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={C.textMuted} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <DatePickerInput
+          value={selectedDateFilter}
+          onChange={setSelectedDateFilter}
+          placeholder="Filter by date"
+          accentColor={C.doctorPrimary}
+          style={{ marginHorizontal: SPACING.lg, marginBottom: SPACING.md }}
+        />
       </View>
 
       {loading ? <ActivityIndicator color={C.doctorPrimary} style={{ marginTop: 40 }} /> : (

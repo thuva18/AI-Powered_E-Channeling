@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const MOOD_STATUSES = ['Improving', 'Stable', 'Worsening'];
@@ -320,8 +321,13 @@ function JournalModal({ visible, entry, onClose, onSave }) {
             
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Date *</Text>
-                <TextInput style={styles.inputField} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} value={form.entryDate} onChangeText={setF('entryDate')} />
+                <DatePickerInput
+                  label="Date *"
+                  value={form.entryDate}
+                  onChange={setF('entryDate')}
+                  maximumDate={new Date()}
+                  accentColor={C.patientPrimary}
+                />
               </View>
               <View style={{ flex: 1, marginLeft: SPACING.md }}>
                 <Text style={styles.label}>Visibility</Text>

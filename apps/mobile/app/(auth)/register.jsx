@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import useStyles from '../../hooks/useStyles';
+import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
@@ -10,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import { COLORS as C, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 // ─── Password Strength Helper ────────────────────────────────────────────────
@@ -246,9 +248,15 @@ export default function RegisterScreen() {
           {/* ── Patient-only Fields ─────────────────────────────────────── */}
           {role === 'patient' && (
             <>
-              <Field icon="calendar-outline" label="Date of Birth (YYYY-MM-DD)" value={form.dob}
-                onChange={(v) => setField('dob', v)} error={errors.dob}
-                extra={{ placeholder: '1990-01-15' }} />
+              <DatePickerInput
+                label="Date of Birth"
+                value={form.dob}
+                onChange={(v) => setField('dob', v)}
+                maximumDate={new Date()}
+                accentColor={accentColor}
+                style={{ marginTop: SPACING.sm }}
+              />
+              {errors.dob && <Text style={styles.errorText}>{errors.dob}</Text>}
             </>
           )}
 

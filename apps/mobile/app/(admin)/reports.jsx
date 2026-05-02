@@ -4,10 +4,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, RefreshControl, FlatList,
+  ActivityIndicator, Alert, RefreshControl, FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
+import DatePickerInput from '../../components/DatePickerInput';
 import useTheme from '../../hooks/useTheme';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
@@ -93,17 +94,24 @@ function StandardTab() {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', marginBottom: SPACING.md }}>
-          <View style={{ flex: 1, marginRight: SPACING.sm }}>
-            <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: 4, fontWeight: '600' }}>From (YYYY-MM-DD)</Text>
-            <TextInput style={{ backgroundColor: C.bgInput, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, fontSize: FONT_SIZES.sm, color: C.textPrimary }}
-              value={dateFrom} onChangeText={setDateFrom} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: 4, fontWeight: '600' }}>To (YYYY-MM-DD)</Text>
-            <TextInput style={{ backgroundColor: C.bgInput, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, fontSize: FONT_SIZES.sm, color: C.textPrimary }}
-              value={dateTo} onChangeText={setDateTo} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
-          </View>
+        <View style={{ flexDirection: 'row', marginBottom: SPACING.md, gap: SPACING.sm }}>
+          <DatePickerInput
+            label="From"
+            value={dateFrom}
+            onChange={setDateFrom}
+            placeholder="Start date"
+            accentColor={C.adminPrimary}
+            style={{ flex: 1 }}
+          />
+          <DatePickerInput
+            label="To"
+            value={dateTo}
+            onChange={setDateTo}
+            placeholder="End date"
+            minimumDate={dateFrom ? new Date(dateFrom) : undefined}
+            accentColor={C.adminPrimary}
+            style={{ flex: 1 }}
+          />
         </View>
         <TouchableOpacity style={{ backgroundColor: C.adminPrimary, borderRadius: RADIUS.md, height: 48, justifyContent: 'center', alignItems: 'center', ...S.md }}
           onPress={fetchData} disabled={loading || !dateFrom || !dateTo}>
@@ -192,17 +200,24 @@ function AdvancedTab() {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={{ flexDirection: 'row', marginBottom: SPACING.md }}>
-          <View style={{ flex: 1, marginRight: SPACING.sm }}>
-            <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: 4, fontWeight: '600' }}>From</Text>
-            <TextInput style={{ backgroundColor: C.bgInput, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, fontSize: FONT_SIZES.sm, color: C.textPrimary }}
-              value={dateFrom} onChangeText={setDateFrom} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: FONT_SIZES.xs, color: C.textSecondary, marginBottom: 4, fontWeight: '600' }}>To</Text>
-            <TextInput style={{ backgroundColor: C.bgInput, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.md, fontSize: FONT_SIZES.sm, color: C.textPrimary }}
-              value={dateTo} onChangeText={setDateTo} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
-          </View>
+        <View style={{ flexDirection: 'row', marginBottom: SPACING.md, gap: SPACING.sm }}>
+          <DatePickerInput
+            label="From"
+            value={dateFrom}
+            onChange={setDateFrom}
+            placeholder="Start date"
+            accentColor={C.accent}
+            style={{ flex: 1 }}
+          />
+          <DatePickerInput
+            label="To"
+            value={dateTo}
+            onChange={setDateTo}
+            placeholder="End date"
+            minimumDate={dateFrom ? new Date(dateFrom) : undefined}
+            accentColor={C.accent}
+            style={{ flex: 1 }}
+          />
         </View>
         <TouchableOpacity style={{ backgroundColor: C.accent, borderRadius: RADIUS.md, height: 48, justifyContent: 'center', alignItems: 'center', ...S.md }}
           onPress={fetchData} disabled={loading || !dateFrom || !dateTo}>
