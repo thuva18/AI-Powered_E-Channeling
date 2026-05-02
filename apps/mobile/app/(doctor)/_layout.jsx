@@ -4,9 +4,18 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import useTheme from '../../hooks/useTheme';
+import useAuthStore from '../../store/authStore';
+import DoctorPendingApproval from '../../components/doctor/DoctorPendingApproval';
 
 export default function DoctorLayout() {
   const { C, isDark } = useTheme();
+  const { user } = useAuthStore();
+
+  // If doctor is not approved, show the pending screen instead of tabs
+  if (user?.role === 'doctor' && user?.approvalStatus !== 'APPROVED') {
+    return <DoctorPendingApproval />;
+  }
+
   return (
     <Tabs
       screenOptions={{
