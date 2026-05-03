@@ -215,6 +215,20 @@ const getReportData = async (req, res) => {
         const apptFilter = { createdAt: { $gte: from, $lte: to } };
         const txnFilter = { createdAt: { $gte: from, $lte: to }, status: { $in: SUCCESS_TRANSACTION_STATUSES } };
 
+        const totalApptsForCheck = await Appointment.countDocuments(apptFilter);
+        const totalTxnsForCheck = await Transaction.countDocuments(txnFilter);
+
+        if (totalApptsForCheck === 0 && totalTxnsForCheck === 0) {
+            return res.json({
+                success: true,
+                message: "No report data found for the selected date range.",
+                dateFrom, dateTo,
+                appointments: { total: 0, completed: 0, accepted: 0, pending: 0, cancelled: 0, byDay: [], topSpecializations: [] },
+                doctorRevenue: [],
+                payments: { totalRevenue: 0, paidCount: 0, successRate: 100, refunds: 0, byMethod: [] },
+            });
+        }
+
         // ── Appointment counts ─────────────────────────────────────────────────
         const [total, completed, accepted, pending, cancelled] = await Promise.all([
             Appointment.countDocuments(apptFilter),
@@ -302,13 +316,38 @@ const getAdvancedReportData = async (req, res) => {
             ? { ...apptFilter, doctorId: { $in: selectedDoctorIds } }
             : apptFilter;
 
+        // ── Check for empty data ───────────────────────────────────────────────
+        const totalApptsForCheck = await Appointment.countDocuments(docFilter);
+        const totalTxnsForCheck = await Transaction.countDocuments(txnFilter);
+
+        if (totalApptsForCheck === 0 && totalTxnsForCheck === 0) {
+            return res.json({
+                success: true,
+                message: "No report data found for the selected date range.",
+                dateFrom, dateTo,
+                allDoctors,
+                appointments: { total: 0, completed: 0, accepted: 0, pending: 0, cancelled: 0, topSpecializations: [] },
+                financial: { total: 0, count: 0, avg: 0, successRate: 100, refunds: 0, failed: 0, byMethod: [], dailyRevenue: [] },
+                cancellation: { total: 0, rate: 0, byDay: [], byDoctor: [] },
+                doctorPerformance: [],
+                peakHours: [],
+            });
+        }
+
         // ── Peak Hours ─────────────────────────────────────────────────────────
         // timeSlot field stored as "09:00 AM" or "09:00" — extract hour
         const peakHoursRaw = await Appointment.aggregate([
             { $match: { ...docFilter, timeSlot: { $exists: true, $ne: null } } },
             {
                 $project: {
-                    hour: { $toInt: { $arrayElemAt: [{ $split: [{ $ifNull: ['$timeSlot', '0:00'] }, ':'] }, 0] } }
+                    hour: {
+                        $convert: {
+                            input: { $arrayElemAt: [{ $split: [{ $ifNull: ['$timeSlot', '0:00'] }, ':'] }, 0] },
+                            to: 'int',
+                            onError: -1,
+                            onNull: -1
+                        }
+                    }
                 }
             },
             { $match: { hour: { $gte: 0, $lte: 23 } } },
