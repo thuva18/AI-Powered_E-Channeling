@@ -76,8 +76,13 @@ export default function PatientProfileScreen() {
   const fetchProfile = async () => {
     try {
       const res = await api.get('/patients/profile');
-      setProfile(res.data);
-      setForm(res.data);
+      const mappedData = {
+        ...res.data,
+        name: `${res.data.firstName || ''} ${res.data.lastName || ''}`.trim(),
+        dob: res.data.dateOfBirth ? String(res.data.dateOfBirth).split('T')[0] : '',
+      };
+      setProfile(mappedData);
+      setForm(mappedData);
     } catch {
       Alert.alert('Error', 'Failed to load profile');
     } finally {
@@ -91,15 +96,22 @@ export default function PatientProfileScreen() {
     setSaving(true);
     try {
       const res = await api.put('/patients/profile', {
-        name: form.name,
+        firstName: form.firstName || '',
+        lastName: form.lastName || '',
         phone: form.phone,
-        gender: form.gender,
-        dob: form.dob,
-        bloodGroup: form.bloodGroup,
-        address: form.address,
+        dateOfBirth: form.dob || null,
       });
-      setProfile(res.data);
-      updateUser({ name: res.data.name });
+      
+      const updatedProfile = res.data.patientProfile;
+      const mappedData = {
+        ...profile,
+        ...updatedProfile,
+        name: `${updatedProfile.firstName || ''} ${updatedProfile.lastName || ''}`.trim(),
+        dob: updatedProfile.dateOfBirth ? String(updatedProfile.dateOfBirth).split('T')[0] : '',
+      };
+
+      setProfile(mappedData);
+      updateUser({ name: mappedData.name });
       setEditing(false);
       Alert.alert('✅ Saved', 'Profile updated successfully');
     } catch (e) {
@@ -154,13 +166,12 @@ export default function PatientProfileScreen() {
 
         {/* Profile Fields */}
         <View style={styles.card}>
-          {renderField('Person', 'Full Name', form.name, (v) => setForm((f) => ({ ...f, name: v })), editing, false)}
+          {renderField('Person', 'First Name', form.firstName, (v) => setForm((f) => ({ ...f, firstName: v })), editing, false)}
+          {renderField('Person', 'Last Name', form.lastName, (v) => setForm((f) => ({ ...f, lastName: v })), editing, false)}
           {renderField('Mail', 'Email', form.email, () => {}, false, true)}
           {renderField('Card', 'NIC', form.nic, () => {}, false, true)}
           {renderField('Call', 'Phone', form.phone, (v) => setForm((f) => ({ ...f, phone: v })), editing, false, 'phone-pad')}
           {renderField('Calendar', 'Date of Birth', form.dob, (v) => setForm((f) => ({ ...f, dob: v })), editing)}
-          {renderField('Water', 'Blood Group', form.bloodGroup, (v) => setForm((f) => ({ ...f, bloodGroup: v })), editing)}
-          {renderField('Location', 'Address', form.address, (v) => setForm((f) => ({ ...f, address: v })), editing)}
         </View>
 
         {editing && (
