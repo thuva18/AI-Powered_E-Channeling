@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, ScrollView, Modal,
+  ActivityIndicator, Alert, RefreshControl, ScrollView, Modal, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -321,8 +321,9 @@ export default function PatientPaymentsScreen() {
 
       {/* Tab filter */}
       {!loading && transactions.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: SPACING.md, gap: 6, marginBottom: SPACING.sm }}>
+        <View style={{ marginBottom: SPACING.md }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: SPACING.md, gap: 8, paddingVertical: 4 }}>
           {TABS.map(t => {
             const count = t === 'ALL' ? transactions.length : transactions.filter(tx => tx.status === t).length;
             const active = activeTab === t;
@@ -342,7 +343,8 @@ export default function PatientPaymentsScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+          </ScrollView>
+        </View>
       )}
 
       {/* Content */}
