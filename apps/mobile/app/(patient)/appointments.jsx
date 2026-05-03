@@ -6,7 +6,7 @@ import useStyles from '../../hooks/useStyles';
 import useTheme from '../../hooks/useTheme';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl,
+  ActivityIndicator, Alert, RefreshControl, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -16,7 +16,7 @@ export default function PatientAppointmentsScreen() {
   const styles = useStyles(getStyles);
   const { C } = useTheme();
   const STATUS_COLORS = {
-    confirmed: C.success, pending: C.warning,
+    accepted: C.success, pending: C.warning,
     cancelled: C.error, completed: C.info,
   };
   const [appointments, setAppointments] = useState([]);
@@ -50,7 +50,7 @@ export default function PatientAppointmentsScreen() {
           try {
             await api.patch(`/patients/appointments/${id}/cancel`);
             setAppointments((prev) =>
-              prev.map((a) => a._id === id ? { ...a, status: 'cancelled' } : a),
+              prev.map((a) => a._id === id ? { ...a, status: 'CANCELLED' } : a),
             );
           } catch (e) {
             Alert.alert('Error', e.response?.data?.message ?? 'Failed to cancel');
@@ -62,8 +62,8 @@ export default function PatientAppointmentsScreen() {
     ]);
   };
 
-  const filters = ['all', 'pending', 'confirmed', 'completed', 'cancelled'];
-  const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status === filter);
+  const filters = ['all', 'pending', 'accepted', 'completed', 'cancelled'];
+  const displayList = filter === 'all' ? appointments : appointments.filter((a) => a.status?.toLowerCase() === filter);
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
@@ -72,8 +72,8 @@ export default function PatientAppointmentsScreen() {
           <Text style={{ fontSize: 20 }}>👨‍⚕️</Text>
         </View>
         <View style={styles.info}>
-          <Text style={styles.docName}>Dr. {item.doctor?.name ?? 'Unknown'}</Text>
-          <Text style={styles.docSpec}>{item.doctor?.specialization ?? ''}</Text>
+          <Text style={styles.docName}>Dr. {item.doctorId ? `${item.doctorId.firstName || ''} ${item.doctorId.lastName || ''}`.trim() || 'Unknown' : 'Unknown'}</Text>
+          <Text style={styles.docSpec}>{item.doctorId?.specialization ?? ''}</Text>
           {item.appointmentDate && (
             <Text style={styles.date}>
               📅 {new Date(item.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -81,16 +81,16 @@ export default function PatientAppointmentsScreen() {
             </Text>
           )}
         </View>
-        <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[item.status] ?? C.textMuted) + '22' }]}>
-          <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status] ?? C.textMuted }]}>
-            {item.status}
+        <View style={[styles.badge, { backgroundColor: (STATUS_COLORS[item.status?.toLowerCase()] ?? C.textMuted) + '22' }]}>
+          <Text style={[styles.badgeText, { color: STATUS_COLORS[item.status?.toLowerCase()] ?? C.textMuted }]}>
+            {item.status?.toLowerCase()}
           </Text>
         </View>
       </View>
 
       {item.notes && <Text style={styles.notes}>{item.notes}</Text>}
 
-      {(item.status === 'pending' || item.status === 'confirmed') && (
+      {(item.status?.toLowerCase() === 'pending' || item.status?.toLowerCase() === 'accepted') && (
         <TouchableOpacity
           style={styles.cancelBtn}
           onPress={() => handleCancel(item._id)}
@@ -112,18 +112,20 @@ export default function PatientAppointmentsScreen() {
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterScroll}>
-        {filters.map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterTab, filter === f && styles.filterTabActive]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          {filters.map((f) => (
+            <TouchableOpacity
+              key={f}
+              style={[styles.filterTab, filter === f && styles.filterTabActive]}
+              onPress={() => setFilter(f)}
+            >
+              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {loading ? (
