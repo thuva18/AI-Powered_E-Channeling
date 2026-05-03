@@ -412,7 +412,7 @@ export default function RegisterScreen() {
 // ─── Reusable Field Component ────────────────────────────────────────────────
 function Field({ icon, label, value, onChange, error, isValid, extra = {} }) {
   const styles = useStyles(getStyles);
-  const { COLORS: C } = useTheme(); // Access colors from theme for the icon
+  const { C } = useTheme(); // Access colors from theme for the icon
   
   return (
     <>
