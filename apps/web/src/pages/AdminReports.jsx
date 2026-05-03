@@ -329,6 +329,11 @@ const StandardTab = ({ savedReports, setSavedReports, showToast, setViewReport, 
                             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700"><AlertCircle size={13} className="shrink-0" /> {error}</div>
                         ) : loading ? (
                             <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="skeleton h-10 rounded-xl" />)}</div>
+                        ) : previewData?.message ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center px-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <AlertCircle size={24} className="text-slate-400 mb-2" />
+                                <p className="text-sm font-semibold text-slate-600">{previewData.message}</p>
+                            </div>
                         ) : previewData ? (
                             <>
                                 <div className="bg-slate-50 rounded-xl p-3 text-xs space-y-1">
@@ -431,7 +436,7 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
 
     useEffect(() => {
         let mounted = true;
-        const loadInitialPresets = async () => {
+        const loadInitialData = async () => {
             setPresetLoading(true);
             try {
                 const { data: list } = await api.get('/admin/presets');
@@ -441,8 +446,17 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
             } finally {
                 if (mounted) setPresetLoading(false);
             }
+
+            try {
+                const { data: doctorsList } = await api.get('/admin/doctors');
+                if (mounted && Array.isArray(doctorsList)) {
+                    setAllDoctors(doctorsList.filter(d => d.approvalStatus === 'APPROVED'));
+                }
+            } catch {
+                // Keep silent
+            }
         };
-        loadInitialPresets();
+        loadInitialData();
         return () => { mounted = false; };
     }, [sortPresetsByRecent]);
 
@@ -695,7 +709,7 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
                             </div>
                         )}
                         {doctorDropOpen && allDoctors.length === 0 && (
-                            <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-4 text-center text-sm text-slate-400">Generate data first to load doctors</div>
+                            <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-4 text-center text-sm text-slate-400">No approved doctors found.</div>
                         )}
                     </div>
                 </div>
@@ -772,6 +786,11 @@ const AdvancedTab = ({ savedReports, setSavedReports, showToast, editConfig }) =
                             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700"><AlertCircle size={13} className="shrink-0" /> {error}</div>
                         ) : loading ? (
                             <div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="skeleton h-10 rounded-xl" />)}</div>
+                        ) : data?.message ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center px-4 bg-slate-50 border border-slate-200 rounded-xl">
+                                <AlertCircle size={24} className="text-slate-400 mb-2" />
+                                <p className="text-sm font-semibold text-slate-600">{data.message}</p>
+                            </div>
                         ) : data ? (
                             <>
                                 <div className="bg-slate-50 rounded-xl p-3 text-xs space-y-1">
