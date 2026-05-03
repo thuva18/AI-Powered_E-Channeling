@@ -4,7 +4,7 @@ services:
     name: echanneling-backend
     plan: free
     env: node
-    rootDir: backend
+    rootDir: apps/backend
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -35,7 +35,7 @@ services:
     name: echanneling-ai-service
     plan: free
     env: python
-    rootDir: ai-service
+    rootDir: apps/ai-service
     buildCommand: pip install -r requirements.txt
     startCommand: AI_PORT=$PORT python app.py
     envVars:
@@ -46,7 +46,7 @@ services:
   - type: web
     name: echanneling-frontend
     env: static
-    rootDir: web
+    rootDir: apps/web
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     routes:

@@ -12,8 +12,8 @@
 A premium, full-stack healthcare ecosystem that revolutionizes patient-doctor interactions using Artificial Intelligence. This system provides an end-to-end solution for symptom analysis, specialist prediction, and seamless appointment management across Web and Mobile platforms.
 
 <div align="center">
-  <img src="mobile_app_mockup_1776409564550.png" width="400" alt="Mobile App Mockup">
-  <img src="web_dashboard_mockup_1776409591128.png" width="400" alt="Web Dashboard Mockup">
+  <img src="assets/mobile_app_mockup_1776409564550.png" width="400" alt="Mobile App Mockup">
+  <img src="assets/web_dashboard_mockup_1776409591128.png" width="400" alt="Web Dashboard Mockup">
 </div>
 
 ---
@@ -91,11 +91,13 @@ graph TD
 
 To help you navigate the codebase, here is where each service is located:
 
-*   **`/web`** — **React Web Application** (Vite, Tailwind CSS v4)
-*   **`/backend`** — **Express.js API** (Node.js, MongoDB)
-*   **`/ai-service`** — **AI & ML Services** (Python, Flask, Scikit-Learn)
-*   **`/mobile`** — **Mobile Application** (React Native, Expo)
-*   **`/shared`** — Shared configuration and API utilities used across platforms.
+*   **`/apps/web`** — **React Web Application** (Vite, Tailwind CSS v4)
+*   **`/apps/backend`** — **Express.js API** (Node.js, MongoDB)
+*   **`/apps/ai-service`** — **AI & ML Services** (Python, Flask, Scikit-Learn)
+*   **`/apps/mobile`** — **Mobile Application** (React Native, Expo)
+*   **`/packages/shared`** — Shared configuration and API utilities used across platforms.
+*   **`/scripts`** — Utility scripts for maintenance and refactoring.
+*   **`/assets`** — Brand assets, mockups, and media files.
 
 ---
 
