@@ -11,6 +11,7 @@ import api from '../../services/api';
 import DatePickerInput from '../../components/DatePickerInput';
 import useTheme from '../../hooks/useTheme';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
+import { generateStandardPDF, generateAdvancedPDF } from '../../utils/reportPdf';
 
 const fmtLKR = (n) => `LKR ${(n || 0).toLocaleString()}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString() : '—';
@@ -53,9 +54,9 @@ export default function AdminReportsScreen() {
 function MiniStat({ label, value, color }) {
   const { C } = useTheme();
   return (
-    <View style={{ flex: 1, minWidth: '45%', borderRadius: RADIUS.md, padding: SPACING.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color + '11', borderColor: color + '33' }}>
-      <Text style={{ fontSize: 10, textTransform: 'uppercase', fontWeight: '700', color: C.textSecondary, marginBottom: 4 }}>{label}</Text>
-      <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color }}>{value}</Text>
+    <View style={{ width: '47%', borderRadius: RADIUS.md, padding: SPACING.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: color + '11', borderColor: color + '33', marginBottom: SPACING.sm }}>
+      <Text style={{ fontSize: 10, textTransform: 'uppercase', fontWeight: '700', color: C.textSecondary, marginBottom: 4 }} numberOfLines={1}>{label}</Text>
+      <Text style={{ fontSize: FONT_SIZES.lg, fontWeight: '800', color }} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
@@ -163,7 +164,7 @@ function StandardTab() {
             {saving ? <ActivityIndicator color={C.white} /> : <Text style={{ color: C.white, fontWeight: '700', fontSize: FONT_SIZES.sm }}>Save Report</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1, backgroundColor: C.warning, borderRadius: RADIUS.md, height: 48, justifyContent: 'center', alignItems: 'center', opacity: (!data) ? 0.5 : 1 }}
-            onPress={() => Alert.alert('Not Supported', 'PDF export is coming soon to the mobile app. Please use the desktop dashboard.')} disabled={!data}>
+            onPress={() => generateStandardPDF({ reportName, dateFrom, dateTo, data })} disabled={!data}>
             <Text style={{ color: C.white, fontWeight: '700', fontSize: FONT_SIZES.sm }}>Export PDF</Text>
           </TouchableOpacity>
         </View>
@@ -179,7 +180,7 @@ function StandardTab() {
           {data.appointments && (
             <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: SPACING.sm }}>Appointments</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: SPACING.sm }}>
                 <MiniStat label="Total" value={data.appointments.total} color={C.primary} />
                 <MiniStat label="Completed" value={data.appointments.completed} color={C.success} />
                 <MiniStat label="Pending" value={data.appointments.pending} color={C.warning} />
@@ -190,7 +191,7 @@ function StandardTab() {
           {data.payments && (
             <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: SPACING.sm }}>Financials</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: SPACING.sm }}>
                 <MiniStat label="Revenue" value={fmtLKR(data.payments.totalRevenue)} color={C.success} />
                 <MiniStat label="Success" value={`${data.payments.successRate}%`} color={C.primary} />
               </View>
@@ -300,7 +301,7 @@ function AdvancedTab() {
 
   const handleSaveAsPreset = async () => {
     if (!dateFrom || !dateTo) { Alert.alert('Error', 'Please select date range before saving preset.'); return; }
-    setPresetNameInput('');
+    setPresetNameInput(reportName || '');
     setPresetModalVisible(true);
   };
 
@@ -336,13 +337,18 @@ function AdvancedTab() {
     setAdvSections(nextSections);
     setData(null);
     await fetchData(from, to, docs);
+    Alert.alert('Success', 'Preset applied successfully.');
   };
 
   const deletePreset = async (id) => {
-    Alert.alert("Delete", "Are you sure?", [
+    Alert.alert("Delete", "Are you sure you want to delete this preset permanently?", [
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: async () => {
-        try { await api.delete(`/admin/presets/${id}`); setPresets(prev => prev.filter(p => p._id !== id)); }
+        try { 
+          await api.delete(`/admin/presets/${id}`); 
+          setPresets(prev => prev.filter(p => p._id !== id)); 
+          Alert.alert('Success', 'Preset deleted successfully.');
+        }
         catch { Alert.alert('Error', 'Failed to delete preset'); }
       }}
     ]);
@@ -427,12 +433,21 @@ function AdvancedTab() {
           <View style={{ backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.border, borderRadius: RADIUS.md, padding: SPACING.sm, marginBottom: SPACING.md, maxHeight: 200 }}>
             <ScrollView nestedScrollEnabled>
               {allDoctors.length === 0 ? <Text style={{ padding: SPACING.sm, color: C.textMuted }}>No approved doctors found.</Text> : 
-                allDoctors.map(doc => (
-                  <TouchableOpacity key={doc._id} onPress={() => toggleDoc(doc._id)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: C.borderLight }}>
-                    <Ionicons name={selectedDoctors.includes(doc._id) ? "checkbox" : "square-outline"} size={20} color={selectedDoctors.includes(doc._id) ? C.primary : C.textSecondary} style={{ marginRight: SPACING.sm }} />
-                    <Text style={{ color: C.textPrimary }}>Dr. {doc.firstName} {doc.lastName}</Text>
+                <>
+                  <TouchableOpacity onPress={() => {
+                    if (selectedDoctors.length === allDoctors.length) setSelectedDoctors([]);
+                    else setSelectedDoctors(allDoctors.map(d => d._id));
+                  }} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: C.borderLight }}>
+                    <Ionicons name={selectedDoctors.length === allDoctors.length ? "checkbox" : "square-outline"} size={20} color={selectedDoctors.length === allDoctors.length ? C.primary : C.textSecondary} style={{ marginRight: SPACING.sm }} />
+                    <Text style={{ color: C.textPrimary, fontWeight: '700' }}>Select All</Text>
                   </TouchableOpacity>
-                ))
+                  {allDoctors.map(doc => (
+                    <TouchableOpacity key={doc._id} onPress={() => toggleDoc(doc._id)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.sm, borderBottomWidth: 1, borderBottomColor: C.borderLight }}>
+                      <Ionicons name={selectedDoctors.includes(doc._id) ? "checkbox" : "square-outline"} size={20} color={selectedDoctors.includes(doc._id) ? C.primary : C.textSecondary} style={{ marginRight: SPACING.sm }} />
+                      <Text style={{ color: C.textPrimary }}>Dr. {doc.firstName} {doc.lastName}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
               }
             </ScrollView>
           </View>
@@ -459,7 +474,7 @@ function AdvancedTab() {
             {saving ? <ActivityIndicator color={C.white} /> : <Text style={{ color: C.white, fontWeight: '700', fontSize: FONT_SIZES.sm }}>Save Report</Text>}
           </TouchableOpacity>
           <TouchableOpacity style={{ flex: 1, backgroundColor: C.warning, borderRadius: RADIUS.md, height: 48, justifyContent: 'center', alignItems: 'center', opacity: (!data) ? 0.5 : 1 }}
-            onPress={() => Alert.alert('Not Supported', 'PDF export is coming soon to the mobile app. Please use the desktop dashboard.')} disabled={!data}>
+            onPress={() => generateAdvancedPDF({ reportName, dateFrom, dateTo, advSections, data })} disabled={!data}>
             <Text style={{ color: C.white, fontWeight: '700', fontSize: FONT_SIZES.sm }}>Export PDF</Text>
           </TouchableOpacity>
         </View>
@@ -496,16 +511,18 @@ function AdvancedTab() {
           {advSections.appointmentSummary && data.appointments && (
             <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: SPACING.sm }}>Appointments</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
                 <MiniStat label="Total" value={data.appointments.total} color={C.primary} />
                 <MiniStat label="Completed" value={data.appointments.completed} color={C.success} />
+                <MiniStat label="Pending" value={data.appointments.pending} color={C.warning} />
+                <MiniStat label="Cancelled" value={data.appointments.cancelled} color={C.error} />
               </View>
             </View>
           )}
           {advSections.financialSummary && data.financial && (
             <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: SPACING.sm }}>Financial Insight</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
                 <MiniStat label="Total Rev" value={fmtLKR(data.financial.total)} color={C.success} />
                 <MiniStat label="Avg Trx" value={fmtLKR(Math.round(data.financial.avg))} color={C.primary} />
               </View>
@@ -514,7 +531,7 @@ function AdvancedTab() {
           {advSections.cancellationAnalysis && data.cancellation && (
             <View style={{ backgroundColor: C.bgCard, borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: C.border, ...S.sm }}>
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.textPrimary, marginBottom: SPACING.sm }}>Cancellations</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
                 <MiniStat label="Cancelled" value={data.cancellation.total} color={C.error} />
                 <MiniStat label="Cancel Rate" value={`${data.cancellation.rate}%`} color={C.warning} />
               </View>
@@ -567,10 +584,14 @@ function SavedTab() {
   const onRefresh = () => { setRefreshing(true); fetchReports(); };
 
   const handleDelete = async (id) => {
-    Alert.alert("Delete Report", "Are you sure you want to delete this saved report?", [
+    Alert.alert("Delete Report", "Are you sure you want to delete this saved report permanently?", [
       { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: async () => {
-          try { await api.delete(`/admin/saved-reports/${id}`); setReports(prev => prev.filter(p => p._id !== id)); }
+          try { 
+            await api.delete(`/admin/saved-reports/${id}`); 
+            setReports(prev => prev.filter(p => p._id !== id)); 
+            Alert.alert('Success', 'Report deleted successfully.');
+          }
           catch { Alert.alert('Error', 'Failed to delete report'); }
       }}
     ]);
@@ -642,7 +663,13 @@ function SavedTab() {
                   <Ionicons name="eye" size={16} color={C.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity style={{ width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center', backgroundColor: `${C.warning}22` }}
-                  onPress={() => Alert.alert('Not Supported', 'PDF export is coming soon to the mobile app. Please use the desktop dashboard.')}>
+                  onPress={() => {
+                    if (item.type === 'advanced') {
+                      generateAdvancedPDF({ reportName: item.name, dateFrom: item.dateFrom, dateTo: item.dateTo, advSections: item.advSections, data: item.data });
+                    } else {
+                      generateStandardPDF({ reportName: item.name, dateFrom: item.dateFrom, dateTo: item.dateTo, data: item.data });
+                    }
+                  }}>
                   <Ionicons name="download" size={16} color={C.warning} />
                 </TouchableOpacity>
                 <TouchableOpacity style={{ width: 34, height: 34, borderRadius: 17, justifyContent: 'center', alignItems: 'center', backgroundColor: `${C.error}22` }}
