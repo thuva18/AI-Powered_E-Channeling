@@ -14,6 +14,7 @@ import useAuthStore from '../../store/authStore';
 import useTheme from '../../hooks/useTheme';
 import useStyles from '../../hooks/useStyles';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import ScreenTransition from '../../components/common/ScreenTransition';
 import NotificationBell from '../../components/NotificationBell';
 import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
@@ -107,7 +108,7 @@ export default function DoctorHomeScreen() {
   const doctorName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name ?? 'Doctor');
 
   return (
-    <View style={styles.root}>
+    <ScreenTransition style={styles.root}>
       {/* Header with gradient */}
       <View style={styles.headerWrap}>
         <LinearGradient
@@ -257,7 +258,7 @@ export default function DoctorHomeScreen() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </ScreenTransition>
   );
 }
 
