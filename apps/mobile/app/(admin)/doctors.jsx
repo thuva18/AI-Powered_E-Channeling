@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, TextInput,
+  ActivityIndicator, Alert, RefreshControl, TextInput, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -13,6 +13,42 @@ import { FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 export default function AdminDoctorsScreen() {
   const { C, S, isDark } = useTheme();
+  const [popup, setPopup] = useState(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [translateAnim] = useState(new Animated.Value(20));
+
+  const triggerPopup = (message, type = 'success') => {
+    setPopup({ message, type });
+    fadeAnim.setValue(0);
+    translateAnim.setValue(-20);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateAnim, {
+          toValue: -20,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setPopup(null));
+    }, 3000);
+  };
   const [doctors, setDoctors] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,11 +88,17 @@ export default function AdminDoctorsScreen() {
 
   const updateApproval = async (id, status) => {
     setProcessingId(id);
+    const doc = doctors.find((d) => d._id === id);
+    const doctorName = doc ? `Dr. ${doc.firstName || ''} ${doc.lastName || ''}`.trim() || 'Doctor' : 'Doctor';
     try {
       // Backend expects { status } not { approvalStatus }
       await api.patch(`/admin/doctors/${id}/approve`, { status });
       setDoctors((prev) =>
         prev.map((d) => d._id === id ? { ...d, approvalStatus: status } : d)
+      );
+      triggerPopup(
+        `${doctorName} has been ${status === 'APPROVED' ? 'approved' : 'rejected'} successfully`,
+        status === 'APPROVED' ? 'success' : 'warning'
       );
     } catch (e) {
       Alert.alert('Error', e.response?.data?.message ?? 'Action failed');
@@ -73,6 +115,7 @@ export default function AdminDoctorsScreen() {
           try {
             await api.delete(`/admin/doctors/${id}`);
             setDoctors((prev) => prev.filter((d) => d._id !== id));
+            triggerPopup(`Dr. ${name} deleted successfully`, 'error');
           } catch { Alert.alert('Error', 'Failed to delete doctor'); }
           finally { setProcessingId(null); }
         },
@@ -83,8 +126,8 @@ export default function AdminDoctorsScreen() {
   // Backend statuses are UPPERCASE
   const statusConfig = {
     APPROVED: { color: C.success, icon: 'checkmark-circle', label: 'Approved' },
-    PENDING:  { color: C.warning, icon: 'time-outline',     label: 'Pending' },
-    REJECTED: { color: C.error,   icon: 'close-circle',     label: 'Rejected' },
+    PENDING: { color: C.warning, icon: 'time-outline', label: 'Pending' },
+    REJECTED: { color: C.error, icon: 'close-circle', label: 'Rejected' },
   };
 
   const renderItem = ({ item }) => {
@@ -171,11 +214,11 @@ export default function AdminDoctorsScreen() {
                 {isProcessing
                   ? <ActivityIndicator size="small" color={C.success} />
                   : <>
-                      <Ionicons name="checkmark-circle" size={16} color={C.success} />
-                      <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.success, marginLeft: 5 }}>
-                        Approve
-                      </Text>
-                    </>
+                    <Ionicons name="checkmark-circle" size={16} color={C.success} />
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.success, marginLeft: 5 }}>
+                      Approve
+                    </Text>
+                  </>
                 }
               </TouchableOpacity>
 
@@ -217,7 +260,7 @@ export default function AdminDoctorsScreen() {
             </TouchableOpacity>
           )}
 
-          {/* APPROVED: show Revoke */}
+          {/* APPROVED: show Rejected */}
           {status === 'APPROVED' && (
             <TouchableOpacity
               style={{
@@ -231,7 +274,7 @@ export default function AdminDoctorsScreen() {
             >
               <Ionicons name="ban-outline" size={16} color={C.warning} />
               <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: C.warning, marginLeft: 5 }}>
-                Revoke
+                Rejected
               </Text>
             </TouchableOpacity>
           )}
@@ -342,6 +385,63 @@ export default function AdminDoctorsScreen() {
             </View>
           }
         />
+      )}
+      {popup && (
+        <Animated.View style={{
+          position: 'absolute',
+          top: 120,
+          left: SPACING.md,
+          right: SPACING.md,
+          backgroundColor: C.bgCard,
+          borderRadius: RADIUS.md,
+          borderWidth: 1.5,
+          borderColor: popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.35 : 0.15,
+          shadowRadius: 10,
+          elevation: 6,
+          opacity: fadeAnim,
+          transform: [{ translateY: translateAnim }],
+          zIndex: 9999,
+        }}>
+          <View style={{
+            width: 32, height: 32, borderRadius: 16,
+            backgroundColor: (popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning) + '22',
+            justifyContent: 'center', alignItems: 'center', marginRight: 12,
+          }}>
+            <Ionicons
+              name={popup.type === 'success' ? 'checkmark-circle' : popup.type === 'error' ? 'trash' : 'ban'}
+              size={18}
+              color={popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: FONT_SIZES.sm,
+              fontWeight: '700',
+              color: C.textPrimary,
+            }}>
+              {popup.type === 'success' ? 'Success' : popup.type === 'error' ? 'Deleted' : 'Rejected'}
+            </Text>
+            <Text style={{
+              fontSize: FONT_SIZES.xs,
+              color: C.textSecondary,
+              marginTop: 1,
+            }}>
+              {popup.message}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => {
+            Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => setPopup(null));
+          }} style={{ padding: 4 }}>
+            <Ionicons name="close" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        </Animated.View>
       )}
     </View>
   );
