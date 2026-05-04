@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   ActivityIndicator, Alert, RefreshControl, Modal, ScrollView,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
@@ -78,12 +78,17 @@ function AdminFormModal({ admin, onSave, onClose }) {
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
-    if (!form.email) { setError('Email is required'); return; }
+    if (!form.firstName?.trim()) { setError('First Name is required'); return; }
+    if (!form.lastName?.trim()) { setError('Last Name is required'); return; }
+    if (!form.email?.trim()) { setError('Email is required'); return; }
+    if (!form.email.includes('@')) { setError('Email must contain @ sign'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) { setError('Please enter a valid email address'); return; }
     if (!isEdit && !form.password) { setError('Password is required'); return; }
-    if (!isEdit && form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (form.password && form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setSaving(true); setError('');
     try {
-      const payload = { email: form.email, firstName: form.firstName, lastName: form.lastName };
+      const payload = { email: form.email.trim(), firstName: form.firstName.trim(), lastName: form.lastName.trim() };
       if (form.password) payload.password = form.password;
       await onSave(payload, admin?._id);
     } catch (e) { setError(e.response?.data?.message || 'Operation failed'); }
@@ -161,6 +166,27 @@ export default function AdminUserManagementScreen() {
   const [adminForm, setAdminForm] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
 
+  const [popup, setPopup] = useState(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [translateAnim] = useState(new Animated.Value(-20));
+
+  const triggerPopup = (message, type = 'success') => {
+    setPopup({ message, type });
+    fadeAnim.setValue(0);
+    translateAnim.setValue(-20);
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.timing(translateAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
+
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        Animated.timing(translateAnim, { toValue: -20, duration: 300, useNativeDriver: true }),
+      ]).start(() => setPopup(null));
+    }, 3000);
+  };
+
   const fetchPatients = useCallback(async () => {
     try { const { data } = await api.get('/admin/patients'); setPatients(data.patients || data || []); }
     catch { console.error('Failed to load patients'); }
@@ -197,19 +223,27 @@ export default function AdminUserManagementScreen() {
   const handleDelete = (id, label, kind) => {
     Alert.alert(`Delete ${label}?`, 'This action cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        try {
-          if (kind === 'doctor') await api.delete(`/admin/doctors/${id}`);
-          else await api.delete(`/admin/users/${id}`);
-          await (tab === 'patients' ? fetchPatients() : tab === 'doctors' ? fetchDoctors() : fetchAdmins());
-        } catch { Alert.alert('Error', 'Delete failed'); }
-      }},
+      {
+        text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            if (kind === 'doctor') await api.delete(`/admin/doctors/${id}`);
+            else await api.delete(`/admin/users/${id}`);
+            await (tab === 'patients' ? fetchPatients() : tab === 'doctors' ? fetchDoctors() : fetchAdmins());
+            triggerPopup(`${label} has been deleted successfully`, 'error');
+          } catch { Alert.alert('Error', 'Delete failed'); }
+        }
+      },
     ]);
   };
 
   const handleAdminSave = async (payload, id) => {
-    if (id) await api.patch(`/admin/admins/${id}`, payload);
-    else await api.post('/admin/admins', payload);
+    if (id) {
+      await api.patch(`/admin/admins/${id}`, payload);
+      triggerPopup(`Admin ${payload.email || 'account'} updated successfully`, 'success');
+    } else {
+      await api.post('/admin/admins', payload);
+      triggerPopup(`New admin created successfully`, 'success');
+    }
     await fetchAdmins();
     setAdminForm(null);
   };
@@ -303,7 +337,10 @@ export default function AdminUserManagementScreen() {
           )}
         </View>
         <TouchableOpacity style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: `${C.warning}15`, justifyContent: 'center', alignItems: 'center', marginRight: SPACING.xs }}
-          onPress={() => setAdminForm(item)}>
+          onPress={() => {
+            setAdminForm(item);
+            triggerPopup(`Editing Admin: ${item.email}`, 'info');
+          }}>
           <Ionicons name="pencil" size={16} color={C.warning} />
         </TouchableOpacity>
         <TouchableOpacity style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: `${C.error}15`, justifyContent: 'center', alignItems: 'center' }}
@@ -382,6 +419,63 @@ export default function AdminUserManagementScreen() {
       <PatientModal patient={viewPatient} onClose={() => setViewPatient(null)} />
       {adminForm !== null && (
         <AdminFormModal admin={adminForm?._id ? adminForm : null} onSave={handleAdminSave} onClose={() => setAdminForm(null)} />
+      )}
+      {popup && (
+        <Animated.View style={{
+          position: 'absolute',
+          top: 120,
+          left: SPACING.md,
+          right: SPACING.md,
+          backgroundColor: C.bgCard,
+          borderRadius: RADIUS.md,
+          borderWidth: 1.5,
+          borderColor: popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning,
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.35 : 0.15,
+          shadowRadius: 10,
+          elevation: 6,
+          opacity: fadeAnim,
+          transform: [{ translateY: translateAnim }],
+          zIndex: 9999,
+        }}>
+          <View style={{
+            width: 32, height: 32, borderRadius: 16,
+            backgroundColor: (popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning) + '22',
+            justifyContent: 'center', alignItems: 'center', marginRight: 12,
+          }}>
+            <Ionicons
+              name={popup.type === 'success' ? 'checkmark-circle' : popup.type === 'error' ? 'trash' : 'create'}
+              size={18}
+              color={popup.type === 'success' ? C.success : popup.type === 'error' ? C.error : C.warning}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: FONT_SIZES.sm,
+              fontWeight: '700',
+              color: C.textPrimary,
+            }}>
+              {popup.type === 'success' ? 'Success' : popup.type === 'error' ? 'Deleted' : 'Editing Admin'}
+            </Text>
+            <Text style={{
+              fontSize: FONT_SIZES.xs,
+              color: C.textSecondary,
+              marginTop: 1,
+            }}>
+              {popup.message}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => {
+            Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => setPopup(null));
+          }} style={{ padding: 4 }}>
+            <Ionicons name="close" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        </Animated.View>
       )}
     </View>
   );
