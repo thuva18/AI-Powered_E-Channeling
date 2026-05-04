@@ -317,9 +317,9 @@ const getStyles = (C, isDark, S) => StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingTop: 58, paddingBottom: SPACING.md,
-    backgroundColor: isDark ? C.bgCard : C.bgCard,
-    borderBottomWidth: 1, borderBottomColor: C.border,
+    paddingHorizontal: SPACING.lg, paddingTop: 56, paddingBottom: SPACING.md,
+    backgroundColor: C.headerBg,
+    borderBottomWidth: 1, borderBottomColor: C.headerBorder,
   },
   title: { fontSize: FONT_SIZES.xl, fontWeight: '800', color: C.textPrimary },
   subtitle: { fontSize: FONT_SIZES.xs, color: C.textSecondary, marginTop: 2 },
