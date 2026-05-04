@@ -65,12 +65,12 @@ const getApprovedDoctors = async (req, res) => {
         if (specialization && specialization.trim()) {
             const specName = specialization.trim();
             let filtered = doctors.filter(
-                d => d.specialization.toLowerCase() === specName.toLowerCase()
+                d => d.specialization?.toLowerCase() === specName.toLowerCase()
             );
             // Fallback: if no doctors for that specialization, show General Physicians
             if (filtered.length === 0) {
                 filtered = doctors.filter(
-                    d => d.specialization.toLowerCase() === 'general physician'
+                    d => d.specialization?.toLowerCase() === 'general physician'
                 );
             }
             return res.json(filtered);

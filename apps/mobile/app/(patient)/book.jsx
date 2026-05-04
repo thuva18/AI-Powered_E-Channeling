@@ -50,6 +50,15 @@ export default function BookAppointmentScreen() {
 
   useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
 
+  const getPredictedSpecialist = (result) =>
+    (result?.predictedSpecialist || result?.specialist || '').trim();
+
+  const getConfidencePercent = (confidence) => {
+    const value = Number(confidence);
+    if (!Number.isFinite(value)) return 0;
+    return Math.min(value > 1 ? value : value * 100, 100);
+  };
+
   // Search filter
   useEffect(() => {
     const q = search.toLowerCase();
@@ -70,14 +79,36 @@ export default function BookAppointmentScreen() {
   const handleAIPredict = async () => {
     if (!symptoms.trim()) { Alert.alert('Enter symptoms', 'Describe your symptoms to get AI recommendations.'); return; }
     setAiLoading(true);
+    setLoading(true);
     setAiError('');
+    setAiResult(null);
     try {
       const res = await api.post('/ai/predict-specialist', { symptoms: symptoms.trim() });
-      setAiResult(res.data);
+      const result = res.data || {};
+      const predictedSpecialist = getPredictedSpecialist(result);
+      setAiResult({ ...result, predictedSpecialist });
+
+      if (predictedSpecialist) {
+        setSearch(predictedSpecialist);
+        try {
+          const docsRes = await api.get(`/patients/doctors?specialization=${encodeURIComponent(predictedSpecialist)}`);
+          const matchedDoctors = docsRes.data || [];
+          setDoctors(matchedDoctors);
+          setFiltered(matchedDoctors);
+          setTimeout(() => jumpToDoctors(predictedSpecialist), 100);
+        } catch (doctorError) {
+          setDoctors([]);
+          setFiltered([]);
+          setAiError(doctorError.response?.data?.message || 'Could not load doctors for this specialization.');
+        }
+      } else {
+        setAiError('AI did not return a specialization. Please try describing your symptoms another way.');
+      }
     } catch (e) {
       setAiError(e.response?.data?.message || 'AI service unavailable.');
     } finally {
       setAiLoading(false);
+      setLoading(false);
     }
   };
 
@@ -183,7 +214,7 @@ export default function BookAppointmentScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.aiRecommendationLabel}>AI Recommendation {aiResult.winningModel ? `· ${aiResult.winningModel}` : ''}</Text>
-                  <Text style={styles.aiSpecialist}>{aiResult.specialist || aiResult.predictedSpecialist}</Text>
+                  <Text style={styles.aiSpecialist}>{getPredictedSpecialist(aiResult)}</Text>
                 </View>
                 {aiResult.belowThreshold && (
                   <View style={styles.lowConfBadge}>
@@ -196,19 +227,19 @@ export default function BookAppointmentScreen() {
                 <View style={styles.confSection}>
                   <View style={styles.flexRowBetween}>
                     <Text style={styles.confLabel}><Ionicons name="trending-up" size={11} /> Confidence</Text>
-                    <Text style={styles.confValue}>{Math.round(aiResult.confidence * 100)}%</Text>
+                    <Text style={styles.confValue}>{Math.round(getConfidencePercent(aiResult.confidence))}%</Text>
                   </View>
                   <View style={styles.confBarBg}>
-                    <View style={[styles.confBarFill, { width: `${Math.min(aiResult.confidence * 100, 100)}%`, backgroundColor: aiResult.confidence > 0.8 ? C.success : C.info }]} />
+                    <View style={[styles.confBarFill, { width: `${getConfidencePercent(aiResult.confidence)}%`, backgroundColor: getConfidencePercent(aiResult.confidence) > 80 ? C.success : C.info }]} />
                   </View>
                 </View>
               )}
 
               <TouchableOpacity 
                 style={styles.findDocsActionBtn}
-                onPress={() => jumpToDoctors(aiResult.predictedSpecialist)}
+                onPress={() => jumpToDoctors(getPredictedSpecialist(aiResult))}
               >
-                <Text style={styles.findDocsActionText}>Find {aiResult.predictedSpecialist} Doctors</Text>
+                <Text style={styles.findDocsActionText}>Find {getPredictedSpecialist(aiResult)} Doctors</Text>
                 <Ionicons name="arrow-down" size={14} color="#000" />
               </TouchableOpacity>
             </View>
@@ -234,7 +265,7 @@ export default function BookAppointmentScreen() {
 
         <View style={styles.listHeaderRow}>
           <Text style={styles.sectionTitle}>
-            {search && aiResult?.predictedSpecialist === search 
+            {search && getPredictedSpecialist(aiResult) === search 
               ? `Matched ${search}s (${filtered.length})`
               : `Available Doctors (${filtered.length})`}
           </Text>
